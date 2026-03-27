@@ -283,12 +283,11 @@ export default function LandingPage() {
             Production Intelligence Platform
           </Badge>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-[1.08] text-balance">
-            The Unified Operating System for{' '}
-            <span className="text-primary">Fashion, Footwear &amp; Hardware</span>{' '}
-            Manufacturing
+            A Unified Operating Platform Designed to{' '}
+            <span className="text-primary">Enhance Manufacturing Performance</span>
           </h1>
           <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto text-balance">
-            Built for the 2026 global market. Connect factories, brands, and agencies through real-time inspection data and end-to-end supply chain transparency.
+            Integrating core operations, improving collaboration, increasing process visibility, and enabling data-driven decisions for consistent quality and efficiency.
           </p>
 
           <div className="mt-8 flex items-center justify-center gap-3 flex-wrap">
