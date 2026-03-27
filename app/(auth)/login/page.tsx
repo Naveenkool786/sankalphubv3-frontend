@@ -125,7 +125,7 @@ export default function LoginPage() {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Signing in...' : 'Sign in'}
             </Button>
-            <div className="text-center">
+            <div className="flex flex-col items-center gap-2 text-center">
               <button
                 type="button"
                 onClick={() => setUseMagicLink(true)}
@@ -133,6 +133,12 @@ export default function LoginPage() {
               >
                 Sign in with magic link instead →
               </button>
+              <a
+                href="/auth/forgot-password"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Forgot password?
+              </a>
             </div>
           </form>
         )}
