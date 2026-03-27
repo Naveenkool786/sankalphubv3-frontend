@@ -47,7 +47,7 @@ export function AppShell({ role, orgName, fullName, email, children }: AppShellP
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Header */}
-        <header className="h-14 border-b border-border bg-card/80 backdrop-blur-sm flex items-center gap-3 px-4 flex-shrink-0">
+        <header className="h-14 border-b border-border bg-background/80 backdrop-blur-sm flex items-center gap-3 px-4 flex-shrink-0">
           <Button
             variant="ghost"
             size="icon"

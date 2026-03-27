@@ -1,26 +1,30 @@
-import type { Metadata } from "next";
-import { Geist } from "next/font/google";
-import { Toaster } from "sonner";
-import "./globals.css";
+import type { Metadata } from "next"
+import { Sora, DM_Sans } from "next/font/google"
+import { Toaster } from "sonner"
+import { ThemeProvider } from "@/components/ThemeProvider"
+import "./globals.css"
 
-const geist = Geist({ subsets: ["latin"] });
+const sora = Sora({ subsets: ["latin"], variable: "--font-sora" })
+const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm-sans" })
 
 export const metadata: Metadata = {
   title: "SankalpHub — Quality Management Platform",
   description: "Quality inspection and workflow management for modern supply chains.",
-};
+}
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geist.className} antialiased`}>
-        {children}
-        <Toaster richColors position="top-right" />
+      <body className={`${sora.variable} ${dmSans.variable} antialiased`}>
+        <ThemeProvider>
+          {children}
+          <Toaster richColors position="top-right" />
+        </ThemeProvider>
       </body>
     </html>
-  );
+  )
 }

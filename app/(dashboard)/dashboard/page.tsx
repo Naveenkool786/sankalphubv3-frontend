@@ -33,14 +33,14 @@ type RecentRow = {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; cls: string }> = {
-  draft:          { label: 'Draft',          cls: 'bg-gray-100 text-gray-600' },
-  scheduled:      { label: 'Scheduled',      cls: 'bg-blue-100 text-blue-700' },
-  confirmed:      { label: 'Confirmed',      cls: 'bg-blue-100 text-blue-700' },
-  in_progress:    { label: 'In Progress',    cls: 'bg-blue-100 text-blue-700' },
-  report_pending: { label: 'Pending Review', cls: 'bg-amber-100 text-amber-700' },
-  submitted:      { label: 'Submitted',      cls: 'bg-amber-100 text-amber-700' },
-  approved:       { label: 'Approved',       cls: 'bg-green-100 text-green-700' },
-  cancelled:      { label: 'Cancelled',      cls: 'bg-red-100 text-red-600' },
+  draft:          { label: 'Draft',          cls: 'bg-zinc-500/15 text-zinc-500 dark:text-zinc-300' },
+  scheduled:      { label: 'Scheduled',      cls: 'bg-blue-500/15 text-blue-600 dark:text-blue-400' },
+  confirmed:      { label: 'Confirmed',      cls: 'bg-blue-500/15 text-blue-600 dark:text-blue-400' },
+  in_progress:    { label: 'In Progress',    cls: 'bg-blue-500/15 text-blue-600 dark:text-blue-400' },
+  report_pending: { label: 'Pending Review', cls: 'bg-amber-500/15 text-amber-600 dark:text-amber-400' },
+  submitted:      { label: 'Submitted',      cls: 'bg-amber-500/15 text-amber-600 dark:text-amber-400' },
+  approved:       { label: 'Approved',       cls: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' },
+  cancelled:      { label: 'Cancelled',      cls: 'bg-red-500/15 text-red-500 dark:text-red-400' },
 }
 
 export default async function DashboardPage() {

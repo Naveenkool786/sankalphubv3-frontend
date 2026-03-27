@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ShieldCheck } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
+import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { cn } from '@/lib/utils'
 import { ROLE_CONFIGS } from '@/lib/roles'
 import type { UserRole } from '@/types/database'
@@ -28,22 +29,22 @@ export function Sidebar({ role, orgName, fullName, email, onNavClick }: SidebarP
   }
 
   return (
-    <div className="flex flex-col h-full bg-card border-r border-border">
+    <div className="flex flex-col h-full bg-sidebar border-r border-border">
       {/* Logo */}
       <Link
         href="/"
-        className="px-5 py-4 flex items-center gap-2.5 border-b border-border hover:bg-muted/30 transition-colors"
+        className="px-5 py-4 flex items-center gap-2.5 border-b border-border hover:bg-accent/30 transition-colors"
       >
         <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
           <ShieldCheck className="w-4 h-4 text-primary-foreground" />
         </div>
-        <span className="font-bold text-base tracking-tight">SankalpHub</span>
+        <span className="font-bold text-base tracking-tight text-foreground">SankalpHub</span>
       </Link>
 
       {/* Org + Role */}
       <div className="px-4 py-3 border-b border-border">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-xs font-bold text-primary flex-shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center text-xs font-bold text-primary flex-shrink-0">
             {orgInitials}
           </div>
           <div className="min-w-0">
@@ -85,7 +86,7 @@ export function Sidebar({ role, orgName, fullName, email, onNavClick }: SidebarP
               className={cn(
                 'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all',
                 isActive
-                  ? 'bg-primary text-primary-foreground font-medium'
+                  ? 'bg-primary text-primary-foreground font-medium shadow-sm'
                   : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
               )}
             >
@@ -98,10 +99,17 @@ export function Sidebar({ role, orgName, fullName, email, onNavClick }: SidebarP
 
       <Separator />
 
+      {/* Theme Toggle */}
+      <div className="px-4 py-3">
+        <ThemeToggle />
+      </div>
+
+      <Separator />
+
       {/* User Info */}
       <div className="px-4 py-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary flex-shrink-0">
+          <div className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center text-xs font-bold text-primary flex-shrink-0">
             {initials}
           </div>
           <div className="min-w-0">
