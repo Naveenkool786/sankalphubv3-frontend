@@ -4,12 +4,21 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getUserContext, canManage } from '@/lib/getUserContext'
 import type { UserRole } from '@/lib/getUserContext'
+import { checkInviteAllowed } from '@/lib/planGuard'
 import { revalidatePath } from 'next/cache'
 import { randomUUID } from 'crypto'
 
 export async function inviteUser(email: string, role: UserRole) {
   const ctx = await getUserContext()
   if (!canManage(ctx.role)) throw new Error('Unauthorized')
+
+  // ── Seat limit + domain enforcement ────────────────────────────────────────
+  const check = await checkInviteAllowed(ctx.orgId, email.trim().toLowerCase())
+  if (!check.allowed) {
+    throw new Error(check.reason ?? 'Invite not permitted by your current plan.')
+  }
+  // If check.isOverage is true (Enterprise), the invite proceeds and the
+  // extra $19/month is noted in the UI — billing is handled separately.
 
   const adminClient = createAdminClient()
 

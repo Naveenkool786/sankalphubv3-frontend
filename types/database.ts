@@ -1,7 +1,16 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type OrgType = 'brand' | 'factory' | 'agency'
-export type OrgPlan = 'free' | 'starter' | 'professional' | 'enterprise'
+export type OrgPlan =
+  | 'free'               // post-trial limited access
+  | 'trial'              // active 21-day trial (full access)
+  | 'premium_single'     // PremiumHub Single  — $9/mo,   1 user
+  | 'premium_group'      // PremiumHub Group   — $49/mo,  5 users, domain-locked
+  | 'premium_enterprise' // PremiumHub Enterprise — $199/mo, 11 users + $19/extra
+  | 'founding_member'    // Founding Member    — $29/mo lifetime, 5 users
+  | 'starter'            // legacy v2
+  | 'professional'       // legacy v2
+  | 'enterprise'         // legacy v2
 export type UserRole = 'super_admin' | 'brand_manager' | 'factory_manager' | 'inspector' | 'viewer'
 export type ProjectStatus = 'draft' | 'active' | 'inspection' | 'completed' | 'cancelled'
 export type InspectionStatus = 'draft' | 'scheduled' | 'confirmed' | 'in_progress' | 'report_pending' | 'submitted' | 'approved' | 'cancelled'

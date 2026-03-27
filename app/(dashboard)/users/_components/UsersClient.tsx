@@ -16,10 +16,12 @@ import {
 } from '@/components/ui/dropdown-menu'
 import {
   Users, Plus, MoreHorizontal, Mail, Copy, Trash2,
-  ShieldCheck, Clock, UserX, Loader2,
+  ShieldCheck, Clock, UserX, Loader2, AlertTriangle, Lock,
 } from 'lucide-react'
 import { inviteUser, removeUser, updateUserRole, revokeInvite } from '../actions'
 import type { UserRole } from '@/lib/getUserContext'
+import type { SeatStatus } from '@/lib/planGuard'
+import Link from 'next/link'
 
 export interface MemberRow {
   id: string
@@ -38,6 +40,7 @@ interface Props {
   pendingInvites: MemberRow[]
   canManage: boolean
   currentUserId: string
+  seatStatus: SeatStatus
 }
 
 type OrgRole = Exclude<UserRole, 'super_admin'>
@@ -57,7 +60,7 @@ function getInitials(name: string) {
   return name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
 }
 
-export function UsersClient({ members, pendingInvites, canManage: isAdmin, currentUserId }: Props) {
+export function UsersClient({ members, pendingInvites, canManage: isAdmin, currentUserId, seatStatus }: Props) {
   const [inviteOpen, setInviteOpen] = useState(false)
   const [email, setEmail] = useState('')
   const [inviteRole, setInviteRole] = useState<OrgRole>('inspector')
@@ -65,6 +68,12 @@ export function UsersClient({ members, pendingInvites, canManage: isAdmin, curre
   const [inviteResult, setInviteResult] = useState<{ token: string } | null>(null)
 
   const appUrl = typeof window !== 'undefined' ? window.location.origin : ''
+
+  // Seat logic derived from seatStatus
+  const isAtHardLimit = seatStatus.atLimit && seatStatus.extraSeatCostUsd === 0
+  const isEnterpriseOverage = seatStatus.atLimit && seatStatus.extraSeatCostUsd > 0
+  const seatPct = Math.min(100, Math.round((seatStatus.current / seatStatus.max) * 100))
+  const seatBarColor = seatStatus.atLimit ? '#ef4444' : seatPct >= 80 ? '#f59e0b' : '#C9A96E'
 
   function resetInviteDialog() {
     setEmail('')
@@ -124,13 +133,14 @@ export function UsersClient({ members, pendingInvites, canManage: isAdmin, curre
 
   return (
     <div className="p-6 space-y-6 max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      {/* ── Header ── */}
+      <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Users &amp; Roles</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Manage organization members and invitations</p>
         </div>
-        {isAdmin && (
+
+        {isAdmin && !isAtHardLimit && (
           <Button size="sm" className="gap-2" onClick={() => { resetInviteDialog(); setInviteOpen(true) }}>
             <Plus className="w-4 h-4" />
             Invite Member
@@ -138,7 +148,75 @@ export function UsersClient({ members, pendingInvites, canManage: isAdmin, curre
         )}
       </div>
 
-      {/* Members Card */}
+      {/* ── Seat Usage Bar ── */}
+      <div className="rounded-xl border border-border bg-card p-4 space-y-2.5">
+        <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4 text-muted-foreground" />
+            <span className="font-medium text-foreground">
+              {seatStatus.current} / {seatStatus.max} seats used
+            </span>
+            <Badge
+              className="text-[10px] px-2 py-0.5 bg-muted text-muted-foreground font-medium"
+            >
+              {seatStatus.planName}
+            </Badge>
+          </div>
+          {isAtHardLimit ? (
+            <Link
+              href="/pricing"
+              className="text-xs font-semibold hover:underline"
+              style={{ color: '#A87C30' }}
+            >
+              Upgrade plan →
+            </Link>
+          ) : (
+            <span className="text-xs text-muted-foreground">{seatStatus.max - seatStatus.current} remaining</span>
+          )}
+        </div>
+
+        {/* Progress bar */}
+        <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all duration-300"
+            style={{ width: `${seatPct}%`, backgroundColor: seatBarColor }}
+          />
+        </div>
+
+        {/* Domain restriction notice */}
+        {seatStatus.isDomainLocked && seatStatus.orgDomain && (
+          <p className="text-xs text-muted-foreground">
+            Domain-restricted — only <strong className="text-foreground">@{seatStatus.orgDomain}</strong> emails can be invited
+            (PremiumHub Group plan).
+          </p>
+        )}
+
+        {/* Enterprise overage notice */}
+        {isEnterpriseOverage && isAdmin && (
+          <div className="flex items-start gap-2 text-xs text-amber-600 dark:text-amber-400">
+            <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+            <span>
+              You have reached the 11-seat base limit. Adding more users will incur an additional{' '}
+              <strong>${seatStatus.extraSeatCostUsd}/month per seat</strong>.
+            </span>
+          </div>
+        )}
+
+        {/* Hard limit notice with upgrade prompt */}
+        {isAtHardLimit && isAdmin && (
+          <div className="flex items-center justify-between gap-3 pt-1">
+            <div className="flex items-start gap-2 text-xs text-red-500">
+              <Lock className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+              <span>Seat limit reached. Upgrade your plan to invite more members.</span>
+            </div>
+            <Button asChild size="sm" style={{ backgroundColor: '#A87C30' }} className="hover:opacity-90 flex-shrink-0 text-white">
+              <Link href="/pricing">Upgrade</Link>
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* ── Members Card ── */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -208,7 +286,7 @@ export function UsersClient({ members, pendingInvites, canManage: isAdmin, curre
         </CardContent>
       </Card>
 
-      {/* Pending Invitations */}
+      {/* ── Pending Invitations ── */}
       {isAdmin && (
         <Card>
           <CardHeader className="pb-3">
@@ -268,7 +346,7 @@ export function UsersClient({ members, pendingInvites, canManage: isAdmin, curre
         </Card>
       )}
 
-      {/* Invite Dialog */}
+      {/* ── Invite Dialog ── */}
       <Dialog open={inviteOpen} onOpenChange={(o) => { setInviteOpen(o); if (!o) resetInviteDialog() }}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
@@ -298,11 +376,32 @@ export function UsersClient({ members, pendingInvites, canManage: isAdmin, curre
             </div>
           ) : (
             <div className="space-y-4">
+              {/* Enterprise overage warning in dialog */}
+              {isEnterpriseOverage && (
+                <div className="flex items-start gap-2 p-3 rounded-lg text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                  <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                  <span>
+                    You are over the 11-seat base limit. Adding this user will add{' '}
+                    <strong>${seatStatus.extraSeatCostUsd}/month</strong> to your Enterprise bill.
+                  </span>
+                </div>
+              )}
+
+              {/* Domain restriction hint */}
+              {seatStatus.isDomainLocked && seatStatus.orgDomain && (
+                <div className="flex items-start gap-2 p-3 rounded-lg text-xs text-muted-foreground bg-muted border border-border">
+                  <Lock className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                  <span>
+                    Only <strong className="text-foreground">@{seatStatus.orgDomain}</strong> email addresses can be invited on your Group plan.
+                  </span>
+                </div>
+              )}
+
               <div>
                 <label className="text-xs font-medium text-muted-foreground block mb-1.5">Email Address</label>
                 <Input
                   type="email"
-                  placeholder="colleague@company.com"
+                  placeholder={seatStatus.isDomainLocked && seatStatus.orgDomain ? `colleague@${seatStatus.orgDomain}` : 'colleague@company.com'}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="h-9"

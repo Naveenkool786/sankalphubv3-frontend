@@ -2,8 +2,17 @@ import { createClient } from '@/lib/supabase/server'
 import { getUserContext, canManage } from '@/lib/getUserContext'
 import { TemplatesClient, type TemplateRow } from './_components/TemplatesClient'
 import type { SectionData } from './actions'
+import { PremiumGate } from '@/components/PremiumGate'
 
 export default async function TemplatesPage() {
+  return (
+    <PremiumGate feature="Templates Builder">
+      <TemplatesPageContent />
+    </PremiumGate>
+  )
+}
+
+async function TemplatesPageContent() {
   const ctx = await getUserContext()
   const supabase = await createClient()
 

@@ -2,8 +2,17 @@ import { createClient } from '@/lib/supabase/server'
 import { getUserContext } from '@/lib/getUserContext'
 import { AnalyticsClient } from './_components/AnalyticsClient'
 import type { AnalyticsData } from './_components/AnalyticsClient'
+import { PremiumGate } from '@/components/PremiumGate'
 
 export default async function AnalyticsPage() {
+  return (
+    <PremiumGate feature="Analytics">
+      <AnalyticsPageContent />
+    </PremiumGate>
+  )
+}
+
+async function AnalyticsPageContent() {
   const ctx = await getUserContext()
   const supabase = await createClient()
 
@@ -163,3 +172,4 @@ export default async function AnalyticsPage() {
     </div>
   )
 }
+
