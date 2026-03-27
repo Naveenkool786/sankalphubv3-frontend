@@ -234,6 +234,7 @@ export default function LandingPage() {
             <a href="#why-now" className="hover:text-foreground transition-colors">Why Now</a>
             <a href="#how-it-works" className="hover:text-foreground transition-colors">How It Works</a>
             <a href="#features" className="hover:text-foreground transition-colors">Features</a>
+            <Link href="/pricing" className="hover:text-foreground transition-colors">Pricing</Link>
           </div>
 
           <div className="hidden md:flex items-center gap-2">
@@ -260,6 +261,7 @@ export default function LandingPage() {
             <a href="#why-now" className="block text-sm text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>Why Now</a>
             <a href="#how-it-works" className="block text-sm text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>How It Works</a>
             <a href="#features" className="block text-sm text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>Features</a>
+            <Link href="/pricing" className="block text-sm text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>Pricing</Link>
             <div className="flex gap-2 pt-2">
               <Link href="/login" className="flex-1">
                 <Button size="sm" variant="secondary" className="w-full">Login</Button>
