@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -9,11 +10,27 @@ import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 
 export default function LoginPage() {
+  const router = useRouter()
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
+  const [useMagicLink, setUseMagicLink] = useState(false)
 
-  async function handleLogin(e: React.FormEvent) {
+  async function handlePasswordLogin(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    const supabase = createClient()
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    setLoading(false)
+    if (error) {
+      toast.error('Sign in failed', { description: error.message })
+    } else {
+      router.push('/dashboard')
+    }
+  }
+
+  async function handleMagicLink(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     const supabase = createClient()
@@ -51,12 +68,12 @@ export default function LoginPage() {
               We sent a magic link to <span className="font-medium text-foreground">{email}</span>.
               Click it to sign in.
             </p>
-            <Button variant="ghost" size="sm" onClick={() => setSent(false)} className="mt-2">
+            <Button variant="ghost" size="sm" onClick={() => { setSent(false) }} className="mt-2">
               Use a different email
             </Button>
           </div>
-        ) : (
-          <form onSubmit={handleLogin} className="space-y-4">
+        ) : useMagicLink ? (
+          <form onSubmit={handleMagicLink} className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="email">Email address</Label>
               <Input
@@ -72,6 +89,51 @@ export default function LoginPage() {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Sending...' : 'Send magic link'}
             </Button>
+            <button
+              type="button"
+              onClick={() => setUseMagicLink(false)}
+              className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              ← Back to password sign in
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handlePasswordLogin} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="email">Email address</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@company.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoFocus
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Signing in...' : 'Sign in'}
+            </Button>
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => setUseMagicLink(true)}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Sign in with magic link instead →
+              </button>
+            </div>
           </form>
         )}
       </div>
