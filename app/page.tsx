@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import {
-  ArrowRight, Menu, X, CheckCircle2,
+  ArrowRight, Menu, X, CheckCircle2, Check,
   Globe, AlertTriangle, FileSearch, Zap,
   ClipboardCheck, BarChart3, FileText, Users, Building2, Factory, UserCheck,
   ChevronRight, Star,
@@ -173,6 +173,71 @@ const features = [
   },
 ]
 
+const pricingPlans = [
+  {
+    name: 'Free',
+    badge: null,
+    price: '$0',
+    period: 'forever',
+    desc: 'Get started with a 21-day full-access trial. After that, core features remain free with usage limits.',
+    cta: 'Start Free',
+    href: '/demo',
+    highlighted: false,
+    features: [
+      'Up to 5 users',
+      '10 inspections / month',
+      '5 active projects',
+      '3 AI generations / month',
+      'AQL scoring engine',
+      'Defect capture + photos',
+    ],
+    missingFeatures: [
+      'PDF reports',
+      'Excel export',
+    ],
+  },
+  {
+    name: 'Pro',
+    badge: 'Most Popular',
+    price: '$29',
+    period: '/month',
+    desc: 'For teams running inspections at scale. Unlimited inspections, reports, and AI — everything you need.',
+    cta: 'Start 14-Day Trial',
+    href: '/demo',
+    highlighted: true,
+    features: [
+      'Up to 5 users per org',
+      'Unlimited inspections',
+      'Unlimited projects & templates',
+      'Unlimited AI generations',
+      'PDF reports & Excel export',
+      'Multi-factory support',
+      'Priority support',
+    ],
+    missingFeatures: [],
+  },
+  {
+    name: 'Enterprise',
+    badge: null,
+    price: 'Custom',
+    period: '',
+    desc: 'For large organisations with multi-factory operations, compliance, and white-label needs.',
+    cta: 'Contact Sales',
+    href: '/demo?role=brand',
+    highlighted: false,
+    features: [
+      'Unlimited users',
+      'Unlimited everything',
+      'White-label branding',
+      'SSO / SAML',
+      'API access',
+      'Dedicated account manager',
+      'SLA 99.9%',
+    ],
+    missingFeatures: [],
+  },
+]
+
 const founderBenefits = [
   { title: 'Lifetime Strategic Pricing', desc: 'Lock in early-adopter rates that will never increase, even as we scale globally.' },
   { title: 'Genesis Verified Badge', desc: 'A permanent mark on your profile as a pioneer of digital-first manufacturing.' },
@@ -234,7 +299,7 @@ export default function LandingPage() {
             <a href="#why-now" className="hover:text-foreground transition-colors">Why Now</a>
             <a href="#how-it-works" className="hover:text-foreground transition-colors">How It Works</a>
             <a href="#features" className="hover:text-foreground transition-colors">Features</a>
-            <Link href="/pricing" className="hover:text-foreground transition-colors">Pricing</Link>
+            <a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a>
           </div>
 
           <div className="hidden md:flex items-center gap-2">
@@ -261,7 +326,7 @@ export default function LandingPage() {
             <a href="#why-now" className="block text-sm text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>Why Now</a>
             <a href="#how-it-works" className="block text-sm text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>How It Works</a>
             <a href="#features" className="block text-sm text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>Features</a>
-            <Link href="/pricing" className="block text-sm text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>Pricing</Link>
+            <a href="#pricing" className="block text-sm text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
             <div className="flex gap-2 pt-2">
               <Link href="/login" className="flex-1">
                 <Button size="sm" variant="secondary" className="w-full">Login</Button>
@@ -425,6 +490,85 @@ export default function LandingPage() {
               )
             })}
           </div>
+        </div>
+      </section>
+
+      {/* ── PRICING ── */}
+      <section id="pricing" className="py-20 px-6 bg-muted/20">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <p className="text-xs font-semibold tracking-widest uppercase text-muted-foreground mb-3">Simple, Transparent Pricing</p>
+            <h2 className="text-3xl font-bold text-foreground">Start free. Scale when you're ready.</h2>
+            <p className="text-muted-foreground mt-3 max-w-xl mx-auto text-sm">
+              Every account starts with a 21-day full-access trial. No credit card required.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {pricingPlans.map((plan) => (
+              <div
+                key={plan.name}
+                className={cn(
+                  'relative rounded-2xl p-7 flex flex-col transition-all duration-300',
+                  plan.highlighted
+                    ? 'border-2 shadow-2xl'
+                    : 'border border-border bg-card hover:shadow-lg hover:-translate-y-1'
+                )}
+                style={plan.highlighted
+                  ? { borderColor: '#C9A96E', background: 'linear-gradient(160deg, hsl(var(--card)) 0%, rgba(201,169,110,0.04) 100%)' }
+                  : {}}
+              >
+                {plan.badge && (
+                  <div
+                    className="absolute -top-3.5 left-1/2 -translate-x-1/2 text-xs font-bold px-4 py-1 rounded-full whitespace-nowrap"
+                    style={{ backgroundColor: '#A87C30', color: '#fff' }}
+                  >
+                    {plan.badge}
+                  </div>
+                )}
+
+                <h3 className="text-lg font-bold text-foreground mb-1">{plan.name}</h3>
+                <p className="text-sm text-muted-foreground leading-snug mb-4">{plan.desc}</p>
+
+                <div className="mb-5">
+                  <span className="text-4xl font-bold text-foreground">{plan.price}</span>
+                  {plan.period && <span className="text-muted-foreground text-sm ml-1">{plan.period}</span>}
+                </div>
+
+                <ul className="space-y-2.5 mb-6 flex-1">
+                  {plan.features.map((f) => (
+                    <li key={f} className="flex items-start gap-2.5 text-sm text-muted-foreground">
+                      <Check size={14} className="mt-0.5 flex-shrink-0" style={{ color: '#C9A96E' }} />
+                      {f}
+                    </li>
+                  ))}
+                  {plan.missingFeatures.map((f) => (
+                    <li key={f} className="flex items-start gap-2.5 text-sm text-muted-foreground/50">
+                      <X size={14} className="mt-0.5 flex-shrink-0 text-red-400/60" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+
+                <Link
+                  href={plan.href}
+                  className={cn(
+                    'block w-full py-2.5 rounded-lg text-sm font-semibold text-center transition-all',
+                    plan.highlighted ? 'text-white hover:opacity-90' : 'border border-border text-foreground hover:bg-accent'
+                  )}
+                  style={plan.highlighted ? { backgroundColor: '#A87C30' } : {}}
+                >
+                  {plan.cta}
+                </Link>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-center text-xs text-muted-foreground mt-8">
+            <Link href="/pricing" className="underline hover:text-foreground transition-colors">
+              See full feature comparison →
+            </Link>
+          </p>
         </div>
       </section>
 

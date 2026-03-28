@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Check, X, Menu, MessageCircle, ChevronDown, Users, User, Building2, BarChart3, LayoutDashboard, FileCode2, Zap, Lock } from 'lucide-react'
+import { Check, X, Menu, MessageCircle, ChevronDown, Zap, Shield, Building2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -41,46 +41,62 @@ function LogoMark({ size = 32 }: { size?: number }) {
 }
 
 /* ─── DATA ─── */
-const PREMIUM_PLANS = [
+const PLANS = [
   {
-    icon: User,
-    name: 'Single User',
+    icon: Zap,
+    name: 'Free',
     badge: null,
-    price: '$9',
-    period: '/month',
-    desc: 'Full PremiumHub access for an individual. Perfect for solo inspectors, freelance agents, or independent brand managers.',
-    seats: '1 user per account',
-    seatNote: null,
+    price: '$0',
+    period: 'forever',
+    desc: 'Get started with a 21-day full-access trial. After that, core features stay free with usage limits.',
+    highlight: '21-day full trial included',
     features: [
-      'Full Analytics dashboard',
-      'Live KPI Dashboard',
-      'Templates Builder (unlimited)',
-      'Automated PDF reports',
-      'All inspection modules',
-      'Email support',
+      'Up to 5 users',
+      '10 inspections / month',
+      '5 active projects',
+      '3 templates',
+      '3 AI generations / month',
+      'AQL scoring engine',
+      'Defect capture + photos',
+      '500 MB storage',
     ],
-    cta: 'Get PremiumHub',
+    missingFeatures: [
+      'PDF reports',
+      'Excel export',
+      'Multi-factory support',
+      'Audit logs',
+    ],
+    cta: 'Start Free',
     href: '/demo',
     highlighted: false,
   },
   {
-    icon: Users,
-    name: 'Group',
+    icon: Shield,
+    name: 'Pro',
     badge: 'Most Popular',
-    price: '$49',
+    price: '$29',
     period: '/month',
-    desc: 'For small teams and growing organisations. Up to 5 users under one domain — built-in access control.',
-    seats: 'Up to 5 users / org',
-    seatNote: 'Same-domain only. 6th user is blocked — no permission to join.',
+    desc: 'For teams running quality inspections at scale. Unlimited inspections, reports, and AI generation.',
+    highlight: '$278/year (save 20%)',
     features: [
-      'Everything in Single User',
-      'Up to 5 users per organisation',
-      'Domain-restricted access control',
-      'Shared team dashboards',
-      'Factory & brand collaboration',
-      'Priority email support',
+      'Up to 5 users per org',
+      'Unlimited inspections',
+      'Unlimited projects',
+      'Unlimited templates',
+      'Unlimited AI generations',
+      'PDF reports & Excel export',
+      'Multi-factory support',
+      'Audit logs (90 days)',
+      '15 GB storage',
+      'Email delivery',
+      'Priority support',
     ],
-    cta: 'Get PremiumHub',
+    missingFeatures: [
+      'White-label branding',
+      'SSO / SAML',
+      'API access',
+    ],
+    cta: 'Start 14-Day Trial',
     href: '/demo',
     highlighted: true,
   },
@@ -88,66 +104,81 @@ const PREMIUM_PLANS = [
     icon: Building2,
     name: 'Enterprise',
     badge: null,
-    price: '$199',
-    period: '/month',
-    desc: 'For large organisations running multi-factory operations with enterprise-level compliance needs.',
-    seats: 'Up to 11 users / org',
-    seatNote: 'Each additional user beyond 11 is +$19/month per licence.',
+    price: 'Custom',
+    period: '',
+    desc: 'For large organisations with multi-factory operations, compliance requirements, and white-label needs.',
+    highlight: '30-day POC available',
     features: [
-      'Everything in Group',
-      'Up to 11 users per organisation',
-      'Additional users at +$19/user/month',
+      'Unlimited users',
+      'Unlimited everything',
+      'White-label branding',
+      'SSO / SAML',
+      'API access',
+      'Audit logs (unlimited)',
+      '100 GB+ storage',
       'Dedicated account manager',
-      'Custom integrations & API access',
       'On-site onboarding & training',
-      'SLA guarantee',
-      'White-label option',
+      'SLA 99.9%',
+      'Custom integrations',
     ],
-    cta: 'Contact Us',
+    missingFeatures: [],
+    cta: 'Contact Sales',
     href: '/demo?role=brand',
     highlighted: false,
   },
 ]
 
 const FEATURE_COMPARE = [
-  { feature: 'Analytics Dashboard', icon: BarChart3, limited: false, premium: true },
-  { feature: 'Live KPI Dashboard', icon: LayoutDashboard, limited: false, premium: true },
-  { feature: 'Templates Builder', icon: FileCode2, limited: false, premium: true },
-  { feature: 'Automated PDF Reports', icon: Zap, limited: false, premium: true },
-  { feature: 'Inspection Modules', icon: Check, limited: 'Read-only', premium: true },
-  { feature: 'Factory Connections', icon: Building2, limited: 'View only', premium: true },
-  { feature: 'Data Access', icon: Lock, limited: 'Limited view', premium: 'Full access' },
-  { feature: 'Team Collaboration', icon: Users, limited: false, premium: true },
+  { feature: 'Users', free: '5', pro: '5 per org', enterprise: 'Unlimited' },
+  { feature: 'Inspections / month', free: '10', pro: 'Unlimited', enterprise: 'Unlimited' },
+  { feature: 'Projects', free: '5 active', pro: 'Unlimited', enterprise: 'Unlimited' },
+  { feature: 'Templates', free: '3', pro: 'Unlimited', enterprise: 'Unlimited' },
+  { feature: 'AI Template Generation', free: '3 / month', pro: 'Unlimited', enterprise: 'Unlimited' },
+  { feature: 'AQL Scoring Engine', free: true, pro: true, enterprise: true },
+  { feature: 'Defect Capture + Photos', free: true, pro: true, enterprise: true },
+  { feature: 'PDF Reports', free: false, pro: true, enterprise: true },
+  { feature: 'Excel Export', free: false, pro: true, enterprise: true },
+  { feature: 'Email Delivery', free: false, pro: true, enterprise: true },
+  { feature: 'Multi-Factory Support', free: false, pro: true, enterprise: true },
+  { feature: 'Template Versioning', free: false, pro: true, enterprise: true },
+  { feature: 'Audit Logs', free: false, pro: '90 days', enterprise: 'Unlimited' },
+  { feature: 'Role Dashboards', free: 'Basic', pro: 'Full', enterprise: 'Custom' },
+  { feature: 'Storage', free: '500 MB', pro: '15 GB', enterprise: '100 GB+' },
+  { feature: 'White-label Branding', free: false, pro: false, enterprise: true },
+  { feature: 'SSO / SAML', free: false, pro: false, enterprise: true },
+  { feature: 'API Access', free: false, pro: false, enterprise: true },
+  { feature: 'SLA 99.9%', free: false, pro: false, enterprise: true },
+  { feature: 'Dedicated Account Manager', free: false, pro: false, enterprise: true },
 ]
 
 const FAQS = [
   {
-    q: 'What happens after my 21-day free trial?',
-    a: 'After the trial your account switches to Limited access — you can still log in and view your data, but Analytics, Live Dashboard, and the Templates Builder are locked. Upgrade to any PremiumHub plan to restore full access instantly.',
+    q: 'What happens during the 21-day free trial?',
+    a: 'You get full access to all Pro features for 21 days — no credit card required. After the trial, your account moves to the Free plan with usage limits. Upgrade anytime to restore full access.',
   },
   {
-    q: 'What does "domain-restricted" mean for the Group plan?',
-    a: 'On the Group plan, users must share the same email domain as the organisation (e.g. @yourfactory.com). Once 5 seats are filled, a 6th user attempting to join with the same domain will be blocked with a "No permission to add" message. Upgrade to Enterprise to expand seats.',
+    q: 'What are the limits on the Free plan?',
+    a: 'Free accounts are limited to 5 users, 10 inspections per month, 5 active projects, 3 templates, 3 AI generations per month, and 500 MB of storage. PDF reports and Excel exports are not available on Free.',
   },
   {
-    q: 'How does Enterprise seat billing work?',
-    a: 'The Enterprise plan includes 11 seats at $199/month. Each additional user beyond 11 is charged at $19/month per licence. These are added to your monthly bill automatically when a new user is invited and accepted.',
+    q: 'Can I upgrade or downgrade at any time?',
+    a: 'Yes. Upgrade to Pro instantly from your dashboard. Downgrade to Free anytime — you keep access until the end of your billing period. No cancellation fees.',
   },
   {
-    q: 'Can I mix PremiumHub plans across my organisation?',
-    a: 'No — one PremiumHub plan applies per organisation. Choose the plan that fits your current team size and upgrade as you grow.',
+    q: 'How does annual billing work?',
+    a: 'The Pro plan is $29/month billed monthly, or $278/year billed annually (save 20%). Enterprise pricing is custom and negotiated annually.',
   },
   {
-    q: 'Is the Founding Member offer related to PremiumHub?',
-    a: 'Yes. Founding Members get lifetime pricing locked in — equivalent to the Group plan (5 users) at $29/month forever, regardless of future price changes. This offer is limited to 50 organisations.',
+    q: 'What payment methods do you support?',
+    a: 'We support UPI, Razorpay, net banking, and all major credit/debit cards. Enterprise clients can pay via invoice and bank transfer.',
   },
   {
-    q: 'Can I cancel anytime?',
-    a: 'Yes. No long-term contracts or cancellation fees. Cancel anytime from your account settings. You keep access until the end of your billing period.',
+    q: 'Is the Founding Member offer still available?',
+    a: 'Yes — Founding Members get lifetime pricing locked at $29/month for the Pro plan (5 users), plus a Genesis Verified Badge and roadmap voting rights. Limited to 50 organisations.',
   },
   {
-    q: 'Do you support Indian payment methods?',
-    a: 'Yes — UPI, Razorpay, net banking, and all major credit/debit cards are supported.',
+    q: 'What is Enterprise pricing?',
+    a: 'Enterprise pricing is custom-based on your team size, feature requirements, and compliance needs. Contact our sales team for a tailored quote and 30-day proof-of-concept.',
   },
 ]
 
@@ -156,6 +187,13 @@ const NAV_LINKS = [
   { label: 'How It Works', href: '/#how-it-works' },
   { label: 'Pricing', href: '/pricing' },
 ]
+
+/* ─── HELPERS ─── */
+function CellValue({ value }: { value: boolean | string }) {
+  if (value === true) return <Check size={16} style={{ color: '#C9A96E' }} />
+  if (value === false) return <X size={16} className="text-red-400" />
+  return <span className="text-xs text-muted-foreground">{value}</span>
+}
 
 /* ─── PAGE ─── */
 export default function PricingPage() {
@@ -219,12 +257,11 @@ export default function PricingPage() {
           Pricing
         </p>
         <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-4">
-          Start Free. Unlock with{' '}
-          <span style={{ color: '#C9A96E' }}>PremiumHub</span>.
+          Simple, transparent pricing.
         </h1>
         <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-          Every account gets a full 21-day free trial. After that, choose a PremiumHub plan to keep
-          Analytics, Live Dashboard, and Templates Builder — or stay on limited access for free.
+          Start with a 21-day full-access trial. No credit card required.
+          Choose the plan that fits your team when you're ready.
         </p>
       </section>
 
@@ -236,7 +273,7 @@ export default function PricingPage() {
               {[
                 { step: '1', label: 'Sign Up', sub: 'No credit card needed' },
                 { step: '2', label: '21-Day Free Trial', sub: 'Full access to everything' },
-                { step: '3', label: 'Choose PremiumHub', sub: 'Or stay on limited access' },
+                { step: '3', label: 'Choose Your Plan', sub: 'Free, Pro, or Enterprise' },
               ].map((item, i) => (
                 <div key={i} className="flex sm:flex-1 items-center w-full sm:w-auto">
                   <div className="flex flex-col items-center text-center flex-1 py-3 sm:py-0">
@@ -259,27 +296,11 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* ── PREMIUMHUB PLANS ── */}
+      {/* ── PLAN CARDS ── */}
       <section className="pb-8 px-6">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-10">
-            <span
-              className="inline-block text-xs font-bold tracking-widest uppercase px-4 py-1.5 rounded-full mb-4"
-              style={{ backgroundColor: 'rgba(201,169,110,0.12)', color: '#C9A96E', border: '1px solid rgba(201,169,110,0.3)' }}
-            >
-              PremiumHub Plans
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-3">
-              Full Platform Power. Choose Your Team Size.
-            </h2>
-            <p className="text-muted-foreground max-w-xl mx-auto text-sm">
-              All PremiumHub plans unlock Analytics, Live Dashboard, Templates Builder, and automated reporting.
-              Plans differ only by number of seats per organisation.
-            </p>
-          </div>
-
           <div className="grid sm:grid-cols-3 gap-6">
-            {PREMIUM_PLANS.map((plan) => {
+            {PLANS.map((plan) => {
               const Icon = plan.icon
               return (
                 <div
@@ -303,7 +324,6 @@ export default function PricingPage() {
                     </div>
                   )}
 
-                  {/* Icon + Name */}
                   <div className="flex items-center gap-3 mb-4">
                     <div
                       className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -311,32 +331,30 @@ export default function PricingPage() {
                     >
                       <Icon size={20} style={{ color: '#C9A96E' }} />
                     </div>
-                    <div>
-                      <h3 className="text-base font-bold text-foreground leading-tight">{plan.name}</h3>
-                      <p className="text-xs text-muted-foreground">{plan.seats}</p>
-                    </div>
+                    <h3 className="text-lg font-bold text-foreground">{plan.name}</h3>
                   </div>
 
                   <p className="text-sm text-muted-foreground leading-snug mb-5">{plan.desc}</p>
 
-                  {/* Price */}
-                  <div className="mb-5">
+                  <div className="mb-2">
                     <span className="text-4xl font-bold text-foreground">{plan.price}</span>
-                    <span className="text-muted-foreground text-sm">{plan.period}</span>
+                    {plan.period && <span className="text-muted-foreground text-sm ml-1">{plan.period}</span>}
                   </div>
 
-                  {/* Seat note */}
-                  {plan.seatNote && (
-                    <div className="mb-5 text-xs rounded-lg px-3 py-2.5 leading-snug" style={{ backgroundColor: 'rgba(201,169,110,0.08)', color: '#C9A96E', border: '1px solid rgba(201,169,110,0.2)' }}>
-                      {plan.seatNote}
-                    </div>
+                  {plan.highlight && (
+                    <p className="text-xs mb-5" style={{ color: '#C9A96E' }}>{plan.highlight}</p>
                   )}
 
-                  {/* Features */}
                   <ul className="space-y-2.5 mb-8 flex-1">
                     {plan.features.map((f) => (
                       <li key={f} className="flex items-start gap-2.5 text-sm text-muted-foreground">
                         <Check size={14} className="mt-0.5 flex-shrink-0" style={{ color: '#C9A96E' }} />
+                        {f}
+                      </li>
+                    ))}
+                    {plan.missingFeatures.map((f) => (
+                      <li key={f} className="flex items-start gap-2.5 text-sm text-muted-foreground/50">
+                        <X size={14} className="mt-0.5 flex-shrink-0 text-red-400/60" />
                         {f}
                       </li>
                     ))}
@@ -361,55 +379,41 @@ export default function PricingPage() {
 
       {/* ── FEATURE COMPARISON TABLE ── */}
       <section className="py-16 px-6">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           <h2 className="text-xl sm:text-2xl font-bold text-foreground text-center mb-2">
-            PremiumHub vs Limited Access
+            Full Feature Comparison
           </h2>
           <p className="text-sm text-muted-foreground text-center mb-8">
-            What you get after the 21-day trial ends, with and without a PremiumHub plan.
+            See exactly what's included in each plan.
           </p>
           <div className="rounded-2xl border border-border overflow-hidden">
             {/* Header */}
-            <div className="grid grid-cols-3 bg-card border-b border-border">
+            <div className="grid grid-cols-4 bg-card border-b border-border">
               <div className="px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Feature</div>
-              <div className="px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-center border-l border-border">
-                Limited (Free)
-              </div>
-              <div className="px-5 py-3 text-xs font-bold uppercase tracking-wide text-center border-l border-border" style={{ color: '#C9A96E' }}>
-                PremiumHub
-              </div>
+              <div className="px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-center border-l border-border">Free</div>
+              <div className="px-5 py-3 text-xs font-bold uppercase tracking-wide text-center border-l border-border" style={{ color: '#C9A96E' }}>Pro</div>
+              <div className="px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-center border-l border-border">Enterprise</div>
             </div>
-            {FEATURE_COMPARE.map((row, i) => {
-              const Icon = row.icon
-              return (
-                <div
-                  key={i}
-                  className={cn(
-                    'grid grid-cols-3 border-b border-border last:border-0',
-                    i % 2 === 0 ? 'bg-background' : 'bg-card/40'
-                  )}
-                >
-                  <div className="px-5 py-3.5 flex items-center gap-2.5 text-sm text-foreground">
-                    <Icon size={14} className="text-muted-foreground flex-shrink-0" />
-                    {row.feature}
-                  </div>
-                  <div className="px-5 py-3.5 flex items-center justify-center border-l border-border">
-                    {row.limited === false ? (
-                      <X size={16} className="text-red-400" />
-                    ) : (
-                      <span className="text-xs text-muted-foreground">{row.limited}</span>
-                    )}
-                  </div>
-                  <div className="px-5 py-3.5 flex items-center justify-center border-l border-border">
-                    {row.premium === true ? (
-                      <Check size={16} style={{ color: '#C9A96E' }} />
-                    ) : (
-                      <span className="text-xs font-medium" style={{ color: '#C9A96E' }}>{row.premium}</span>
-                    )}
-                  </div>
+            {FEATURE_COMPARE.map((row, i) => (
+              <div
+                key={i}
+                className={cn(
+                  'grid grid-cols-4 border-b border-border last:border-0',
+                  i % 2 === 0 ? 'bg-background' : 'bg-card/40'
+                )}
+              >
+                <div className="px-5 py-3.5 text-sm text-foreground">{row.feature}</div>
+                <div className="px-5 py-3.5 flex items-center justify-center border-l border-border">
+                  <CellValue value={row.free} />
                 </div>
-              )
-            })}
+                <div className="px-5 py-3.5 flex items-center justify-center border-l border-border">
+                  <CellValue value={row.pro} />
+                </div>
+                <div className="px-5 py-3.5 flex items-center justify-center border-l border-border">
+                  <CellValue value={row.enterprise} />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -427,12 +431,12 @@ export default function PricingPage() {
             Founding Member — $29/month Forever
           </h2>
           <p className="text-muted-foreground mb-6 max-w-xl mx-auto text-sm">
-            Founding Members get the Group plan (5 users, full PremiumHub) locked at $29/month for life —
+            Founding Members get the Pro plan (5 users, full access) locked at $29/month for life —
             regardless of future price changes. Plus a Genesis Verified Badge and roadmap voting rights.
           </p>
           <div className="grid sm:grid-cols-2 gap-3 text-left mb-8 max-w-lg mx-auto">
             {[
-              'Group PremiumHub (5 users) — $29/month lifetime',
+              'Pro plan (5 users) — $29/month lifetime',
               'Genesis Verified Badge on your organisation',
               'Roadmap voting rights — shape the product',
               'White-glove onboarding from our team',
@@ -480,7 +484,7 @@ export default function PricingPage() {
       {/* ── BOTTOM CTA ── */}
       <section className="py-20 px-6 text-center" style={{ background: 'linear-gradient(135deg, #0D0D0F 0%, #1A1208 100%)' }}>
         <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-          Ready to unlock your full platform?
+          Ready to streamline your quality inspections?
         </h2>
         <p className="text-gray-400 text-lg mb-8 max-w-lg mx-auto">
           Start your 21-day free trial today. No credit card. No commitment.

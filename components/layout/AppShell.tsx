@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
-import { Bell, Menu, ChevronRight } from 'lucide-react'
+import { Bell, Menu, ChevronRight, Crown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sidebar } from '@/components/layout/Sidebar'
 import type { UserRole } from '@/types/database'
@@ -61,6 +61,19 @@ export function AppShell({ role, orgName, fullName, email, children }: AppShellP
             <ChevronRight className="w-3 h-3 hidden sm:inline flex-shrink-0" />
             <span className="font-medium text-foreground capitalize truncate">{currentPage}</span>
           </div>
+          {/* PremiumHub upgrade button */}
+          <button
+            className="hidden sm:flex items-center gap-1.5 h-7 px-2.5 rounded-md text-[11px] font-semibold tracking-wide transition-all hover:opacity-90 flex-shrink-0"
+            style={{
+              backgroundColor: 'rgba(201,169,110,0.12)',
+              color: '#C9A96E',
+              border: '1px solid rgba(201,169,110,0.25)',
+            }}
+            title="Upgrade to PremiumHub"
+          >
+            <Crown className="w-3.5 h-3.5" />
+            PremiumHub
+          </button>
           <Button variant="ghost" size="icon" className="h-8 w-8 relative flex-shrink-0">
             <Bell className="w-4 h-4" />
           </Button>
