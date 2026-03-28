@@ -5,9 +5,10 @@ import {
   ArrowRight, Menu, X, CheckCircle2, Check,
   Globe, AlertTriangle, FileSearch, Zap,
   ClipboardCheck, BarChart3, FileText, Users, Building2, Factory, UserCheck,
-  ChevronRight, Star,
+  ChevronRight, Star, Sun, Moon,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
@@ -43,6 +44,24 @@ function LogoMark({ size = 32 }: { size?: number }) {
       <circle cx="70" cy="70" r="6.5" fill="url(#lm-dG)" filter="url(#lm-glow)" />
       <circle cx="70" cy="70" r="2.8" fill="#0D0D0F" />
     </svg>
+  )
+}
+
+/* ─── THEME TOGGLE (for public pages) ─── */
+function NavThemeToggle() {
+  const { resolvedTheme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+  if (!mounted) return <div className="w-8 h-8" />
+  const isDark = resolvedTheme === 'dark'
+  return (
+    <button
+      onClick={() => setTheme(isDark ? 'light' : 'dark')}
+      className="w-8 h-8 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+      title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+    >
+      {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+    </button>
   )
 }
 
@@ -303,6 +322,7 @@ export default function LandingPage() {
           </div>
 
           <div className="hidden md:flex items-center gap-2">
+            <NavThemeToggle />
             <Link href="/login">
               <Button size="sm" variant="ghost">Login</Button>
             </Link>
