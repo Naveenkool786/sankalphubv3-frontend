@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Settings, FileText, Users, ShieldCheck, CreditCard } from 'lucide-react'
+import { Settings, FileText, Users, ShieldCheck, CreditCard, AlertTriangle, Table2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const settingsNav = [
@@ -10,6 +10,8 @@ const settingsNav = [
   { label: 'Templates', href: '/settings/templates', icon: FileText },
   { label: 'Users & Roles', href: '/settings/users', icon: Users },
   { label: 'Permissions', href: '/settings/permissions', icon: ShieldCheck },
+  { label: 'Defects Library', href: '/settings/defects', icon: AlertTriangle },
+  { label: 'AQL Table', href: '/settings/aql', icon: Table2 },
   { label: 'Billing', href: '/settings/billing', icon: CreditCard },
 ]
 

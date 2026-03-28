@@ -1,0 +1,95 @@
+{
+  "defects": [
+    {
+      "id": "def-001", "code": "CON-001", "name": "Seam Breakage / Open Seam", "type": "Stitching",
+      "severity": "CRITICAL", "applies_to": ["mens_outerwear", "womens_outerwear", "footwear"],
+      "description": "Complete seam failure where stitching has come undone, exposing garment interior or causing structural weakness.",
+      "corrective_action": "HALT PRODUCTION — Investigate root cause, check needle/thread tension, re-stitch affected units.",
+      "stage_checks": { "cutting": { "active": false, "check": "", "action": "" }, "sewing": { "active": true, "check": "Pull-test all seams at 2kg force", "action": "Re-stitch immediately" }, "finishing": { "active": true, "check": "Visual inspection of all seams", "action": "Reject unit" } }
+    },
+    {
+      "id": "def-002", "code": "CON-002", "name": "Needle Hole / Fabric Puncture", "type": "Stitching",
+      "severity": "CRITICAL", "applies_to": ["mens_outerwear", "womens_outerwear", "gloves"],
+      "description": "Visible needle holes in fabric from incorrect needle size or damaged needles.",
+      "corrective_action": "HALT — Replace needles, check needle plate, reject affected units.",
+      "stage_checks": { "sewing": { "active": true, "check": "Check for visible punctures around seam lines", "action": "Replace needle, reject unit" } }
+    },
+    {
+      "id": "def-003", "code": "CON-003", "name": "Color Bleeding / Migration", "type": "Fabric",
+      "severity": "CRITICAL", "applies_to": ["mens_outerwear", "womens_outerwear", "accessories"],
+      "description": "Dye from one fabric area transfers to adjacent areas, especially in multi-color garments.",
+      "corrective_action": "HALT — Isolate affected lot, test dye fastness, reject non-conforming materials.",
+      "stage_checks": { "pre_production": { "active": true, "check": "Wet rub test on all color combinations", "action": "Reject fabric lot" } }
+    },
+    {
+      "id": "def-004", "code": "MAJ-001", "name": "Skipped Stitches", "type": "Stitching",
+      "severity": "MAJOR", "applies_to": ["mens_outerwear", "womens_outerwear", "footwear", "gloves"],
+      "description": "Machine skips stitches, creating weak points in the seam that may fail under stress.",
+      "corrective_action": "Rework — Re-stitch affected seam. Check machine timing and thread tension.",
+      "stage_checks": { "sewing": { "active": true, "check": "Visual check every 10 units", "action": "Rework seam" }, "finishing": { "active": true, "check": "Final visual inspection", "action": "Flag for rework" } }
+    },
+    {
+      "id": "def-005", "code": "MAJ-002", "name": "Incorrect Label Placement", "type": "Labeling",
+      "severity": "MAJOR", "applies_to": ["mens_outerwear", "womens_outerwear", "footwear", "headwear"],
+      "description": "Care label, size label, or brand label placed in wrong position or orientation.",
+      "corrective_action": "Rework — Remove and re-attach label in correct position per tech pack.",
+      "stage_checks": { "finishing": { "active": true, "check": "Check label position against tech pack spec", "action": "Rework" } }
+    },
+    {
+      "id": "def-006", "code": "MAJ-003", "name": "Measurement Out of Tolerance", "type": "Measurement",
+      "severity": "MAJOR", "applies_to": ["mens_outerwear", "womens_outerwear", "footwear", "gloves", "headwear"],
+      "description": "Key measurement exceeds ±1/2 inch tolerance from spec sheet.",
+      "corrective_action": "Rework if possible, reject if beyond rework tolerance. Adjust patterns.",
+      "stage_checks": { "cutting": { "active": true, "check": "Measure pattern pieces against spec", "action": "Re-cut" }, "finishing": { "active": true, "check": "Full measurement check per size spec", "action": "Reject or rework" } }
+    },
+    {
+      "id": "def-007", "code": "MAJ-004", "name": "Fabric Defect (Hole / Tear / Snag)", "type": "Fabric",
+      "severity": "MAJOR", "applies_to": ["mens_outerwear", "womens_outerwear", "accessories"],
+      "description": "Visible hole, tear, or snag in fabric affecting garment appearance or function.",
+      "corrective_action": "Reject unit — Cannot be reworked if in visible area.",
+      "stage_checks": { "cutting": { "active": true, "check": "Inspect fabric roll for defects before cutting", "action": "Mark and avoid defect area" }, "sewing": { "active": true, "check": "Check panels before assembly", "action": "Replace panel" } }
+    },
+    {
+      "id": "def-008", "code": "MAJ-005", "name": "Zipper Malfunction", "type": "Hardware",
+      "severity": "MAJOR", "applies_to": ["mens_outerwear", "womens_outerwear", "footwear", "accessories"],
+      "description": "Zipper does not open/close smoothly, jams, or separates under normal use.",
+      "corrective_action": "Replace zipper and re-stitch. Check zipper supplier quality.",
+      "stage_checks": { "finishing": { "active": true, "check": "Open/close zipper 5 times, check alignment", "action": "Replace zipper" } }
+    },
+    {
+      "id": "def-009", "code": "MIN-001", "name": "Loose Thread / Untrimmed Thread", "type": "Stitching",
+      "severity": "MINOR", "applies_to": ["mens_outerwear", "womens_outerwear", "footwear", "gloves", "headwear", "accessories"],
+      "description": "Visible loose or untrimmed thread ends on exterior or interior of garment.",
+      "corrective_action": "Trim threads. Conditional accept if ≤ AQL 4.0 limit.",
+      "stage_checks": { "finishing": { "active": true, "check": "Visual scan for loose threads", "action": "Trim" } }
+    },
+    {
+      "id": "def-010", "code": "MIN-002", "name": "Minor Shade Variation", "type": "Fabric",
+      "severity": "MINOR", "applies_to": ["mens_outerwear", "womens_outerwear", "accessories"],
+      "description": "Slight color difference between panels within acceptable tolerance (Grade 3.5+ on grey scale).",
+      "corrective_action": "Conditional accept. Note on report. Review with buyer if borderline.",
+      "stage_checks": { "cutting": { "active": true, "check": "Check shade continuity across rolls", "action": "Separate shaded lots" } }
+    },
+    {
+      "id": "def-011", "code": "MIN-003", "name": "Minor Alignment Issue", "type": "Construction",
+      "severity": "MINOR", "applies_to": ["mens_outerwear", "womens_outerwear", "headwear"],
+      "description": "Slight misalignment of patterns, stripes, or plaids within 3mm tolerance.",
+      "corrective_action": "Conditional accept within tolerance. Flag for pattern marker review.",
+      "stage_checks": { "sewing": { "active": true, "check": "Check pattern matching at seam lines", "action": "Rework if visible" } }
+    },
+    {
+      "id": "def-012", "code": "COS-001", "name": "Wrinkle / Crease Mark", "type": "Appearance",
+      "severity": "COSMETIC", "applies_to": ["mens_outerwear", "womens_outerwear", "accessories"],
+      "description": "Non-permanent wrinkle or crease mark on garment surface from handling or packing.",
+      "corrective_action": "Steam press before packing. Note on report.",
+      "stage_checks": { "packing": { "active": true, "check": "Visual check before folding", "action": "Steam press" } }
+    },
+    {
+      "id": "def-013", "code": "COS-002", "name": "Chalk / Marker Residue", "type": "Appearance",
+      "severity": "COSMETIC", "applies_to": ["mens_outerwear", "womens_outerwear", "footwear"],
+      "description": "Visible chalk marks or marker lines from pattern marking not fully removed.",
+      "corrective_action": "Clean with appropriate solvent or brush. Note on report.",
+      "stage_checks": { "finishing": { "active": true, "check": "Check for visible marking residue", "action": "Clean" } }
+    }
+  ]
+}
