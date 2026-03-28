@@ -240,7 +240,7 @@ const roleCTAs = [
 
 const stats = [
   { value: '50', label: 'Founding Slots' },
-  { value: '3', label: 'Industry Types' },
+  { value: '100%', label: 'Digital. No Paper' },
   { value: '< 24 hr', label: 'Onboarding' },
   { value: '5 Roles', label: 'Supported' },
 ]
@@ -632,11 +632,15 @@ export default function LandingPage() {
               <span className="ml-1 hidden sm:inline tracking-widest uppercase text-[9px]">— Production Intelligence Platform</span>
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap justify-center">
             <a href="#features" className="hover:text-foreground transition-colors">Features</a>
             <a href="#roles" className="hover:text-foreground transition-colors">Who It's For</a>
             <Link href="/demo" className="hover:text-foreground transition-colors">Request Demo</Link>
             <Link href="/login" className="hover:text-foreground transition-colors">Login</Link>
+            <span>·</span>
+            <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
+            <a href="mailto:hello@sankalphub.in" className="hover:text-foreground transition-colors">Contact</a>
             <span>© {new Date().getFullYear()} SankalpHub</span>
           </div>
         </div>

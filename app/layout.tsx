@@ -9,8 +9,8 @@ const sora = Sora({ subsets: ["latin"], variable: "--font-sora" })
 const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm-sans" })
 
 export const metadata: Metadata = {
-  title: "SankalpHub — Quality Management Platform",
-  description: "Quality inspection and workflow management for modern supply chains.",
+  title: "SankalpHub — Production Intelligence Platform",
+  description: "A unified operating platform for manufacturing quality, inspection workflows, and supply chain visibility.",
 }
 
 export default function RootLayout({

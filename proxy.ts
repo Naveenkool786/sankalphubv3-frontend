@@ -28,7 +28,7 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Public routes
-  if (pathname === '/' || pathname.startsWith('/login') || pathname.startsWith('/auth') || pathname.startsWith('/demo') || pathname === '/api/demo' || pathname.startsWith('/pricing')) {
+  if (pathname === '/' || pathname.startsWith('/login') || pathname.startsWith('/auth') || pathname.startsWith('/demo') || pathname === '/api/demo' || pathname.startsWith('/pricing') || pathname === '/privacy' || pathname === '/terms') {
     if (user && pathname === '/login') {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
