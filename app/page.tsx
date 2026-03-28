@@ -5,65 +5,14 @@ import {
   ArrowRight, Menu, X, CheckCircle2, Check,
   Globe, AlertTriangle, FileSearch, Zap,
   ClipboardCheck, BarChart3, FileText, Users, Building2, Factory, UserCheck,
-  ChevronRight, Star, Sun, Moon,
+  ChevronRight, Star,
 } from 'lucide-react'
-import { useState, useEffect } from 'react'
-import { useTheme } from 'next-themes'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Logo } from '@/components/ui/Logo'
+import { NavThemeToggle } from '@/components/ui/NavThemeToggle'
 import { cn } from '@/lib/utils'
-
-/* ─── LOGO MARK (inline SVG — Sacred Orbit icon without background) ─── */
-function LogoMark({ size = 32 }: { size?: number }) {
-  return (
-    <svg viewBox="0 0 140 140" width={size} height={size} xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <defs>
-        <linearGradient id="lm-dG" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#EDD898" />
-          <stop offset="100%" stopColor="#A87C30" />
-        </linearGradient>
-        <linearGradient id="lm-nG" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#C9A96E" />
-          <stop offset="100%" stopColor="#8B6520" />
-        </linearGradient>
-        <filter id="lm-glow">
-          <feGaussianBlur stdDeviation="2" result="blur" />
-          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-        </filter>
-      </defs>
-      <ellipse cx="70" cy="70" rx="56" ry="20" fill="none" stroke="#C9A96E" strokeWidth="1" opacity="0.3" transform="rotate(-40 70 70)" />
-      <ellipse cx="70" cy="70" rx="56" ry="20" fill="none" stroke="#C9A96E" strokeWidth="1" opacity="0.45" transform="rotate(20 70 70)" />
-      <polygon points="70,14 116,70 70,122 24,70" fill="none" stroke="url(#lm-dG)" strokeWidth="1.2" opacity="0.5" />
-      <polygon points="70,28 102,70 70,108 38,70" fill="none" stroke="url(#lm-dG)" strokeWidth="1.1" opacity="0.85" />
-      <polygon points="70,44 96,70 70,94 44,70" fill="none" stroke="url(#lm-dG)" strokeWidth="1.8" />
-      <circle cx="70" cy="10" r="4" fill="url(#lm-nG)" filter="url(#lm-glow)" />
-      <circle cx="120" cy="88" r="3" fill="url(#lm-nG)" opacity="0.6" />
-      <circle cx="20" cy="88" r="3" fill="url(#lm-nG)" opacity="0.6" />
-      <line x1="70" y1="10" x2="70" y2="44" stroke="#C9A96E" strokeWidth="0.6" opacity="0.3" />
-      <circle cx="70" cy="70" r="12" fill="none" stroke="#C9A96E" strokeWidth="0.8" opacity="0.4" />
-      <circle cx="70" cy="70" r="6.5" fill="url(#lm-dG)" filter="url(#lm-glow)" />
-      <circle cx="70" cy="70" r="2.8" fill="#0D0D0F" />
-    </svg>
-  )
-}
-
-/* ─── THEME TOGGLE (for public pages) ─── */
-function NavThemeToggle() {
-  const { resolvedTheme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
-  if (!mounted) return <div className="w-8 h-8" />
-  const isDark = resolvedTheme === 'dark'
-  return (
-    <button
-      onClick={() => setTheme(isDark ? 'light' : 'dark')}
-      className="w-8 h-8 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-      title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-    >
-      {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-    </button>
-  )
-}
 
 /* ─── DATA ─── */
 const painPoints = [
@@ -307,10 +256,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5">
-            <LogoMark size={32} />
-            <span className="font-bold text-base tracking-tight text-foreground">
-              Sankalp<span style={{ color: '#C9A96E' }}>Hub</span>
-            </span>
+            <Logo size={32} variant="full" />
           </Link>
 
           {/* Desktop links */}
@@ -667,9 +613,9 @@ export default function LandingPage() {
       <footer className="py-8 px-6 border-t border-border">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
           <div className="flex items-center gap-2.5">
-            <LogoMark size={24} />
+            <Logo size={24} />
             <div>
-              <span className="font-semibold text-foreground">Sankalp<span style={{ color: '#C9A96E' }}>Hub</span></span>
+              <span className="font-semibold text-foreground">Sankalp<span className="text-primary">Hub</span></span>
               <span className="ml-1 hidden sm:inline tracking-widest uppercase text-[9px]">— Production Intelligence Platform</span>
             </div>
           </div>

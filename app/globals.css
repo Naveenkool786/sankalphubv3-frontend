@@ -32,11 +32,11 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* ── LIGHT MODE (default) ──────────────────────────────────── */
+/* ── LIGHT MODE (default) — warm tones matching gold logo ─── */
 :root {
   --radius: 0.5rem;
 
-  --background: #FAFAFA;
+  --background: #FAF9F7;
   --foreground: #111113;
 
   --card: #FFFFFF;
@@ -45,16 +45,16 @@
   --popover: #FFFFFF;
   --popover-foreground: #111113;
 
-  --primary: #14907A;
+  --primary: #A87C30;
   --primary-foreground: #FFFFFF;
 
   --secondary: #F0F0F2;
   --secondary-foreground: #111113;
 
-  --muted: #F4F4F6;
+  --muted: #F4F0EA;
   --muted-foreground: #71717A;
 
-  --accent: #F0F0F2;
+  --accent: #F0EDE6;
   --accent-foreground: #111113;
 
   --destructive: #EF4444;
@@ -62,42 +62,48 @@
 
   --border: #E4E4E7;
   --input: #E4E4E7;
-  --ring: #14907A;
+  --ring: #A87C30;
 
-  --sidebar: #F4F4F6;
+  --sidebar: #F4F0EA;
+
+  --gold: #A87C30;
+  --gold-foreground: #FFFFFF;
 }
 
-/* ── DARK MODE ─────────────────────────────────────────────── */
+/* ── DARK MODE — deep navy matching logo background ────────── */
 .dark {
-  --background: #0D0D0F;
+  --background: #0D1420;
   --foreground: #F0F0F2;
 
-  --card: #161618;
+  --card: #141A28;
   --card-foreground: #F0F0F2;
 
-  --popover: #161618;
+  --popover: #141A28;
   --popover-foreground: #F0F0F2;
 
-  --primary: #14907A;
-  --primary-foreground: #FFFFFF;
+  --primary: #C9A96E;
+  --primary-foreground: #0D1420;
 
-  --secondary: #1E1E22;
+  --secondary: #1A2235;
   --secondary-foreground: #F0F0F2;
 
-  --muted: #1E1E22;
+  --muted: #1A2235;
   --muted-foreground: #888890;
 
-  --accent: #252528;
+  --accent: #1F2A3D;
   --accent-foreground: #F0F0F2;
 
   --destructive: #EF4444;
   --destructive-foreground: #FFFFFF;
 
-  --border: #2A2A2E;
-  --input: #2A2A2E;
-  --ring: #14907A;
+  --border: #1E2A3E;
+  --input: #1E2A3E;
+  --ring: #C9A96E;
 
-  --sidebar: #0A0A0C;
+  --sidebar: #0A0F1A;
+
+  --gold: #C9A96E;
+  --gold-foreground: #0D1420;
 }
 
 body {

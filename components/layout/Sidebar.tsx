@@ -2,8 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ShieldCheck } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
+import { Logo } from '@/components/ui/Logo'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { cn } from '@/lib/utils'
 import { ROLE_CONFIGS } from '@/lib/roles'
@@ -35,10 +35,7 @@ export function Sidebar({ role, orgName, fullName, email, onNavClick }: SidebarP
         href="/"
         className="px-5 py-4 flex items-center gap-2.5 border-b border-border hover:bg-accent/30 transition-colors"
       >
-        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
-          <ShieldCheck className="w-4 h-4 text-primary-foreground" />
-        </div>
-        <span className="font-bold text-base tracking-tight text-foreground">SankalpHub</span>
+        <Logo size={28} variant="full" />
       </Link>
 
       {/* Org + Role */}

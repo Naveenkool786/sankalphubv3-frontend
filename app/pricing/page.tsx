@@ -1,63 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
-import { useTheme } from 'next-themes'
-import { Check, X, Menu, MessageCircle, ChevronDown, Zap, Shield, Building2, Sun, Moon } from 'lucide-react'
+import { Check, X, Menu, MessageCircle, ChevronDown, Zap, Shield, Building2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Logo } from '@/components/ui/Logo'
+import { NavThemeToggle } from '@/components/ui/NavThemeToggle'
 import { cn } from '@/lib/utils'
-
-/* ─── LOGO ─── */
-function LogoMark({ size = 32 }: { size?: number }) {
-  return (
-    <svg viewBox="0 0 140 140" width={size} height={size} xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <defs>
-        <linearGradient id="lm-dG2" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#EDD898" />
-          <stop offset="100%" stopColor="#A87C30" />
-        </linearGradient>
-        <linearGradient id="lm-nG2" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#C9A96E" />
-          <stop offset="100%" stopColor="#8B6520" />
-        </linearGradient>
-        <filter id="lm-glow2">
-          <feGaussianBlur stdDeviation="2" result="blur" />
-          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-        </filter>
-      </defs>
-      <ellipse cx="70" cy="70" rx="56" ry="20" fill="none" stroke="#C9A96E" strokeWidth="1" opacity="0.3" transform="rotate(-40 70 70)" />
-      <ellipse cx="70" cy="70" rx="56" ry="20" fill="none" stroke="#C9A96E" strokeWidth="1" opacity="0.45" transform="rotate(20 70 70)" />
-      <polygon points="70,14 116,70 70,122 24,70" fill="none" stroke="url(#lm-dG2)" strokeWidth="1.2" opacity="0.5" />
-      <polygon points="70,28 102,70 70,108 38,70" fill="none" stroke="url(#lm-dG2)" strokeWidth="1.1" opacity="0.85" />
-      <polygon points="70,44 96,70 70,94 44,70" fill="none" stroke="url(#lm-dG2)" strokeWidth="1.8" />
-      <circle cx="70" cy="10" r="4" fill="url(#lm-nG2)" filter="url(#lm-glow2)" />
-      <circle cx="120" cy="88" r="3" fill="url(#lm-nG2)" opacity="0.6" />
-      <circle cx="20" cy="88" r="3" fill="url(#lm-nG2)" opacity="0.6" />
-      <line x1="70" y1="10" x2="70" y2="44" stroke="#C9A96E" strokeWidth="0.6" opacity="0.3" />
-      <circle cx="70" cy="70" r="12" fill="none" stroke="#C9A96E" strokeWidth="0.8" opacity="0.4" />
-      <circle cx="70" cy="70" r="6.5" fill="url(#lm-dG2)" filter="url(#lm-glow2)" />
-      <circle cx="70" cy="70" r="2.8" fill="#0D0D0F" />
-    </svg>
-  )
-}
-
-/* ─── THEME TOGGLE ─── */
-function NavThemeToggle() {
-  const { resolvedTheme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
-  if (!mounted) return <div className="w-8 h-8" />
-  const isDark = resolvedTheme === 'dark'
-  return (
-    <button
-      onClick={() => setTheme(isDark ? 'light' : 'dark')}
-      className="w-8 h-8 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-      title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-    >
-      {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-    </button>
-  )
-}
 
 /* ─── DATA ─── */
 const PLANS = [
@@ -226,10 +175,7 @@ export default function PricingPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
-            <LogoMark size={32} />
-            <span className="font-bold text-base tracking-tight text-foreground">
-              Sankalp<span style={{ color: '#C9A96E' }}>Hub</span>
-            </span>
+            <Logo size={32} variant="full" />
           </Link>
           <div className="hidden md:flex items-center gap-8">
             {NAV_LINKS.map((link) => (
@@ -523,7 +469,7 @@ export default function PricingPage() {
       <footer className="py-8 px-6 border-t border-border">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
-            <LogoMark size={20} />
+            <Logo size={20} />
             <span>© 2026 SankalpHub. All rights reserved.</span>
           </div>
           <div className="flex items-center gap-5">

@@ -2,8 +2,9 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Logo } from '@/components/ui/Logo'
+import { NavThemeToggle } from '@/components/ui/NavThemeToggle'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
@@ -29,11 +30,14 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-6">
+    <div className="min-h-screen flex items-center justify-center bg-background p-6 relative">
+      <div className="absolute top-4 right-4 z-10">
+        <NavThemeToggle />
+      </div>
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center space-y-3">
-          <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center mx-auto">
-            <ShieldCheck className="w-7 h-7 text-primary-foreground" />
+          <div className="flex justify-center">
+            <Logo size={48} />
           </div>
           <div>
             <h1 className="text-2xl font-bold">Reset your password</h1>
