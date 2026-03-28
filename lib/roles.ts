@@ -34,8 +34,6 @@ const ALL_NAV: NavItem[] = [
   { label: 'Analytics',      path: '/analytics',   icon: BarChart3 },
   { label: 'Templates',      path: '/templates',   icon: FileText },
   { label: 'Users & Roles',  path: '/users',       icon: Users },
-  { label: 'Automations',    path: '/automations', icon: Zap,        comingSoon: true },
-  { label: 'Organizations',  path: '/organizations', icon: Building2, comingSoon: true },
   { label: 'Settings',       path: '/settings',    icon: Settings },
 ]
 
