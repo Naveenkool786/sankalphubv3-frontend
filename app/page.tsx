@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import {
   ArrowRight, Menu, X, CheckCircle2, Check,
   Globe, AlertTriangle, FileSearch, Zap,
@@ -306,10 +307,22 @@ export default function LandingPage() {
       </nav>
 
       {/* ── HERO ── */}
-      <section className="pt-28 pb-20 px-6 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
-        <div className="absolute top-16 right-0 w-[500px] h-[500px] rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(201,169,110,0.06) 0%, transparent 70%)' }} />
+      <section className="pt-28 pb-20 px-6 relative overflow-hidden min-h-[85vh] flex items-center">
+        {/* 3D Background Image */}
+        <Image
+          src="/hero/LandingPageUpfront3D.webp"
+          alt=""
+          fill
+          priority
+          className="object-cover object-center pointer-events-none"
+          style={{ opacity: 0.12 }}
+        />
+        {/* Gradient overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-background/80 to-background pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/60 via-transparent to-background/60 pointer-events-none" />
+        {/* Gold glow accent */}
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[800px] h-[400px] rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(ellipse, rgba(201,169,110,0.08) 0%, transparent 70%)' }} />
 
         <div className="max-w-4xl mx-auto text-center relative">
           <Badge className="mb-6 px-3 py-1 bg-primary/10 text-primary border-primary/20 text-[10px] font-semibold tracking-widest uppercase">
