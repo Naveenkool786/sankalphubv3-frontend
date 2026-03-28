@@ -7,6 +7,7 @@ import { Building2, Factory, UserCheck, ArrowRight, ArrowLeft, CheckCircle2 } fr
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { Logo } from '@/components/ui/Logo'
 import { NavThemeToggle } from '@/components/ui/NavThemeToggle'
 import { cn } from '@/lib/utils'
@@ -64,6 +65,7 @@ function DemoForm() {
   const [productFocus, setProductFocus] = useState('')
   const [teamSize, setTeamSize] = useState('')
   const [clientCount, setClientCount] = useState('')
+  const [message, setMessage] = useState('')
   const [categories, setCategories] = useState<string[]>([])
 
   useEffect(() => {
@@ -96,6 +98,7 @@ function DemoForm() {
           company_name: companyName,
           email,
           phone: phone || null,
+          message: message || null,
           metadata: {
             country: country || null,
             product_focus: productFocus || null,
@@ -291,6 +294,18 @@ function DemoForm() {
             placeholder="e.g. 5, 10–20, 50+" />
         </div>
       )}
+
+      {/* Message — all roles */}
+      <div className="space-y-1.5">
+        <Label htmlFor="message">Message (optional)</Label>
+        <Textarea
+          id="message"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder="Tell us about your business and what you need"
+          className="min-h-[80px]"
+        />
+      </div>
 
       {error && (
         <p className="text-sm text-destructive">{error}</p>
