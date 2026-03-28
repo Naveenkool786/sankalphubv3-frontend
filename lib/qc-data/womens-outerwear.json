@@ -1,1 +1,75 @@
-{"products":[]}
+{
+  "category_id": "womens_outerwear",
+  "category_label": "Women's Outerwear",
+  "brand": "RefrigiWear",
+  "source_url": "https://pro.refrigiwear.com/category/womens/",
+  "products": [
+    {
+      "id": "WMNJKT-001",
+      "style": "0489W",
+      "name": "Women's Iron-Tuff® Coat",
+      "subcategory": "Jackets",
+      "collection": "Iron-Tuff®",
+      "colors": ["Black"],
+      "description": "Redesigned women's contoured cut. Same Iron-Tuff® legendary durability and -50°F rating. Hip-length for added coverage.",
+      "sizes": ["XS","S","M","L","XL","2XL","3XL"],
+      "temp_rating_f": -50,
+      "temp_rating_c": -46,
+      "specs": {
+        "shell": "400-denier nylon",
+        "insulation": "11.25 oz RefrigiFill™ polyester",
+        "seams": "Bound seams",
+        "hardware": "Brass zipper + brass rivets",
+        "fit": "Women's contoured silhouette",
+        "certifications": []
+      },
+      "size_chart_ref": "womens_garment_chart",
+      "key_materials": ["400D nylon shell", "RefrigiFill™ insulation", "Brass hardware"]
+    },
+    {
+      "id": "WMNBIB-001",
+      "style": "0402W",
+      "name": "Women's Iron-Tuff® Bib Overalls",
+      "subcategory": "Bibs & Pants",
+      "collection": "Iron-Tuff®",
+      "colors": ["Black"],
+      "description": "Women's contoured cut with shaped hips and waist. Boot zipper legs. Adjustable shoulder straps.",
+      "sizes": ["XS","S","M","L","XL","2XL","3XL"],
+      "temp_rating_f": -50,
+      "temp_rating_c": -46,
+      "specs": {
+        "shell": "400-denier nylon",
+        "insulation": "11.25 oz RefrigiFill™ polyester",
+        "seams": "Bound seams",
+        "leg_closure": "Boot zipper legs",
+        "straps": "Adjustable shoulder straps",
+        "fit": "Women's shaped hip and waist",
+        "certifications": []
+      },
+      "size_chart_ref": "womens_garment_chart",
+      "key_materials": ["400D nylon shell", "RefrigiFill™ insulation"]
+    },
+    {
+      "id": "WMNJKT-002",
+      "style": "0647W",
+      "name": "Women's PolarForce® Hooded Parka",
+      "subcategory": "Jackets",
+      "collection": "PolarForce®",
+      "colors": ["Black"],
+      "description": "Women's cut with Performance-Flex panels. Customizable insulated hood.",
+      "sizes": ["XS","S","M","L","XL","2XL","3XL"],
+      "temp_rating_f": -40,
+      "temp_rating_c": -40,
+      "specs": {
+        "shell": "PolarShield™ nylon",
+        "insulation": "9 oz RefrigiFill™ polyester",
+        "flex_panels": "Performance-Flex ribbed panels",
+        "hood": "Customizable insulated hood",
+        "fit": "Women's contoured",
+        "certifications": []
+      },
+      "size_chart_ref": "womens_garment_chart",
+      "key_materials": ["PolarShield™ nylon", "9oz RefrigiFill™", "Performance-Flex"]
+    }
+  ]
+}
