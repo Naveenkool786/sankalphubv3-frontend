@@ -149,7 +149,7 @@ const pricingPlans = [
     price: '$0',
     period: 'forever',
     desc: 'Get started with a 21-day full-access trial. After that, core features remain free with usage limits.',
-    cta: 'Start Free',
+    cta: 'Start Free Trial',
     href: '/demo',
     highlighted: false,
     features: [
@@ -171,7 +171,7 @@ const pricingPlans = [
     price: '$29',
     period: '/month',
     desc: 'For teams running inspections at scale. Unlimited inspections, reports, and AI — everything you need.',
-    cta: 'Start 14-Day Trial',
+    cta: 'Get Started',
     href: '/demo',
     highlighted: true,
     features: [
@@ -329,11 +329,11 @@ export default function LandingPage() {
             Production Intelligence Platform
           </Badge>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-[1.08] text-balance">
-            A Unified Operating Platform Designed to{' '}
-            <span className="text-primary">Enhance Manufacturing Performance</span>
+            Build Better Products,{' '}
+            <span className="text-primary">Faster.</span>
           </h1>
           <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto text-balance">
-            Integrating core operations, improving collaboration, increasing process visibility, and enabling data-driven decisions for consistent quality and efficiency.
+            Tech packs, sampling, supplier collaboration, and product passports — all in one platform. Finally, ditch the spreadsheets.
           </p>
 
           <div className="mt-8 flex items-center justify-center gap-3 flex-wrap">
