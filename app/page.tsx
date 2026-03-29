@@ -150,7 +150,7 @@ const pricingPlans = [
     period: 'forever',
     desc: 'Get started with a 21-day full-access trial. After that, core features remain free with usage limits.',
     cta: 'Start Free Trial',
-    href: '/demo',
+    href: '/signup',
     highlighted: false,
     features: [
       'Up to 5 users',

@@ -35,7 +35,7 @@ const PLANS = [
       'Audit logs',
     ],
     cta: 'Start Free',
-    href: '/demo',
+    href: '/signup',
     highlighted: false,
   },
   {
@@ -457,7 +457,7 @@ export default function PricingPage() {
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Button asChild size="lg" className="hover:opacity-90" style={{ backgroundColor: '#A87C30' }}>
-            <Link href="/demo">Start Free Trial →</Link>
+            <Link href="/signup">Start Free Trial →</Link>
           </Button>
           <Button asChild size="lg" variant="outline" className="border-white/20 text-white hover:bg-white/10">
             <Link href="/demo">Talk to Sales</Link>
