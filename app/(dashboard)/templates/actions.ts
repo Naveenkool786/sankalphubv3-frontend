@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { getUserContext, canManage } from '@/lib/getUserContext'
 import { revalidatePath } from 'next/cache'
+import { trackEvent } from '@/lib/activity-tracker'
 
 export type FieldType = 'text' | 'number' | 'dropdown' | 'yes_no' | 'image' | 'textarea' | 'scale'
 
@@ -44,6 +45,7 @@ export async function createTemplate(data: {
   } as any)
 
   if (error) throw new Error(error.message)
+  trackEvent({ userId: ctx.userId, organizationId: ctx.orgId, actionType: 'template_create', category: 'templates', actionLabel: 'Created template', detail: `${data.name} · ${data.template_type} · ${data.industry || 'General'}` })
   revalidatePath('/templates')
 }
 
@@ -112,5 +114,6 @@ export async function archiveTemplate(templateId: string) {
     .eq('org_id', ctx.orgId)
 
   if (error) throw new Error(error.message)
+  trackEvent({ userId: ctx.userId, organizationId: ctx.orgId, actionType: 'delete', category: 'templates', actionLabel: 'Archived template', detail: templateId })
   revalidatePath('/templates')
 }

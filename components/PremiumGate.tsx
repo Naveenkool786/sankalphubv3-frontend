@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getUserContext } from '@/lib/getUserContext'
+import { isSuperAdmin } from '@/lib/permissions'
 import { isPremiumPlan, getPlanDisplayName } from '@/lib/plans'
 import { Lock } from 'lucide-react'
 import Link from 'next/link'
@@ -27,7 +28,8 @@ export async function PremiumGate({ children, feature = 'This feature' }: Props)
 
   const plan = (org as any)?.plan ?? 'free'
 
-  if (isPremiumPlan(plan)) {
+  // super_admin always bypasses plan gates
+  if (isSuperAdmin(ctx.role) || isPremiumPlan(plan)) {
     return <>{children}</>
   }
 

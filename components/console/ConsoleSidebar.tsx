@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, TrendingUp, Building2, Users, Inbox, Zap, ArrowLeft, Shield } from 'lucide-react'
+import { LayoutDashboard, TrendingUp, Building2, Users, UserCog, Activity, Inbox, Zap, ArrowLeft, Shield } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { Logo } from '@/components/ui/Logo'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
@@ -13,6 +13,8 @@ const NAV_ITEMS = [
   { label: 'Analytics', path: '/console/analytics', icon: TrendingUp },
   { label: 'Organizations', path: '/console/organizations', icon: Building2 },
   { label: 'Users', path: '/console/users', icon: Users },
+  { label: 'Impersonate', path: '/console/impersonate', icon: UserCog },
+  { label: 'Activity', path: '/console/activity', icon: Activity },
   { label: 'Demo Requests', path: '/console/demo-requests', icon: Inbox },
   { label: 'Automations', path: '/console/automations', icon: Zap },
 ]

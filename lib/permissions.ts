@@ -1,5 +1,13 @@
 export type Role = 'super_admin' | 'brand_manager' | 'factory_manager' | 'inspector' | 'viewer'
 
+// ─── CORE RULE ───────────────────────────────────────────────
+// super_admin ALWAYS bypasses everything.
+// Check this FIRST before any other permission check.
+// ─────────────────────────────────────────────────────────────
+export function isSuperAdmin(role: Role | string | null | undefined): boolean {
+  return role === 'super_admin'
+}
+
 export interface Permission {
   category: string
   action: string

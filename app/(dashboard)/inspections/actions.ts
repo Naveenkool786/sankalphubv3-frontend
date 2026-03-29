@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { getUserContext, canManage } from '@/lib/getUserContext'
 import { revalidatePath } from 'next/cache'
+import { trackEvent } from '@/lib/activity-tracker'
 import type { InspectionStatus, InspectionType } from '@/types/database'
 
 export async function createInspection(data: {
@@ -47,6 +48,7 @@ export async function createInspection(data: {
   } as any)
 
   if (error) throw new Error(error.message)
+  trackEvent({ userId: ctx.userId, organizationId: ctx.orgId, actionType: 'inspection_start', category: 'inspections', actionLabel: 'Started inspection', detail: `${inspection_no} · ${data.inspection_type} · AQL ${data.aql_level} · Sample: ${data.sample_size}` })
   revalidatePath('/inspections')
 }
 
@@ -74,5 +76,6 @@ export async function deleteInspection(inspectionId: string) {
     .eq('id', inspectionId)
     .eq('org_id', ctx.orgId)
   if (error) throw new Error(error.message)
+  trackEvent({ userId: ctx.userId, organizationId: ctx.orgId, actionType: 'delete', category: 'inspections', actionLabel: 'Deleted inspection', detail: inspectionId })
   revalidatePath('/inspections')
 }

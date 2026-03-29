@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { getUserContext, canManage } from '@/lib/getUserContext'
 import { revalidatePath } from 'next/cache'
+import { trackEvent } from '@/lib/activity-tracker'
 
 export async function createFactory(data: {
   name: string
@@ -35,6 +36,7 @@ export async function createFactory(data: {
   })
 
   if (error) throw new Error(error.message)
+  trackEvent({ userId: ctx.userId, organizationId: ctx.orgId, actionType: 'create', category: 'factories', actionLabel: 'Added factory', detail: `${data.name} · ${data.country || 'No country'}` })
   revalidatePath('/factories')
 }
 
@@ -88,6 +90,7 @@ export async function deleteFactory(factoryId: string) {
     .eq('org_id', ctx.orgId)
 
   if (error) throw new Error(error.message)
+  trackEvent({ userId: ctx.userId, organizationId: ctx.orgId, actionType: 'delete', category: 'factories', actionLabel: 'Deleted factory', detail: factoryId })
   revalidatePath('/factories')
 }
 

@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { getUserContext, canManage } from '@/lib/getUserContext'
 import { revalidatePath } from 'next/cache'
+import { trackEvent } from '@/lib/activity-tracker'
 import type { ProjectStatus } from '@/types/database'
 
 export async function createProject(data: {
@@ -35,6 +36,7 @@ export async function createProject(data: {
     created_by: ctx.userId,
   } as any)
   if (error) throw new Error(error.message)
+  trackEvent({ userId: ctx.userId, organizationId: ctx.orgId, actionType: 'create', category: 'projects', actionLabel: 'Created project', detail: `${data.name} · ${data.product_category || 'No category'} · Qty: ${data.quantity}` })
   revalidatePath('/projects')
 }
 
@@ -71,6 +73,7 @@ export async function updateProject(
     .eq('id', projectId)
     .eq('org_id', ctx.orgId)
   if (error) throw new Error(error.message)
+  trackEvent({ userId: ctx.userId, organizationId: ctx.orgId, actionType: 'edit', category: 'projects', actionLabel: 'Updated project', detail: data.name })
   revalidatePath('/projects')
 }
 
@@ -98,5 +101,6 @@ export async function deleteProject(projectId: string) {
     .eq('id', projectId)
     .eq('org_id', ctx.orgId)
   if (error) throw new Error(error.message)
+  trackEvent({ userId: ctx.userId, organizationId: ctx.orgId, actionType: 'delete', category: 'projects', actionLabel: 'Deleted project', detail: projectId })
   revalidatePath('/projects')
 }

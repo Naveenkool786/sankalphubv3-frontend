@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { AppShell } from '@/components/layout/AppShell'
+import { ImpersonationBanner } from '@/components/ImpersonationBanner'
 import type { UserRole } from '@/types/database'
 
 interface Profile {
@@ -33,13 +34,16 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const org = orgData as { name: string } | null
 
   return (
-    <AppShell
-      role={profile.role as UserRole}
-      orgName={org?.name ?? 'My Organization'}
-      fullName={profile.full_name || user.email?.split('@')[0] || 'User'}
-      email={user.email ?? ''}
-    >
-      {children}
-    </AppShell>
+    <>
+      <ImpersonationBanner />
+      <AppShell
+        role={profile.role as UserRole}
+        orgName={org?.name ?? 'My Organization'}
+        fullName={profile.full_name || user.email?.split('@')[0] || 'User'}
+        email={user.email ?? ''}
+      >
+        {children}
+      </AppShell>
+    </>
   )
 }

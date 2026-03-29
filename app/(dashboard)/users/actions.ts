@@ -6,6 +6,7 @@ import { getUserContext, canManage } from '@/lib/getUserContext'
 import type { UserRole } from '@/lib/getUserContext'
 import { checkInviteAllowed } from '@/lib/planGuard'
 import { revalidatePath } from 'next/cache'
+import { trackEvent } from '@/lib/activity-tracker'
 import { randomUUID } from 'crypto'
 
 export async function inviteUser(email: string, role: UserRole) {
@@ -39,6 +40,7 @@ export async function inviteUser(email: string, role: UserRole) {
     invited_by: ctx.userId,
   }).eq('id', userId)
 
+  trackEvent({ userId: ctx.userId, organizationId: ctx.orgId, actionType: 'invite_member', category: 'team', actionLabel: 'Invited team member', detail: `${email} · Role: ${role}` })
   revalidatePath('/users')
   return { token: inviteToken, userId }
 }
