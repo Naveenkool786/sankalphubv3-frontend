@@ -57,7 +57,7 @@ export default async function FactoryProfilePage({ params }: { params: Promise<{
   const passRateColor = passRate === null ? '#6B7280' : passRate >= 80 ? '#16a34a' : passRate >= 60 ? '#d97706' : '#dc2626'
 
   return (
-    <div className="p-6 lg:p-8 max-w-5xl">
+    <div className="p-6 lg:p-8">
       {/* Back */}
       <Link href="/factories" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-6 transition-colors">
         <ArrowLeft className="w-3.5 h-3.5" /> Back to Factories

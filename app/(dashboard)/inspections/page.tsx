@@ -75,7 +75,7 @@ export default async function InspectionsPage() {
   const templates = (templatesRes.data ?? []) as TemplateOption[]
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="p-6 lg:p-8">
       <InspectionsClient
         inspections={inspections}
         projects={projects}

@@ -35,7 +35,7 @@ async function TemplatesPageContent() {
   })) as TemplateRow[]
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 lg:p-8">
       <TemplatesClient templates={templates} canManage={canManage(ctx.role)} />
     </div>
   )

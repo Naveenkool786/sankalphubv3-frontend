@@ -54,7 +54,7 @@ export default async function ProjectsPage() {
   const factories = (factoriesRes.data ?? []) as FactoryRow[]
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 lg:p-8">
       <ProjectsClient
         projects={projects}
         factories={factories}

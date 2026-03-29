@@ -167,7 +167,7 @@ async function AnalyticsPageContent() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 lg:p-8">
       <AnalyticsClient data={data} />
     </div>
   )
