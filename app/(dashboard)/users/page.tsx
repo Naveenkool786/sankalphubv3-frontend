@@ -46,12 +46,14 @@ export default async function UsersPage() {
   const pendingInvites = allRows.filter((r) => r.invite_token !== null && r.invite_accepted_at === null)
 
   return (
-    <UsersClient
-      members={members}
-      pendingInvites={pendingInvites}
-      canManage={canManage(ctx.role)}
-      currentUserId={ctx.userId}
-      seatStatus={seatStatus}
-    />
+    <div className="p-6 lg:p-8">
+      <UsersClient
+        members={members}
+        pendingInvites={pendingInvites}
+        canManage={canManage(ctx.role)}
+        currentUserId={ctx.userId}
+        seatStatus={seatStatus}
+      />
+    </div>
   )
 }
