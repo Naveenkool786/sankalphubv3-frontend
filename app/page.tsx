@@ -640,7 +640,7 @@ export default function LandingPage() {
             <span>·</span>
             <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
             <Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
-            <a href="mailto:hello@sankalphub.in" className="hover:text-foreground transition-colors">Contact</a>
+            <a href="mailto:info@sankalphub.in" className="hover:text-foreground transition-colors">Contact</a>
             <span>© {new Date().getFullYear()} SankalpHub</span>
           </div>
         </div>

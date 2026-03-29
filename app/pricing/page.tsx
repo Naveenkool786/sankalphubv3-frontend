@@ -472,11 +472,15 @@ export default function PricingPage() {
             <Logo size={20} />
             <span>© 2026 SankalpHub. All rights reserved.</span>
           </div>
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-5 flex-wrap justify-center">
             <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
             <Link href="/pricing" className="hover:text-foreground transition-colors">Pricing</Link>
             <Link href="/demo" className="hover:text-foreground transition-colors">Request Demo</Link>
             <Link href="/login" className="hover:text-foreground transition-colors">Login</Link>
+            <span>·</span>
+            <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
+            <a href="mailto:info@sankalphub.in" className="hover:text-foreground transition-colors">Contact</a>
           </div>
         </div>
       </footer>
