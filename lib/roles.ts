@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   FolderKanban,
   ClipboardCheck,
+  CalendarRange,
   BarChart3,
   Settings,
   Factory,
@@ -26,6 +27,7 @@ const ALL_NAV: NavItem[] = [
   { label: 'Dashboard',      path: '/dashboard',   icon: LayoutDashboard },
   { label: 'Projects',       path: '/projects',    icon: FolderKanban },
   { label: 'Inspections',    path: '/inspections', icon: ClipboardCheck },
+  { label: 'Planning',       path: '/planning',    icon: CalendarRange },
   { label: 'Factories',      path: '/factories',   icon: Factory },
   { label: 'Analytics',      path: '/analytics',   icon: BarChart3 },
   { label: 'Settings',       path: '/settings',    icon: Settings },
@@ -43,12 +45,12 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
   brand_manager: {
     label: 'Brand Manager',
     badgeClass: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
-    navItems: nav('Dashboard', 'Projects', 'Inspections', 'Factories', 'Analytics', 'Settings'),
+    navItems: nav('Dashboard', 'Projects', 'Inspections', 'Planning', 'Factories', 'Analytics', 'Settings'),
   },
   factory_manager: {
     label: 'Factory Manager',
     badgeClass: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
-    navItems: nav('Dashboard', 'Projects', 'Inspections', 'Settings'),
+    navItems: nav('Dashboard', 'Projects', 'Inspections', 'Planning', 'Settings'),
   },
   inspector: {
     label: 'Inspector',

@@ -17,6 +17,8 @@ export type InspectionStatus = 'draft' | 'scheduled' | 'confirmed' | 'in_progres
 export type InspectionResult = 'pending' | 'pass' | 'fail' | 'conditional_pass'
 export type InspectionType = 'pre_production' | 'inline' | 'final' | 'lab_test' | 'fri' | 'dupro' | 'pre_final'
 export type DefectSeverity = 'critical' | 'major' | 'minor'
+export type OrderStatus = 'confirmed' | 'in_production' | 'in_inspection' | 'completed' | 'delayed' | 'cancelled'
+export type OrderPriority = 'high' | 'medium' | 'low'
 export type TaskStatus = 'open' | 'in_progress' | 'completed' | 'cancelled'
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent'
 
@@ -78,6 +80,7 @@ export interface Database {
           contact_phone: string | null
           certifications: Json
           audit_compliance: Json
+          max_capacity: number | null
           is_active: boolean
           created_at: string
           updated_at: string
@@ -213,6 +216,48 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['documents']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['documents']['Insert']>
+      }
+      orders: {
+        Row: {
+          id: string
+          org_id: string
+          factory_id: string | null
+          order_number: string
+          product_category: string
+          product_name: string | null
+          quantity: number
+          units_produced: number
+          daily_target: number
+          status: OrderStatus
+          priority: OrderPriority
+          start_date: string | null
+          expected_delivery: string | null
+          actual_delivery: string | null
+          time_slot_start: string | null
+          time_slot_end: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['orders']['Row'], 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Database['public']['Tables']['orders']['Insert']>
+      }
+      daily_production: {
+        Row: {
+          id: string
+          org_id: string
+          factory_id: string | null
+          order_id: string | null
+          date: string
+          units_produced: number
+          daily_target: number
+          cycle_time_minutes: number | null
+          shift: string
+          notes: string | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['daily_production']['Row'], 'id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['daily_production']['Insert']>
       }
     }
     Views: {}
