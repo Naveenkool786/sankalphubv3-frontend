@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 
 export interface ConsoleContext {
@@ -13,7 +14,9 @@ export async function getConsoleContext(): Promise<ConsoleContext> {
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) redirect('/login')
 
-  const { data: profileData } = await supabase
+  // Use admin client to bypass RLS — console is super_admin only
+  const admin = createAdminClient()
+  const { data: profileData } = await admin
     .from('profiles')
     .select('role, full_name')
     .eq('id', user.id)
