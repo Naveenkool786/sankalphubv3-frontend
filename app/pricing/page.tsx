@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Check, X, Menu, MessageCircle, ChevronDown, Zap, Shield, Building2 } from 'lucide-react'
+import { Check, X, Menu, ChevronDown, Zap, Shield, Building2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Logo } from '@/components/ui/Logo'
 import { NavThemeToggle } from '@/components/ui/NavThemeToggle'
@@ -485,17 +485,6 @@ export default function PricingPage() {
         </div>
       </footer>
 
-      {/* ── WHATSAPP FLOAT ── */}
-      <a
-        href="https://wa.me/919410261360?text=Hi%2C%20I%27m%20interested%20in%20SankalpHub."
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110"
-        style={{ backgroundColor: '#25D366' }}
-        aria-label="Chat on WhatsApp"
-      >
-        <MessageCircle size={28} className="text-white" />
-      </a>
     </div>
   )
 }
