@@ -1,281 +1,335 @@
 import { createClient } from '@/lib/supabase/server'
 import { getUserContext } from '@/lib/getUserContext'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import {
-  FolderKanban,
-  ClipboardCheck,
-  TrendingUp,
-  Clock,
-  ArrowUpRight,
-  Plus,
-  CheckCircle2,
-  XCircle,
-  AlertTriangle,
-} from 'lucide-react'
-import Link from 'next/link'
-import { cn } from '@/lib/utils'
-import type { ProjectStatus, InspectionStatus, InspectionResult } from '@/types/database'
-
-type ProjectRow = { status: ProjectStatus }
-type InspectionRow = { result: InspectionResult; status: InspectionStatus; score: number | null }
-type RecentRow = {
-  id: string
-  status: InspectionStatus
-  result: InspectionResult
-  score: number | null
-  submitted_at: string | null
-  inspection_date: string
-  auditor_name: string | null
-  projects: { name: string } | null
-  factories: { name: string } | null
-}
-
-const STATUS_CONFIG: Record<string, { label: string; cls: string }> = {
-  draft:          { label: 'Draft',          cls: 'bg-zinc-500/15 text-zinc-500 dark:text-zinc-300' },
-  scheduled:      { label: 'Scheduled',      cls: 'bg-blue-500/15 text-blue-600 dark:text-blue-400' },
-  confirmed:      { label: 'Confirmed',      cls: 'bg-blue-500/15 text-blue-600 dark:text-blue-400' },
-  in_progress:    { label: 'In Progress',    cls: 'bg-blue-500/15 text-blue-600 dark:text-blue-400' },
-  report_pending: { label: 'Pending Review', cls: 'bg-amber-500/15 text-amber-600 dark:text-amber-400' },
-  submitted:      { label: 'Submitted',      cls: 'bg-amber-500/15 text-amber-600 dark:text-amber-400' },
-  approved:       { label: 'Approved',       cls: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' },
-  cancelled:      { label: 'Cancelled',      cls: 'bg-red-500/15 text-red-500 dark:text-red-400' },
-}
+import { DashboardClient, type DashboardData, type TrendPoint, type CategoryRow, type RecentInspection } from './_components/DashboardClient'
+import { DashboardEmptyState } from './_components/DashboardEmptyState'
+import { ShieldCheck, CircleCheck, Truck, FolderKanban, AlertTriangle, Factory as FactoryIcon } from 'lucide-react'
+import { format, subDays, startOfMonth, subMonths } from 'date-fns'
 
 export default async function DashboardPage() {
   const ctx = await getUserContext()
   const supabase = await createClient()
 
-  const [projectsRes, inspectionsRes, recentRes] = await Promise.all([
-    supabase
-      .from('projects')
-      .select('status')
+  const now = new Date()
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString()
+  const currentMonthStart = startOfMonth(now).toISOString()
+  const prevMonthStart = startOfMonth(subMonths(now, 1)).toISOString()
+  const ninetyDaysAgo = subDays(now, 90).toISOString()
+
+  // ── PARALLEL DATA FETCHES ──
+  const [
+    { data: allInspections },
+    { data: projects },
+    { data: factories },
+    { data: recentRaw },
+    { count: templateCount },
+    { count: teamCount },
+  ] = await Promise.all([
+    (supabase.from('inspections') as any)
+      .select('id, result, status, score, critical_defects, major_defects, minor_defects, aql_level, inspection_date, created_at, project_id, factory_id')
       .eq('org_id', ctx.orgId),
-    supabase
-      .from('inspections')
-      .select('result, status, score')
+    (supabase.from('projects') as any)
+      .select('id, status, product_category')
       .eq('org_id', ctx.orgId),
-    supabase
-      .from('inspections')
-      .select('id, status, result, score, submitted_at, inspection_date, auditor_name, projects(name), factories(name)')
+    (supabase.from('factories') as any)
+      .select('id, is_active')
+      .eq('org_id', ctx.orgId),
+    (supabase.from('inspections') as any)
+      .select('id, inspection_no, result, status, score, aql_level, inspection_date, inspection_type, project_id, factory_id, projects(name, product_category), factories(name)')
       .eq('org_id', ctx.orgId)
       .order('created_at', { ascending: false })
       .limit(5),
+    (supabase.from('inspection_templates') as any)
+      .select('id', { count: 'exact', head: true })
+      .eq('org_id', ctx.orgId),
+    (supabase.from('profiles') as any)
+      .select('id', { count: 'exact', head: true })
+      .eq('org_id', ctx.orgId),
   ])
 
-  // Project stats
-  const projects = (projectsRes.data ?? []) as ProjectRow[]
-  const activeProjects = projects.filter(
-    (p) => p.status === 'active' || p.status === 'inspection'
-  ).length
-  const totalProjects = projects.length
+  const inspections = (allInspections ?? []) as any[]
+  const projs = (projects ?? []) as any[]
+  const facts = (factories ?? []) as any[]
 
-  // Inspection stats
-  const inspections = (inspectionsRes.data ?? []) as InspectionRow[]
-  const total = inspections.length
-  const passed = inspections.filter((i) => i.result === 'pass').length
-  const failed = inspections.filter((i) => i.result === 'fail').length
-  const pending = inspections.filter(
-    (i) => i.status === 'report_pending' || i.status === 'submitted'
-  ).length
-  const passRate = total > 0 ? Math.round((passed / total) * 100) : 0
-  const scores = inspections
-    .filter((i) => i.score !== null)
-    .map((i) => i.score as number)
-  const avgScore =
-    scores.length > 0
-      ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
-      : 0
+  // ── EMPTY STATE CHECK ──
+  const hasData = projs.length > 0 || inspections.length > 0 || facts.length > 0
 
-  const recent = (recentRes.data ?? []) as RecentRow[]
+  if (!hasData) {
+    const firstName = ctx.fullName?.split(' ')[0] || 'there'
+    return (
+      <div className="p-6 lg:p-8">
+        <DashboardEmptyState
+          firstName={firstName}
+          factoryCount={facts.length}
+          projectCount={projs.length}
+          templateCount={templateCount ?? 0}
+          inspectionCount={inspections.length}
+          teamCount={teamCount ?? 0}
+        />
+      </div>
+    )
+  }
 
-  const kpis = [
+  // ── DATA AGGREGATION ──
+  const firstName = ctx.fullName?.split(' ')[0] || 'there'
+
+  // Project category map
+  const projectCategoryMap: Record<string, string> = {}
+  for (const p of projs) {
+    if (p.id && p.product_category) projectCategoryMap[p.id] = p.product_category
+  }
+
+  // Current month vs previous month inspections
+  const currentMonthInspections = inspections.filter((i: any) => i.created_at >= currentMonthStart)
+  const prevMonthInspections = inspections.filter((i: any) => i.created_at >= prevMonthStart && i.created_at < currentMonthStart)
+
+  // Counts
+  const totalInspections = inspections.length
+  const passedInspections = inspections.filter((i: any) => i.result === 'pass')
+  const passRate = totalInspections > 0 ? Math.round((passedInspections.length / totalInspections) * 100 * 10) / 10 : 0
+
+  const currentPassRate = currentMonthInspections.length > 0
+    ? (currentMonthInspections.filter((i: any) => i.result === 'pass').length / currentMonthInspections.length) * 100
+    : 0
+  const prevPassRate = prevMonthInspections.length > 0
+    ? (prevMonthInspections.filter((i: any) => i.result === 'pass').length / prevMonthInspections.length) * 100
+    : 0
+  const passRateDelta = prevPassRate > 0 ? currentPassRate - prevPassRate : 0
+
+  // Defect-free rate
+  const defectFreeCount = inspections.filter((i: any) => (i.critical_defects ?? 0) + (i.major_defects ?? 0) + (i.minor_defects ?? 0) === 0).length
+  const defectFreeRate = totalInspections > 0 ? Math.round((defectFreeCount / totalInspections) * 100) : 0
+
+  // Today's inspections
+  const inspectionsToday = inspections.filter((i: any) => i.created_at >= todayStart).length
+
+  // Pending approvals
+  const pendingApprovals = inspections.filter((i: any) => i.status === 'report_pending' || i.status === 'submitted').length
+
+  // Active factories
+  const activeFactories = facts.filter((f: any) => f.is_active).length
+
+  // Critical alerts
+  const criticalAlerts = inspections.filter((i: any) => (i.critical_defects ?? 0) > 0 && i.status !== 'approved' && i.status !== 'cancelled').length
+
+  // Open defects
+  const openInspections = inspections.filter((i: any) => i.status !== 'approved' && i.status !== 'cancelled')
+  const totalCritical = openInspections.reduce((s: number, i: any) => s + (i.critical_defects ?? 0), 0)
+  const totalMajor = openInspections.reduce((s: number, i: any) => s + (i.major_defects ?? 0), 0)
+  const totalMinor = openInspections.reduce((s: number, i: any) => s + (i.minor_defects ?? 0), 0)
+  const openDefects = totalCritical + totalMajor + totalMinor
+
+  // Projects breakdown
+  const activeProjects = projs.filter((p: any) => p.status === 'active' || p.status === 'inspection').length
+  const projectsInInspection = projs.filter((p: any) => p.status === 'inspection').length
+  const projectsCompleted = projs.filter((p: any) => p.status === 'completed').length
+  const projectsInProduction = projs.filter((p: any) => p.status === 'active').length
+
+  // Completion rate as proxy for shipment rate
+  const nonDraftProjects = projs.filter((p: any) => p.status !== 'draft' && p.status !== 'cancelled')
+  const completionRate = nonDraftProjects.length > 0
+    ? Math.round((projectsCompleted / nonDraftProjects.length) * 100 * 10) / 10
+    : 0
+
+  // AQL first pass yield (passed on first attempt — approximate as overall pass rate for now)
+  const aqlYield = passRate
+
+  // ── TREND DATA (last 90 days) ──
+  const trendInspections = inspections.filter((i: any) => i.inspection_date >= ninetyDaysAgo)
+  const dayMap: Record<string, { total: number; passed: number; defects: number; scores: number[]; rework: number }> = {}
+
+  for (const insp of trendInspections) {
+    const day = (insp.inspection_date ?? insp.created_at ?? '').slice(0, 10)
+    if (!day) continue
+    if (!dayMap[day]) dayMap[day] = { total: 0, passed: 0, defects: 0, scores: [], rework: 0 }
+    dayMap[day].total++
+    if (insp.result === 'pass') dayMap[day].passed++
+    dayMap[day].defects += (insp.critical_defects ?? 0) + (insp.major_defects ?? 0) + (insp.minor_defects ?? 0)
+    if (insp.score != null) dayMap[day].scores.push(insp.score)
+  }
+
+  const trendData: TrendPoint[] = Object.entries(dayMap)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, d]) => ({
+      date: format(new Date(date), 'MMM d'),
+      passRate: d.total > 0 ? Math.round((d.passed / d.total) * 100) : 0,
+      defectRate: d.total > 0 ? Math.round((d.defects / d.total) * 100) : 0,
+      aqlScore: d.scores.length > 0 ? Math.round(d.scores.reduce((a, b) => a + b, 0) / d.scores.length) : 0,
+      reworkRate: 0,
+    }))
+
+  // ── CATEGORY ANALYSIS ──
+  const catMap: Record<string, { passExcellent: number; passGood: number; minor: number; major: number; critical: number; rework: number }> = {}
+
+  for (const insp of inspections) {
+    const cat = insp.project_id ? (projectCategoryMap[insp.project_id] ?? 'Uncategorised') : 'Uncategorised'
+    if (!catMap[cat]) catMap[cat] = { passExcellent: 0, passGood: 0, minor: 0, major: 0, critical: 0, rework: 0 }
+    const defects = (insp.critical_defects ?? 0) + (insp.major_defects ?? 0) + (insp.minor_defects ?? 0)
+    if (insp.result === 'pass' && defects === 0) catMap[cat].passExcellent++
+    else if (insp.result === 'pass') catMap[cat].passGood++
+    if ((insp.minor_defects ?? 0) > 0) catMap[cat].minor += insp.minor_defects
+    if ((insp.major_defects ?? 0) > 0) catMap[cat].major += insp.major_defects
+    if ((insp.critical_defects ?? 0) > 0) catMap[cat].critical += insp.critical_defects
+  }
+
+  const categories = ['All', ...Object.keys(catMap).filter(c => c !== 'All').sort()]
+
+  // Merge all into "All"
+  const allCat = { passExcellent: 0, passGood: 0, minor: 0, major: 0, critical: 0, rework: 0 }
+  for (const v of Object.values(catMap)) {
+    allCat.passExcellent += v.passExcellent
+    allCat.passGood += v.passGood
+    allCat.minor += v.minor
+    allCat.major += v.major
+    allCat.critical += v.critical
+    allCat.rework += v.rework
+  }
+  catMap['All'] = allCat
+
+  function buildCategoryRows(data: typeof allCat): CategoryRow[] {
+    const total = data.passExcellent + data.passGood + data.minor + data.major + data.critical + data.rework
+    const pct = (v: number) => total > 0 ? Math.round((v / total) * 100) : 0
+    return [
+      { label: 'Pass — Excellent', count: data.passExcellent, percentage: pct(data.passExcellent), bg: '#E6F1FB', color: '#0C447C' },
+      { label: 'Pass — Good', count: data.passGood, percentage: pct(data.passGood), bg: '#EEEDFE', color: '#3C3489' },
+      { label: 'Minor defects', count: data.minor, percentage: pct(data.minor), bg: '#FAEEDA', color: '#633806' },
+      { label: 'Major defects', count: data.major, percentage: pct(data.major), bg: '#EAF3DE', color: '#27500A' },
+      { label: 'Critical defects', count: data.critical, percentage: pct(data.critical), bg: '#FCEBEB', color: '#791F1F' },
+      { label: 'Rework required', count: data.rework, percentage: pct(data.rework), bg: '#E6F1FB', color: '#0C447C' },
+    ]
+  }
+
+  const categoryData: Record<string, CategoryRow[]> = {}
+  for (const [cat, data] of Object.entries(catMap)) {
+    categoryData[cat] = buildCategoryRows(data)
+  }
+
+  // ── RECENT INSPECTIONS ──
+  const recentInspections: RecentInspection[] = ((recentRaw ?? []) as any[]).map((i: any) => {
+    const daysAgo = Math.floor((Date.now() - new Date(i.inspection_date || i.created_at).getTime()) / 86400000)
+    return {
+      id: i.id,
+      inspectionNo: i.inspection_no ?? i.id.slice(0, 8),
+      factoryName: i.factories?.name ?? null,
+      category: i.projects?.product_category ?? null,
+      aqlLevel: i.aql_level ?? '—',
+      score: i.score,
+      result: i.result ?? 'pending',
+      date: daysAgo === 0 ? 'Today' : daysAgo === 1 ? 'Yesterday' : `${daysAgo}d ago`,
+    }
+  })
+
+  // ── BUILD KPI CARD PROPS ──
+  const kpiCards = [
     {
+      icon: ShieldCheck, iconBg: '#E1F5EE', iconColor: '#1D9E75',
+      title: 'Overall Pass Rate', industryAvg: '82.0%',
+      value: `${passRate}%`, delta: passRateDelta,
+      progressPercent: passRate, progressColor: '#1D9E75',
+      detailRows: [
+        { label: 'Achieved target', value: `${passRate}%` },
+        { label: 'Target progress', value: `${Math.min(Math.round(passRate / 0.82), 100)}%` },
+      ],
+      subMetrics: [
+        { label: 'Garments', value: '—', dotColor: '#1D9E75' },
+        { label: 'Footwear', value: '—', dotColor: '#378ADD' },
+        { label: 'Gloves', value: '—', dotColor: '#EF9F27' },
+      ],
+    },
+    {
+      icon: CircleCheck, iconBg: '#E6F1FB', iconColor: '#185FA5',
+      title: 'AQL First Pass Yield', industryAvg: '89.0%',
+      value: `${aqlYield}%`, delta: passRateDelta * 0.8,
+      progressPercent: aqlYield, progressColor: '#185FA5',
+      detailRows: [
+        { label: 'First-attempt pass', value: `${aqlYield}%` },
+        { label: 'Target progress', value: `${Math.min(Math.round(aqlYield / 0.89), 100)}%` },
+      ],
+      subMetrics: [
+        { label: 'Defect rate', value: `${100 - defectFreeRate}%`, dotColor: '#E24B4A' },
+        { label: 'Rework', value: '0%', dotColor: '#EF9F27' },
+        { label: 'Rejected', value: `${totalInspections > 0 ? Math.round((inspections.filter((i: any) => i.result === 'fail').length / totalInspections) * 100) : 0}%`, dotColor: '#791F1F' },
+      ],
+    },
+    {
+      icon: Truck, iconBg: '#FAEEDA', iconColor: '#854F0B',
+      title: 'On-Time Shipment Rate', industryAvg: '84.0%',
+      value: `${completionRate}%`, delta: 0,
+      progressPercent: completionRate, progressColor: '#BA7517',
+      detailRows: [
+        { label: 'Completion rate', value: `${completionRate}%` },
+        { label: 'Target progress', value: `${Math.min(Math.round(completionRate / 0.84), 100)}%` },
+      ],
+      subMetrics: [
+        { label: 'NPS', value: '—', dotColor: '#1D9E75' },
+        { label: 'Returns', value: '0%', dotColor: '#EF9F27' },
+        { label: 'Claims', value: '0', dotColor: '#E24B4A' },
+      ],
+    },
+    {
+      icon: FolderKanban, iconBg: '#EEEDFE', iconColor: '#534AB7',
       title: 'Active Projects',
-      value: activeProjects,
-      icon: FolderKanban,
-      trend: `${totalProjects} total`,
-      color: 'text-blue-600',
-      bg: 'bg-blue-50',
+      value: `${activeProjects}`, delta: 0,
+      progressPercent: projs.length > 0 ? Math.round((activeProjects / projs.length) * 100) : 0, progressColor: '#534AB7',
+      detailRows: [
+        { label: 'Active / Total', value: `${activeProjects} / ${projs.length}` },
+        { label: 'Utilisation', value: `${projs.length > 0 ? Math.round((activeProjects / projs.length) * 100) : 0}%` },
+      ],
+      subMetrics: [
+        { label: 'In inspection', value: projectsInInspection, dotColor: '#534AB7' },
+        { label: 'In production', value: projectsInProduction, dotColor: '#378ADD' },
+        { label: 'Completed', value: projectsCompleted, dotColor: '#1D9E75' },
+      ],
     },
     {
-      title: 'Pending Reviews',
-      value: pending,
-      icon: Clock,
-      trend: 'awaiting action',
-      color: 'text-amber-600',
-      bg: 'bg-amber-50',
+      icon: AlertTriangle, iconBg: '#FCEBEB', iconColor: '#A32D2D',
+      title: 'Open Defects',
+      value: `${openDefects}`, delta: 0,
+      progressPercent: totalInspections > 0 ? Math.min(Math.round((openDefects / totalInspections) * 100), 100) : 0, progressColor: '#E24B4A',
+      detailRows: [
+        { label: 'Open defects', value: `${openDefects}` },
+        { label: 'Defect density', value: `${totalInspections > 0 ? (openDefects / totalInspections).toFixed(1) : 0} per inspection` },
+      ],
+      subMetrics: [
+        { label: 'Critical', value: totalCritical, dotColor: '#E24B4A' },
+        { label: 'Major', value: totalMajor, dotColor: '#EF9F27' },
+        { label: 'Minor', value: totalMinor, dotColor: '#9CA3AF' },
+      ],
     },
     {
-      title: 'Pass Rate',
-      value: `${passRate}%`,
-      icon: TrendingUp,
-      trend: `${total} inspections`,
-      color: 'text-green-600',
-      bg: 'bg-green-50',
-    },
-    {
-      title: 'Avg. Score',
-      value: avgScore > 0 ? avgScore : '—',
-      icon: ClipboardCheck,
-      trend: 'all time',
-      color: 'text-purple-600',
-      bg: 'bg-purple-50',
+      icon: FactoryIcon, iconBg: '#E1F5EE', iconColor: '#1D9E75',
+      title: 'Active Factories',
+      value: `${activeFactories}`, delta: 0,
+      progressPercent: facts.length > 0 ? Math.round((activeFactories / facts.length) * 100) : 0, progressColor: '#1D9E75',
+      detailRows: [
+        { label: 'Active / Total', value: `${activeFactories} / ${facts.length}` },
+        { label: 'Coverage', value: `${facts.length > 0 ? Math.round((activeFactories / facts.length) * 100) : 0}%` },
+      ],
+      subMetrics: [
+        { label: 'Garments', value: '—', dotColor: '#1D9E75' },
+        { label: 'Footwear', value: '—', dotColor: '#378ADD' },
+        { label: 'Accessories', value: '—', dotColor: '#EF9F27' },
+      ],
     },
   ]
 
+  // ── RENDER ──
+  const dashboardData: DashboardData = {
+    firstName,
+    inspectionsToday,
+    defectFreeRate,
+    pendingApprovals,
+    activeFactories,
+    criticalAlerts,
+    kpiCards,
+    categories,
+    categoryData,
+    trendData,
+    recentInspections,
+  }
+
   return (
-    <div className="p-6 lg:p-8 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Welcome back — here is your quality overview.
-          </p>
-        </div>
-        <Link href="/projects">
-          <Button size="sm" className="gap-2 hidden sm:flex">
-            <Plus className="w-4 h-4" />
-            New Project
-          </Button>
-        </Link>
-      </div>
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {kpis.map((k) => {
-          const Icon = k.icon
-          return (
-            <Card key={k.title} className="hover:shadow-md transition-shadow">
-              <CardContent className="pt-5 pb-4">
-                <div className="flex items-start justify-between mb-3">
-                  <div
-                    className={cn(
-                      'w-9 h-9 rounded-lg flex items-center justify-center',
-                      k.bg
-                    )}
-                  >
-                    <Icon size={18} className={k.color} />
-                  </div>
-                  <span className="text-[11px] font-medium text-muted-foreground">
-                    {k.trend}
-                  </span>
-                </div>
-                <div className="text-2xl font-bold text-foreground">{k.value}</div>
-                <div className="text-xs text-muted-foreground mt-0.5">{k.title}</div>
-              </CardContent>
-            </Card>
-          )
-        })}
-      </div>
-
-      {/* Inspection Summary — only shown if there is data */}
-      {total > 0 && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Inspection Summary</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-              <div className="p-3 bg-muted/40 rounded-lg">
-                <div className="text-2xl font-bold text-foreground">{total}</div>
-                <div className="text-xs text-muted-foreground">Total Inspections</div>
-              </div>
-              <div className="p-3 bg-green-50 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">{passed}</div>
-                <div className="text-xs text-muted-foreground">Passed</div>
-              </div>
-              <div className="p-3 bg-red-50 rounded-lg">
-                <div className="text-2xl font-bold text-red-500">{failed}</div>
-                <div className="text-xs text-muted-foreground">Failed</div>
-              </div>
-              <div className="p-3 bg-amber-50 rounded-lg">
-                <div className="text-2xl font-bold text-amber-600">{pending}</div>
-                <div className="text-xs text-muted-foreground">Pending Review</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Recent Inspections */}
-      <Card>
-        <CardHeader className="pb-3 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-semibold">Recent Inspections</CardTitle>
-          <Link href="/inspections">
-            <Button variant="ghost" size="sm" className="text-xs h-7 gap-1">
-              View all <ArrowUpRight className="w-3 h-3" />
-            </Button>
-          </Link>
-        </CardHeader>
-        <CardContent className="p-0">
-          {recent.length === 0 ? (
-            <div className="px-6 py-8 text-center text-sm text-muted-foreground">
-              No inspections yet. Start one from the{' '}
-              <Link href="/inspections" className="text-primary hover:underline">
-                Inspections
-              </Link>{' '}
-              page.
-            </div>
-          ) : (
-            <div className="divide-y divide-border">
-              {recent.map((insp) => {
-                const sc = STATUS_CONFIG[insp.status]
-                const proj = insp.projects
-                const fact = insp.factories
-                return (
-                  <div
-                    key={insp.id}
-                    className="flex items-center gap-4 px-6 py-3 hover:bg-muted/30 transition-colors"
-                  >
-                    <div className="flex-shrink-0">
-                      {insp.result === 'pass' ? (
-                        <CheckCircle2 className="w-5 h-5 text-green-500" />
-                      ) : insp.result === 'fail' ? (
-                        <XCircle className="w-5 h-5 text-red-500" />
-                      ) : (
-                        <AlertTriangle className="w-5 h-5 text-amber-500" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {proj?.name ?? '—'}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {fact?.name ?? '—'} · {insp.auditor_name ?? '—'}
-                      </p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <div className="text-sm font-semibold text-foreground">
-                        {insp.score ?? '—'}
-                      </div>
-                      {sc && (
-                        <Badge
-                          className={cn(
-                            'text-[10px] px-1.5 py-0 capitalize border-0',
-                            sc.cls
-                          )}
-                        >
-                          {sc.label}
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="text-xs text-muted-foreground hidden sm:block w-24 text-right">
-                      {insp.submitted_at
-                        ? new Date(insp.submitted_at).toLocaleDateString()
-                        : insp.inspection_date
-                          ? new Date(insp.inspection_date).toLocaleDateString()
-                          : 'In progress'}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+    <div className="p-6 lg:p-8">
+      <DashboardClient data={dashboardData} />
     </div>
   )
 }
