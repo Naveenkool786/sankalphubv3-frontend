@@ -1,11 +1,12 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { LayoutDashboard, TrendingUp, Building2, Users, UserCog, Activity, Inbox, Zap, ArrowLeft, Shield } from 'lucide-react'
+import { usePathname, useRouter } from 'next/navigation'
+import { LayoutDashboard, TrendingUp, Building2, Users, UserCog, Activity, Inbox, Zap, ArrowLeft, LogOut, Shield } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { Logo } from '@/components/ui/Logo'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
+import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 
 const NAV_ITEMS = [
@@ -27,7 +28,14 @@ interface ConsoleSidebarProps {
 
 export function ConsoleSidebar({ fullName, email, onNavClick }: ConsoleSidebarProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const initials = fullName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
+
+  async function handleLogout() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
 
   return (
     <div className="flex flex-col h-full" style={{ backgroundColor: '#0A0F1A' }}>
@@ -92,16 +100,29 @@ export function ConsoleSidebar({ fullName, email, onNavClick }: ConsoleSidebarPr
         })}
       </nav>
 
-      <div style={{ borderTop: '1px solid rgba(201,169,110,0.15)' }}>
-        {/* Back to Dashboard */}
+      {/* Bottom section */}
+      <div className="px-3 py-3 space-y-1" style={{ borderTop: '1px solid rgba(201,169,110,0.15)' }}>
         <Link
           href="/dashboard"
-          className="flex items-center gap-2 px-5 py-3 text-xs transition-colors hover:opacity-80"
+          onClick={onNavClick}
+          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all"
           style={{ color: '#6B7280' }}
+          onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(201,169,110,0.15)'; e.currentTarget.style.color = '#C9A96E' }}
+          onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#6B7280' }}
         >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          Back to Dashboard
+          <ArrowLeft className="w-4 h-4 flex-shrink-0" />
+          <span>Back to Dashboard</span>
         </Link>
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all w-full text-left"
+          style={{ color: '#6B7280' }}
+          onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(226,75,74,0.15)'; e.currentTarget.style.color = '#E24B4A' }}
+          onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#6B7280' }}
+        >
+          <LogOut className="w-4 h-4 flex-shrink-0" />
+          <span>Logout</span>
+        </button>
       </div>
 
       <Separator className="opacity-20" />
