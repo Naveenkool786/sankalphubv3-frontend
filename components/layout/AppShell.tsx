@@ -2,9 +2,10 @@
 
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
-import { Bell, Menu, ChevronRight, Crown } from 'lucide-react'
+import { Menu, ChevronRight, Crown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sidebar } from '@/components/layout/Sidebar'
+import { NotificationBell } from '@/components/notifications/NotificationBell'
 import type { UserRole } from '@/types/database'
 
 interface AppShellProps {
@@ -74,9 +75,7 @@ export function AppShell({ role, orgName, fullName, email, children }: AppShellP
             <Crown className="w-3.5 h-3.5" />
             PremiumHub
           </button>
-          <Button variant="ghost" size="icon" className="h-8 w-8 relative flex-shrink-0">
-            <Bell className="w-4 h-4" />
-          </Button>
+          <NotificationBell />
         </header>
 
         {/* Page content */}

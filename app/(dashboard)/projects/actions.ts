@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getUserContext, canManage } from '@/lib/getUserContext'
 import { revalidatePath } from 'next/cache'
 import { trackEvent } from '@/lib/activity-tracker'
+import { createNotification } from '@/lib/notifications'
 import type { ProjectStatus } from '@/types/database'
 
 export async function createProject(data: {
@@ -37,6 +38,7 @@ export async function createProject(data: {
   } as any)
   if (error) throw new Error(error.message)
   trackEvent({ userId: ctx.userId, organizationId: ctx.orgId, actionType: 'create', category: 'projects', actionLabel: 'Created project', detail: `${data.name} · ${data.product_category || 'No category'} · Qty: ${data.quantity}` })
+  createNotification({ organizationId: ctx.orgId, eventType: 'order_assigned', soundCategory: 'brand', title: 'New project created', detail: `${data.name} · ${data.product_category || 'General'}`, link: '/projects' })
   revalidatePath('/projects')
 }
 

@@ -26,6 +26,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { z } from 'zod'
+import { createNotification } from '@/lib/notifications'
 
 const schema = z.object({
   role: z.enum(['factory', 'brand', 'agency']),
@@ -90,6 +91,16 @@ export async function POST(req: NextRequest) {
       console.error('[demo/route] Supabase insert error:', error)
       return NextResponse.json({ error: 'Failed to save request. Please try again.' }, { status: 500 })
     }
+
+    // Notify founder about new demo request (non-blocking)
+    createNotification({
+      organizationId: process.env.FOUNDER_ORG_ID ?? '',
+      eventType: 'new_demo_request',
+      soundCategory: 'system',
+      title: 'New demo request',
+      detail: `${full_name} · ${company_name} · ${email}`,
+      link: '/console/demo-requests',
+    })
 
     return NextResponse.json({ success: true })
   } catch (err) {

@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { z } from 'zod'
 import { randomUUID } from 'crypto'
+import { createNotification } from '@/lib/notifications'
 
 const ROLE_MAP: Record<string, string> = {
   factory: 'factory_manager',
@@ -152,6 +153,16 @@ export async function POST(req: NextRequest) {
     if (inviteErrors.length > 0) {
       console.warn('[signup] Some invites failed:', inviteErrors)
     }
+
+    // Notify founder about new signup (non-blocking)
+    createNotification({
+      organizationId: process.env.FOUNDER_ORG_ID ?? '',
+      eventType: 'new_user_signup',
+      soundCategory: 'system',
+      title: 'New user signup',
+      detail: `${companyName} · ${orgType} · trial plan`,
+      link: '/console/users',
+    })
 
     return NextResponse.json({
       success: true,
