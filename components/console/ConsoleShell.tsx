@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { Menu, ChevronRight, Shield } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ConsoleSidebar } from '@/components/console/ConsoleSidebar'
+import { NotificationBell } from '@/components/notifications/NotificationBell'
 
 interface ConsoleShellProps {
   fullName: string
@@ -56,6 +57,7 @@ export function ConsoleShell({ fullName, email, children }: ConsoleShellProps) {
             <ChevronRight className="w-3 h-3 hidden sm:inline flex-shrink-0" />
             <span className="font-medium text-foreground capitalize truncate">{currentPage}</span>
           </div>
+          <NotificationBell />
         </header>
 
         {/* Page content */}

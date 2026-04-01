@@ -7,7 +7,9 @@ import {
   Bell, AlertTriangle, XCircle, CheckCircle2, Clock, Building2,
   FileText, CheckSquare, FilePlus, UserPlus, Star, Volume2, VolumeX,
 } from 'lucide-react'
+import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { playFounderRipple } from '@/lib/sounds/founderSound'
 
 /* ─── TYPES ─── */
 
@@ -62,6 +64,8 @@ function timeAgo(dateStr: string): string {
 
 export function NotificationBell() {
   const router = useRouter()
+  const pathname = usePathname()
+  const isConsole = pathname.startsWith('/console')
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [soundEnabled, setSoundEnabled] = useState(true)
@@ -84,6 +88,13 @@ export function NotificationBell() {
   const playSound = useCallback((category: string, isCritical: boolean) => {
     if (!soundEnabled) return
     if (criticalOnly && !isCritical) return
+
+    // Founder Console — exclusive "Still pond ripple" sound
+    if (isConsole) {
+      playFounderRipple()
+      return
+    }
+
     try {
       const ctx = getAudioContext()
       const playNotes = (notes: [number, number][], type: OscillatorType, vol: number, dur: number) => {
@@ -114,7 +125,7 @@ export function NotificationBell() {
         }
       }
     } catch { /* never crash */ }
-  }, [soundEnabled, criticalOnly, getAudioContext])
+  }, [soundEnabled, criticalOnly, isConsole, getAudioContext])
 
   /* ── DATA + REALTIME ── */
   useEffect(() => {
