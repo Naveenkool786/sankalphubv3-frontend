@@ -43,9 +43,8 @@ interface Props {
   seatStatus: SeatStatus
 }
 
-type OrgRole = Exclude<UserRole, 'super_admin'>
-
-const ROLE_OPTIONS: { value: OrgRole; label: string; badgeClass: string }[] = [
+const ROLE_OPTIONS: { value: UserRole; label: string; badgeClass: string }[] = [
+  { value: 'super_admin',     label: 'Super Admin',     badgeClass: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' },
   { value: 'brand_manager',   label: 'Brand Manager',   badgeClass: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
   { value: 'factory_manager', label: 'Factory Manager', badgeClass: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' },
   { value: 'inspector',       label: 'Inspector',       badgeClass: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
@@ -63,7 +62,7 @@ function getInitials(name: string) {
 export function UsersClient({ members, pendingInvites, canManage: isAdmin, currentUserId, seatStatus }: Props) {
   const [inviteOpen, setInviteOpen] = useState(false)
   const [email, setEmail] = useState('')
-  const [inviteRole, setInviteRole] = useState<OrgRole>('inspector')
+  const [inviteRole, setInviteRole] = useState<UserRole>('inspector')
   const [inviting, setInviting] = useState(false)
   const [inviteResult, setInviteResult] = useState<{ token: string } | null>(null)
 
@@ -106,7 +105,7 @@ export function UsersClient({ members, pendingInvites, canManage: isAdmin, curre
     }
   }
 
-  async function handleRoleChange(userId: string, role: OrgRole) {
+  async function handleRoleChange(userId: string, role: UserRole) {
     try {
       await updateUserRole(userId, role)
       toast.success('Role updated')
