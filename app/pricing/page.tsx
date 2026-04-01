@@ -64,7 +64,7 @@ const PLANS = [
       'SSO / SAML',
       'API access',
     ],
-    cta: 'Start 14-Day Trial',
+    cta: 'Get Started',
     href: '/demo',
     highlighted: true,
   },
