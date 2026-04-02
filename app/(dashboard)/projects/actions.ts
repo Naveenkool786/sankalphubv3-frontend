@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { getUserContext, canManage } from '@/lib/getUserContext'
 import { revalidatePath } from 'next/cache'
 import { trackEvent } from '@/lib/activity-tracker'
@@ -21,8 +21,8 @@ export async function createProject(data: {
   const ctx = await getUserContext()
   if (!canManage(ctx.role)) throw new Error('Unauthorized')
 
-  const supabase = await createClient()
-  const { error } = await supabase.from('projects').insert({
+  const supabase = createAdminClient()
+  const { error } = await (supabase.from('projects') as any).insert({
     org_id: ctx.orgId,
     name: data.name,
     product_category: data.product_category || null,
@@ -35,7 +35,7 @@ export async function createProject(data: {
     notes: data.notes || null,
     status: 'draft' as ProjectStatus,
     created_by: ctx.userId,
-  } as any)
+  })
   if (error) throw new Error(error.message)
   trackEvent({ userId: ctx.userId, organizationId: ctx.orgId, actionType: 'create', category: 'projects', actionLabel: 'Created project', detail: `${data.name} · ${data.product_category || 'No category'} · Qty: ${data.quantity}` })
   createNotification({ organizationId: ctx.orgId, eventType: 'order_assigned', soundCategory: 'brand', title: 'New project created', detail: `${data.name} · ${data.product_category || 'General'}`, link: '/projects' })
@@ -59,7 +59,7 @@ export async function updateProject(
   const ctx = await getUserContext()
   if (!canManage(ctx.role)) throw new Error('Unauthorized')
 
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { error } = await (supabase.from('projects') as any)
     .update({
       name: data.name,
@@ -83,7 +83,7 @@ export async function updateProjectStatus(projectId: string, status: ProjectStat
   const ctx = await getUserContext()
   if (!canManage(ctx.role)) throw new Error('Unauthorized')
 
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { error } = await (supabase.from('projects') as any)
     .update({ status })
     .eq('id', projectId)
@@ -96,9 +96,8 @@ export async function deleteProject(projectId: string) {
   const ctx = await getUserContext()
   if (!canManage(ctx.role)) throw new Error('Unauthorized')
 
-  const supabase = await createClient()
-  const { error } = await supabase
-    .from('projects')
+  const supabase = createAdminClient()
+  const { error } = await (supabase.from('projects') as any)
     .delete()
     .eq('id', projectId)
     .eq('org_id', ctx.orgId)

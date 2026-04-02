@@ -2,30 +2,6 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { getUserContext, canManage } from '@/lib/getUserContext'
 import { ProjectsClient } from './_components/ProjectsClient'
-import type { ProjectStatus } from '@/types/database'
-
-type ProjectRow = {
-  id: string
-  name: string
-  po_number: string | null
-  buyer_brand: string | null
-  product_category: string | null
-  product_description: string | null
-  quantity: number | null
-  unit: string | null
-  deadline: string | null
-  status: ProjectStatus
-  country: string | null
-  notes: string | null
-  created_by: string
-  created_at: string
-  factory_id: string | null
-  assigned_inspector_id: string | null
-  factories: { name: string } | null
-  inspector: { full_name: string } | null
-}
-
-type FactoryRow = { id: string; name: string }
 
 export default async function ProjectsPage() {
   const ctx = await getUserContext()
@@ -41,8 +17,9 @@ export default async function ProjectsPage() {
     (supabase.from('projects') as any)
       .select(`
         id, name, po_number, buyer_brand, product_category, product_description,
-        quantity, unit, deadline, status, country, notes, created_by, created_at,
-        factory_id, assigned_inspector_id,
+        product_image_url, quantity, unit, deadline, status, priority, season,
+        expected_delivery, country, notes, created_by, created_at,
+        factory_id, assigned_inspector_id, sizes,
         factories(name),
         inspector:profiles!assigned_inspector_id(full_name)
       `)
@@ -55,8 +32,8 @@ export default async function ProjectsPage() {
       .order('name'),
   ])
 
-  const projects = (projectsRes.data ?? []) as ProjectRow[]
-  const factories = (factoriesRes.data ?? []) as FactoryRow[]
+  const projects = (projectsRes.data ?? []) as any[]
+  const factories = (factoriesRes.data ?? []) as { id: string; name: string }[]
 
   return (
     <div className="p-6 lg:p-8">
@@ -64,6 +41,7 @@ export default async function ProjectsPage() {
         projects={projects}
         factories={factories}
         canManage={canManage(ctx.role)}
+        orgId={ctx.orgId}
       />
     </div>
   )

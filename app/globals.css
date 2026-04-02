@@ -111,3 +111,13 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans, system-ui, sans-serif);
 }
+
+/* SankalpHub — Global placeholder size */
+::placeholder {
+  font-size: 9px !important;
+  opacity: 0.7;
+}
+input::placeholder,
+textarea::placeholder {
+  font-size: 9px !important;
+}

@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import { PROJECT_STATUS_CONFIG, type ProjectRow } from './ProjectCard'
+import { STATUS_CONFIG, type ProjectRow } from './ProjectCard'
 import { updateProject, updateProjectStatus, deleteProject } from '../actions'
 import type { ProjectStatus } from '@/types/database'
 
@@ -30,7 +30,7 @@ interface Props {
   factories: Factory[]
 }
 
-const ALL_STATUSES: ProjectStatus[] = ['draft', 'active', 'inspection', 'completed', 'cancelled']
+const ALL_STATUSES: ProjectStatus[] = ['draft', 'confirmed', 'active', 'in_production', 'inspection', 'in_inspection', 'completed', 'delayed', 'cancelled']
 
 export function ProjectDetailDialog({ project, open, onClose, canManage, factories }: Props) {
   const [editing, setEditing] = useState(false)
@@ -50,7 +50,7 @@ export function ProjectDetailDialog({ project, open, onClose, canManage, factori
 
   if (!project) return null
 
-  const sc = PROJECT_STATUS_CONFIG[project.status]
+  const sc = STATUS_CONFIG[project.status]
 
   const startEdit = () => {
     setForm({
@@ -104,7 +104,7 @@ export function ProjectDetailDialog({ project, open, onClose, canManage, factori
   const handleStatusChange = async (status: ProjectStatus) => {
     try {
       await updateProjectStatus(project.id, status)
-      toast.success(`Status changed to ${PROJECT_STATUS_CONFIG[status].label}`)
+      toast.success(`Status changed to ${STATUS_CONFIG[status].label}`)
       onClose()
     } catch {
       toast.error('Failed to update status')
@@ -136,7 +136,7 @@ export function ProjectDetailDialog({ project, open, onClose, canManage, factori
                 <p className="text-xs text-muted-foreground mt-0.5">{project.buyer_brand}</p>
               )}
             </div>
-            <Badge className={cn('text-[10px] px-1.5 py-0 border-0 mt-0.5', sc.cls)}>
+            <Badge className={cn('text-[10px] px-1.5 py-0 border-0 mt-0.5', sc.color)}>
               {sc.label}
             </Badge>
           </div>
@@ -240,10 +240,10 @@ export function ProjectDetailDialog({ project, open, onClose, canManage, factori
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     {ALL_STATUSES.filter((s) => s !== project.status).map((s) => {
-                      const cfg = PROJECT_STATUS_CONFIG[s]
+                      const cfg = STATUS_CONFIG[s]
                       return (
                         <DropdownMenuItem key={s} onClick={() => handleStatusChange(s)}>
-                          <Badge className={cn('text-[10px] px-1.5 py-0 border-0 mr-2', cfg.cls)}>{cfg.label}</Badge>
+                          <Badge className={cn('text-[10px] px-1.5 py-0 border-0 mr-2', cfg.color)}>{cfg.label}</Badge>
                           {cfg.label}
                         </DropdownMenuItem>
                       )

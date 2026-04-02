@@ -12,7 +12,7 @@ export type OrgPlan =
   | 'professional'       // legacy v2
   | 'enterprise'         // legacy v2
 export type UserRole = 'super_admin' | 'brand_manager' | 'factory_manager' | 'inspector' | 'viewer'
-export type ProjectStatus = 'draft' | 'active' | 'inspection' | 'completed' | 'cancelled'
+export type ProjectStatus = 'draft' | 'active' | 'confirmed' | 'in_production' | 'inspection' | 'in_inspection' | 'completed' | 'delayed' | 'cancelled'
 export type InspectionStatus = 'draft' | 'scheduled' | 'confirmed' | 'in_progress' | 'report_pending' | 'submitted' | 'approved' | 'cancelled'
 export type InspectionResult = 'pending' | 'pass' | 'fail' | 'conditional_pass'
 export type InspectionType = 'pre_production' | 'inline' | 'final' | 'lab_test' | 'fri' | 'dupro' | 'pre_final'
@@ -98,10 +98,25 @@ export interface Database {
           factory_id: string | null
           product_category: string | null
           product_description: string | null
+          product_image_url: string | null
           quantity: number | null
           unit: string | null
           deadline: string | null
           status: ProjectStatus
+          priority: string | null
+          season: string | null
+          product_type: string | null
+          description: string | null
+          aql_level: string | null
+          inspection_type: string | null
+          sample_size: number | null
+          lot_size: number | null
+          start_date: string | null
+          expected_delivery: string | null
+          inspection_date: string | null
+          shipment_date: string | null
+          sizes: Json
+          tags: string[] | null
           assigned_inspector_id: string | null
           country: string | null
           notes: string | null
