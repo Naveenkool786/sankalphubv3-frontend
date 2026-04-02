@@ -4,6 +4,7 @@ import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { loginWithPassword } from './actions'
 import { CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -34,14 +35,15 @@ function LoginContent() {
   async function handlePasswordLogin(e: React.FormEvent) {
     e.preventDefault()
     setSignInLoading(true)
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    setSignInLoading(false)
-    if (error) {
-      toast.error('Sign in failed', { description: error.message })
-    } else {
-      // Hard redirect to ensure auth cookies are sent with the server request
-      window.location.href = '/dashboard'
+    try {
+      const result = await loginWithPassword(email, password)
+      if (result?.error) {
+        toast.error('Sign in failed', { description: result.error })
+      }
+    } catch {
+      // redirect() throws a NEXT_REDIRECT error — this is expected
+    } finally {
+      setSignInLoading(false)
     }
   }
 
