@@ -1,10 +1,9 @@
 'use client'
 
 import { useState, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { loginWithPassword } from './actions'
 import { CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,7 +14,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { toast } from 'sonner'
 
 function LoginContent() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const defaultTab = searchParams.get('tab') === 'recovery' ? 'recovery' : 'signin'
 
@@ -35,19 +33,18 @@ function LoginContent() {
   async function handlePasswordLogin(e: React.FormEvent) {
     e.preventDefault()
     setSignInLoading(true)
-    try {
-      const result = await loginWithPassword(email, password)
-      if (result?.error) {
-        toast.error('Sign in failed', { description: result.error })
-        setSignInLoading(false)
-        return
-      }
-      // Full page navigation — ensures proxy sees the fresh session cookies
-      window.location.href = '/dashboard'
-    } catch {
-      toast.error('Sign in failed', { description: 'An unexpected error occurred' })
+
+    const supabase = createClient()
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+
+    if (error) {
+      toast.error('Sign in failed', { description: error.message })
       setSignInLoading(false)
+      return
     }
+
+    // Full page navigation — proxy will see the session cookies
+    window.location.href = '/dashboard'
   }
 
   async function handleMagicLink(e: React.FormEvent) {

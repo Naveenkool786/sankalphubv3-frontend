@@ -2,46 +2,10 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function proxy(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request })
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-  // If env vars missing, don't crash — just pass through
-  if (!supabaseUrl || !supabaseKey) {
-    return supabaseResponse
-  }
-
-  const supabase = createServerClient(supabaseUrl, supabaseKey, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll()
-      },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) =>
-          request.cookies.set(name, value)
-        )
-        supabaseResponse = NextResponse.next({ request })
-        cookiesToSet.forEach(({ name, value, options }) =>
-          supabaseResponse.cookies.set(name, value, options)
-        )
-      },
-    },
-  })
-
-  // Refresh session — wrapped in try/catch so a Supabase outage
-  // doesn't take down the entire site
-  let user = null
-  try {
-    const { data } = await supabase.auth.getUser()
-    user = data.user
-  } catch {
-    // If getUser fails, treat as unauthenticated
-  }
-
+  const supabaseResponse = NextResponse.next({ request })
   const { pathname } = request.nextUrl
 
-  // Public routes — always accessible
+  // Public routes — always accessible, no auth needed
   const isPublic =
     pathname === '/' ||
     pathname === '/login' ||
@@ -54,11 +18,45 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith('/auth/') ||
     pathname.startsWith('/api/')
 
-  // No session + protected route → login
-  if (!user && !isPublic) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
+  // Skip auth check entirely for public routes
+  if (isPublic && pathname !== '/login') {
+    return supabaseResponse
+  }
+
+  // For /login and protected routes, we need to check session
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseKey) {
+    // Can't check auth without env vars — pass through
+    return supabaseResponse
+  }
+
+  let response = supabaseResponse
+  let user = null
+
+  try {
+    const supabase = createServerClient(supabaseUrl, supabaseKey, {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          )
+          response = NextResponse.next({ request })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          )
+        },
+      },
+    })
+
+    const { data } = await supabase.auth.getUser()
+    user = data.user
+  } catch {
+    // Supabase unavailable — treat as unauthenticated
   }
 
   // Has session + on login page → dashboard
@@ -68,8 +66,14 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // IMPORTANT: always return supabaseResponse — it carries cookie updates
-  return supabaseResponse
+  // No session + protected route → login
+  if (!user && !isPublic) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    return NextResponse.redirect(url)
+  }
+
+  return response
 }
 
 export const config = {
