@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { AppShell } from '@/components/layout/AppShell'
 import { ImpersonationBanner } from '@/components/ImpersonationBanner'
 import type { UserRole } from '@/types/database'
@@ -16,7 +17,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profileData } = await supabase
+  // Use admin client to bypass RLS for profile + org reads
+  const admin = createAdminClient()
+
+  const { data: profileData } = await admin
     .from('profiles')
     .select('org_id, role, full_name')
     .eq('id', user.id)
@@ -25,7 +29,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const profile = profileData as Profile | null
   if (!profile || !profile.org_id) redirect('/onboarding')
 
-  const { data: orgData } = await supabase
+  const { data: orgData } = await admin
     .from('organizations')
     .select('name')
     .eq('id', profile.org_id)
