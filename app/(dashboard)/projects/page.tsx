@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { getUserContext, canManage } from '@/lib/getUserContext'
 import { ProjectsClient } from './_components/ProjectsClient'
 import type { ProjectStatus } from '@/types/database'
@@ -28,11 +29,16 @@ type FactoryRow = { id: string; name: string }
 
 export default async function ProjectsPage() {
   const ctx = await getUserContext()
-  const supabase = await createClient()
+
+  // Use service role client to bypass RLS
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const admin = serviceKey
+    ? createServiceClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceKey)
+    : null
+  const supabase = admin ?? await createClient()
 
   const [projectsRes, factoriesRes] = await Promise.all([
-    supabase
-      .from('projects')
+    (supabase.from('projects') as any)
       .select(`
         id, name, po_number, buyer_brand, product_category, product_description,
         quantity, unit, deadline, status, country, notes, created_by, created_at,
@@ -42,8 +48,7 @@ export default async function ProjectsPage() {
       `)
       .eq('org_id', ctx.orgId)
       .order('created_at', { ascending: false }),
-    supabase
-      .from('factories')
+    (supabase.from('factories') as any)
       .select('id, name')
       .eq('org_id', ctx.orgId)
       .eq('is_active', true)

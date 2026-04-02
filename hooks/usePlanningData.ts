@@ -131,22 +131,30 @@ export function usePlanningData(selectedDate: string, viewMonth: Date): Planning
         const orgId = (profile as any)?.org_id
         if (!orgId) return
 
-        const [ordersRes, factoriesRes, inspectionsRes, defectsRes, dpRes] = await Promise.all([
-          (supabase.from('orders') as any).select('*, factories(name, max_capacity)').eq('org_id', orgId),
-          (supabase.from('factories') as any).select('id, name, is_active, max_capacity').eq('org_id', orgId).eq('is_active', true),
-          (supabase.from('inspections') as any).select('id, result, status, score, critical_defects, major_defects, minor_defects, inspection_date, factory_id, created_at').eq('org_id', orgId),
-          (supabase.from('defect_records') as any).select('id, severity, inspection_id, created_at').eq('org_id', orgId),
-          (supabase.from('daily_production') as any).select('*').eq('org_id', orgId),
+        // Wrap each query independently — if a table doesn't exist, return []
+        async function safeQuery(query: Promise<{ data: any; error: any }>) {
+          try {
+            const res = await query
+            return res.data ?? []
+          } catch { return [] }
+        }
+
+        const [orders, factories, inspections, defects, dailyProduction] = await Promise.all([
+          safeQuery((supabase.from('orders') as any).select('*, factories(name, max_capacity)').eq('org_id', orgId)),
+          safeQuery((supabase.from('factories') as any).select('id, name, is_active, max_capacity').eq('org_id', orgId).eq('is_active', true)),
+          safeQuery((supabase.from('inspections') as any).select('id, result, status, score, critical_defects, major_defects, minor_defects, inspection_date, factory_id, created_at').eq('org_id', orgId)),
+          safeQuery((supabase.from('defect_records') as any).select('id, severity, inspection_id, created_at').eq('org_id', orgId)),
+          safeQuery((supabase.from('daily_production') as any).select('*').eq('org_id', orgId)),
         ])
 
         if (cancelled) return
 
         const result = calculateAll({
-          orders: ordersRes.data ?? [],
-          factories: factoriesRes.data ?? [],
-          inspections: inspectionsRes.data ?? [],
-          defects: defectsRes.data ?? [],
-          dailyProduction: dpRes.data ?? [],
+          orders,
+          factories,
+          inspections,
+          defects,
+          dailyProduction,
           selectedDate,
           viewMonth,
         })

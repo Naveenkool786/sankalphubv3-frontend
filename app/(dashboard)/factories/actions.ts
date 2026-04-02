@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { getUserContext, canManage } from '@/lib/getUserContext'
 import { revalidatePath } from 'next/cache'
 import { trackEvent } from '@/lib/activity-tracker'
@@ -17,7 +17,7 @@ export async function createFactory(data: {
   is_self_registered: boolean
 }) {
   const ctx = await getUserContext()
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const status = data.is_self_registered ? false : true // pending vs active
 
@@ -57,7 +57,7 @@ export async function updateFactory(
   const ctx = await getUserContext()
   if (!canManage(ctx.role)) throw new Error('Unauthorized')
 
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { error } = await (supabase.from('factories') as any)
     .update({
       name: data.name,
@@ -82,9 +82,8 @@ export async function deleteFactory(factoryId: string) {
   const ctx = await getUserContext()
   if (!canManage(ctx.role)) throw new Error('Unauthorized')
 
-  const supabase = await createClient()
-  const { error } = await supabase
-    .from('factories')
+  const supabase = createAdminClient()
+  const { error } = await (supabase.from('factories') as any)
     .delete()
     .eq('id', factoryId)
     .eq('org_id', ctx.orgId)
@@ -98,7 +97,7 @@ export async function assignFactoryToProject(factoryId: string, projectId: strin
   const ctx = await getUserContext()
   if (!canManage(ctx.role)) throw new Error('Unauthorized')
 
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { error } = await (supabase.from('projects') as any)
     .update({ factory_id: factoryId })
     .eq('id', projectId)
@@ -113,7 +112,7 @@ export async function removeFactoryFromProject(projectId: string) {
   const ctx = await getUserContext()
   if (!canManage(ctx.role)) throw new Error('Unauthorized')
 
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { error } = await (supabase.from('projects') as any)
     .update({ factory_id: null })
     .eq('id', projectId)

@@ -35,13 +35,18 @@ export default async function FactoryProfilePage({ params }: { params: Promise<{
     .eq('org_id', ctx.orgId)
     .order('created_at', { ascending: false })
 
-  // Fetch defects
-  const { data: defects } = await (supabase.from('defect_records') as any)
-    .select('*')
-    .eq('org_id', ctx.orgId)
-    .in('inspection_id', ((inspections ?? []) as any[]).map((i: any) => i.id))
-    .order('created_at', { ascending: false })
-    .limit(5)
+  // Fetch defects — table may not exist yet
+  const inspectionIds = ((inspections ?? []) as any[]).map((i: any) => i.id)
+  let defects: any[] | null = null
+  if (inspectionIds.length > 0) {
+    const { data, error } = await (supabase.from('defect_records') as any)
+      .select('*')
+      .eq('org_id', ctx.orgId)
+      .in('inspection_id', inspectionIds)
+      .order('created_at', { ascending: false })
+      .limit(5)
+    if (!error) defects = data
+  }
 
   // Calculate stats
   const allInspections = (inspections ?? []) as any[]
