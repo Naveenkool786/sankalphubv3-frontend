@@ -29,9 +29,6 @@ export async function proxy(request: NextRequest) {
 
   // Public routes
   if (pathname === '/' || pathname.startsWith('/login') || pathname.startsWith('/auth') || pathname.startsWith('/demo') || pathname === '/api/demo' || pathname.startsWith('/pricing') || pathname === '/privacy' || pathname === '/terms' || pathname.startsWith('/signup') || pathname.startsWith('/onboarding')) {
-    if (user && pathname === '/login') {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
-    }
     return supabaseResponse
   }
 
