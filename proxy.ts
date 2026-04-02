@@ -23,17 +23,33 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  // Refresh session — this ensures cookies stay valid
+  await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
 
-  // Public routes
-  if (pathname === '/' || pathname.startsWith('/login') || pathname.startsWith('/auth') || pathname.startsWith('/demo') || pathname === '/api/demo' || pathname.startsWith('/pricing') || pathname === '/privacy' || pathname === '/terms' || pathname.startsWith('/signup') || pathname.startsWith('/onboarding')) {
+  // Public routes — always accessible, no auth check
+  const isPublic =
+    pathname === '/' ||
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/auth') ||
+    pathname.startsWith('/demo') ||
+    pathname.startsWith('/pricing') ||
+    pathname.startsWith('/signup') ||
+    pathname.startsWith('/onboarding') ||
+    pathname === '/api/demo' ||
+    pathname === '/api/signup' ||
+    pathname === '/privacy' ||
+    pathname === '/terms'
+
+  if (isPublic) {
     return supabaseResponse
   }
 
-  // Protected routes
-  if (!user) {
+  // For protected routes, check if auth cookies exist
+  // The actual auth verification happens in the layout via auth.getUser()
+  const hasAuthCookie = request.cookies.getAll().some(c => c.name.startsWith('sb-'))
+  if (!hasAuthCookie) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
