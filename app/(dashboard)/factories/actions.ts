@@ -122,3 +122,17 @@ export async function removeFactoryFromProject(projectId: string) {
   revalidatePath('/projects')
   revalidatePath('/factories')
 }
+
+export async function updateFactoryStatus(factoryId: string, status: string) {
+  const ctx = await getUserContext()
+  if (!canManage(ctx.role)) throw new Error('Unauthorized')
+
+  const supabase = createAdminClient()
+  const { error } = await (supabase.from('factories') as any)
+    .update({ status, is_active: status !== 'inactive' })
+    .eq('id', factoryId)
+    .eq('org_id', ctx.orgId)
+  if (error) throw new Error(error.message)
+  trackEvent({ userId: ctx.userId, organizationId: ctx.orgId, actionType: 'edit', category: 'factories', actionLabel: `Factory status → ${status}`, detail: factoryId })
+  revalidatePath('/factories')
+}

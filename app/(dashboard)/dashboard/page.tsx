@@ -23,6 +23,7 @@ export default async function DashboardPage() {
     { data: recentRaw },
     { count: templateCount },
     { count: teamCount },
+    { data: auditedFactories },
   ] = await Promise.all([
     (supabase.from('inspections') as any)
       .select('id, result, status, score, critical_defects, major_defects, minor_defects, aql_level, inspection_date, created_at, project_id, factory_id')
@@ -44,6 +45,12 @@ export default async function DashboardPage() {
     (supabase.from('profiles') as any)
       .select('id', { count: 'exact', head: true })
       .eq('org_id', ctx.orgId),
+    (supabase.from('factories') as any)
+      .select('id, name, latest_audit_score, latest_audit_result')
+      .eq('org_id', ctx.orgId)
+      .not('latest_audit_score', 'is', null)
+      .order('latest_audit_score', { ascending: false })
+      .limit(4),
   ])
 
   const inspections = (allInspections ?? []) as any[]
@@ -325,6 +332,9 @@ export default async function DashboardPage() {
     categoryData,
     trendData,
     recentInspections,
+    factoryAuditScores: ((auditedFactories ?? []) as any[]).map((f: any) => ({
+      id: f.id, name: f.name, score: f.latest_audit_score, result: f.latest_audit_result,
+    })),
   }
 
   return (

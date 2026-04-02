@@ -59,6 +59,8 @@ export interface DashboardData {
   trendData: TrendPoint[]
   // Recent inspections
   recentInspections: RecentInspection[]
+  // Factory audit scores
+  factoryAuditScores?: { id: string; name: string; score: number; result: string }[]
 }
 
 /* ─── CONSTANTS ─── */
@@ -296,6 +298,37 @@ export function DashboardClient({ data }: { data: DashboardData }) {
           </table>
         </div>
       </div>
+
+      {/* ── Factory Audit Scores Widget ── */}
+      {data.factoryAuditScores && data.factoryAuditScores.length > 0 && (
+        <div className="bg-card border border-border rounded-xl p-5 mt-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-foreground">Factory Audit Scores</h3>
+            <Link href="/audits/factory" className="text-xs text-primary hover:underline">View all &rarr;</Link>
+          </div>
+          <div className="space-y-2">
+            {data.factoryAuditScores.map(f => {
+              const isApproved = f.result === 'approved'
+              const isConditional = f.result === 'conditional'
+              return (
+                <div key={f.id} className="flex items-center gap-3 py-1.5">
+                  <span className="text-xs text-foreground flex-1 truncate">{f.name}</span>
+                  <span className="text-sm font-medium" style={{ color: isApproved ? '#085041' : isConditional ? '#BA7517' : '#E24B4A' }}>
+                    {f.score}%
+                  </span>
+                  <span style={{
+                    fontSize: '9px', padding: '1px 6px', borderRadius: '4px', fontWeight: 600,
+                    background: isApproved ? '#E1F5EE' : isConditional ? '#FAEEDA' : '#FCEBEB',
+                    color: isApproved ? '#085041' : isConditional ? '#633806' : '#791F1F',
+                  }}>
+                    {isApproved ? 'Approved' : isConditional ? 'Conditional' : 'Failed'}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

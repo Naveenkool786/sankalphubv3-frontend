@@ -2,54 +2,57 @@
 
 import { useState, useMemo, useTransition } from 'react'
 import Link from 'next/link'
-import { Factory, Plus, UserPlus, Search, SlidersHorizontal, MapPin, Shield, BarChart3, MoreVertical, Building2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { createBrowserClient } from '@supabase/ssr'
+import { Factory, Plus, UserPlus, Search, MapPin, Shield, MoreHorizontal, Building2, Camera, Package } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
-import { createFactory, assignFactoryToProject } from '../actions'
+import { createFactory, assignFactoryToProject, updateFactoryStatus } from '../actions'
 import { toast } from 'sonner'
 import type { UserRole } from '@/types/database'
 
 interface FactoryRow {
-  id: string
-  name: string
-  code: string | null
-  country: string | null
-  city: string | null
-  contact_name: string | null
-  contact_email: string | null
-  contact_phone: string | null
-  certifications: string[] | null
-  is_active: boolean
-  created_at: string
-  passRate: number | null
-  totalInspections: number
+  id: string; name: string; code: string | null; country: string | null; city: string | null
+  contact_name: string | null; contact_email: string | null; contact_phone: string | null
+  certifications: string[] | null; is_active: boolean; created_at: string
+  photo_url?: string | null; latest_audit_score?: number | null; latest_audit_date?: string | null
+  latest_audit_result?: string | null; status: string; utilisation_pct?: number
+  total_lines?: number; active_lines?: number; pass_rate?: number; passRate: number
+  activeOrders: number; max_capacity?: number | null
 }
 
-interface ProjectRow {
-  id: string
-  name: string
-  factory_id: string | null
-  status: string
+interface ProjectRow { id: string; name: string; factory_id: string | null; status: string }
+
+const STATUS_CONFIG: Record<string, { bg: string; color: string; label: string; border: string }> = {
+  active:       { bg: '#E1F5EE', color: '#085041', label: 'Active', border: '#1D9E75' },
+  at_capacity:  { bg: '#FCEBEB', color: '#791F1F', label: 'At capacity', border: '#E24B4A' },
+  under_review: { bg: '#EEEDFE', color: '#3C3489', label: 'Under review', border: '#534AB7' },
+  inactive:     { bg: 'var(--muted)', color: 'var(--muted-foreground)', label: 'Inactive', border: '#888780' },
 }
+
+const FILTER_TABS = [
+  { label: 'All', value: 'all' },
+  { label: 'Active', value: 'active' },
+  { label: 'At capacity', value: 'at_capacity' },
+  { label: 'Under review', value: 'under_review' },
+  { label: 'Audited', value: 'audited' },
+  { label: 'Inactive', value: 'inactive' },
+]
 
 const CERT_OPTIONS = ['ISO 9001', 'GOTS', 'OEKO-TEX', 'BSCI', 'SA8000', 'WRAP', 'GRS']
 
-interface Props {
-  factories: FactoryRow[]
-  projects: ProjectRow[]
-  userRole: UserRole
-}
+interface Props { factories: FactoryRow[]; projects: ProjectRow[]; userRole: UserRole; orgId?: string }
 
-export function FactoriesClient({ factories, projects, userRole }: Props) {
+export function FactoriesClient({ factories, projects, userRole, orgId }: Props) {
+  const router = useRouter()
   const [search, setSearch] = useState('')
-  const [filterCountry, setFilterCountry] = useState('all')
-  const [filterStatus, setFilterStatus] = useState('all')
+  const [filter, setFilter] = useState('all')
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [showRegisterDialog, setShowRegisterDialog] = useState(false)
   const [assignDialog, setAssignDialog] = useState<FactoryRow | null>(null)
@@ -59,55 +62,90 @@ export function FactoriesClient({ factories, projects, userRole }: Props) {
   const canAdd = ['super_admin', 'brand_manager'].includes(userRole)
   const canSelfRegister = ['factory_manager', 'super_admin'].includes(userRole)
 
-  const countries = useMemo(() => {
-    const set = new Set<string>()
-    factories.forEach((f) => { if (f.country) set.add(f.country) })
-    return Array.from(set).sort()
-  }, [factories])
-
   const filtered = useMemo(() => {
-    return factories.filter((f) => {
-      if (search && !f.name.toLowerCase().includes(search.toLowerCase())) return false
-      if (filterCountry !== 'all' && f.country !== filterCountry) return false
-      if (filterStatus === 'active' && !f.is_active) return false
-      if (filterStatus === 'inactive' && f.is_active) return false
-      return true
+    return factories.filter(f => {
+      if (search) {
+        const q = search.toLowerCase()
+        if (!f.name.toLowerCase().includes(q) && !(f.country || '').toLowerCase().includes(q) && !(f.city || '').toLowerCase().includes(q)) return false
+      }
+      if (filter === 'all') return true
+      if (filter === 'audited') return f.latest_audit_score != null
+      return f.status === filter
     })
-  }, [factories, search, filterCountry, filterStatus])
+  }, [factories, search, filter])
+
+  const stats = useMemo(() => ({
+    active: factories.filter(f => f.status === 'active').length,
+    atCapacity: factories.filter(f => f.status === 'at_capacity').length,
+    underReview: factories.filter(f => f.status === 'under_review').length,
+  }), [factories])
+
+  const unassignedProjects = projects.filter(p => !p.factory_id && p.status !== 'cancelled')
+
+  // Photo upload
+  const handlePhotoUpload = (factoryId: string) => {
+    const input = document.createElement('input')
+    input.type = 'file'; input.accept = 'image/*'
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0]
+      if (!file) return
+      if (file.size > 5 * 1024 * 1024) { toast.error('Image must be under 5MB'); return }
+      try {
+        const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+        const path = `${orgId || 'uploads'}/${factoryId}/photo.jpg`
+        const { data } = await supabase.storage.from('factory-photos').upload(path, file, { upsert: true })
+        if (data) {
+          const url = supabase.storage.from('factory-photos').getPublicUrl(data.path).data.publicUrl
+          await (supabase.from('factories') as any).update({ photo_url: url }).eq('id', factoryId)
+          router.refresh()
+          toast.success('Photo uploaded')
+        }
+      } catch { toast.error('Failed to upload photo') }
+    }
+    input.click()
+  }
+
+  const handleDeactivate = async (factory: FactoryRow) => {
+    const newStatus = factory.status === 'inactive' ? 'active' : 'inactive'
+    try {
+      await updateFactoryStatus(factory.id, newStatus)
+      toast.success(`Factory ${newStatus === 'inactive' ? 'deactivated' : 'activated'}`)
+    } catch (err: any) { toast.error(err?.message || 'Failed') }
+  }
 
   function handleAssign() {
     if (!assignDialog || !selectedProject) return
     startTransition(async () => {
       try {
         await assignFactoryToProject(assignDialog.id, selectedProject)
-        toast.success('Factory assigned', { description: `${assignDialog.name} assigned to project` })
-        setAssignDialog(null)
-        setSelectedProject('')
-      } catch (err) {
-        toast.error('Failed', { description: err instanceof Error ? err.message : 'Unknown error' })
-      }
+        toast.success('Factory assigned')
+        setAssignDialog(null); setSelectedProject('')
+      } catch (err: any) { toast.error(err?.message || 'Failed') }
     })
   }
-
-  const unassignedProjects = projects.filter((p) => !p.factory_id && p.status !== 'cancelled')
 
   return (
     <>
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Factory className="w-6 h-6 text-primary" />
-            Factories
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Manage and monitor your manufacturing partners
+          <h1 className="text-2xl font-bold text-foreground">Factories</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {factories.length} factor{factories.length !== 1 ? 'ies' : 'y'}
+            {stats.active > 0 && <> &middot; {stats.active} active</>}
+            {stats.atCapacity > 0 && <> &middot; {stats.atCapacity} at capacity</>}
+            {stats.underReview > 0 && <> &middot; {stats.underReview} under review</>}
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {canAdd && (
+            <Button variant="outline" size="sm" onClick={() => router.push('/audits/factory/new')}>
+              + New audit
+            </Button>
+          )}
           {canSelfRegister && (
             <Button variant="outline" size="sm" onClick={() => setShowRegisterDialog(true)}>
-              <UserPlus className="w-4 h-4 mr-1.5" /> Register My Factory
+              <UserPlus className="w-4 h-4 mr-1.5" /> Register
             </Button>
           )}
           {canAdd && (
@@ -118,181 +156,220 @@ export function FactoriesClient({ factories, projects, userRole }: Props) {
         </div>
       </div>
 
-      {/* Filters — pill-shaped */}
-      <div className="flex items-center gap-2 mb-6 flex-wrap">
-        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-          <SlidersHorizontal className="w-4 h-4" />
-          <span>Filters</span>
+      {/* Search + Filter Tabs */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <div className="relative flex-1 max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input className="pl-9" placeholder="Search factories..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        <div className="relative">
-          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search factories..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="h-8 pl-8 rounded-full text-sm w-[180px]"
-          />
+        <div className="flex gap-1 flex-wrap">
+          {FILTER_TABS.map(t => (
+            <Button key={t.value} variant={filter === t.value ? 'default' : 'outline'} size="sm"
+              className={cn('text-xs', filter !== t.value && 'text-muted-foreground')}
+              onClick={() => setFilter(t.value)}>
+              {t.label}
+            </Button>
+          ))}
         </div>
-        <Select value={filterCountry} onValueChange={setFilterCountry}>
-          <SelectTrigger className="h-8 px-3 rounded-full border text-sm w-auto min-w-[130px]">
-            <SelectValue placeholder="All Countries" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Countries</SelectItem>
-            {countries.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="h-8 px-3 rounded-full border text-sm w-auto min-w-[120px]">
-            <SelectValue placeholder="All Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
-          </SelectContent>
-        </Select>
-        <span className="text-xs text-muted-foreground ml-auto">{filtered.length} factor{filtered.length !== 1 ? 'ies' : 'y'}</span>
       </div>
 
-      {/* Factory Cards Grid */}
+      {/* Grid */}
       {filtered.length === 0 ? (
         <div className="text-center py-16">
           <Building2 className="w-12 h-12 mx-auto text-muted-foreground/30 mb-4" />
-          <h3 className="text-lg font-semibold text-foreground mb-1">No factories yet</h3>
-          <p className="text-sm text-muted-foreground mb-6">Add your first manufacturing partner or invite a factory to register.</p>
-          {canAdd && (
-            <Button onClick={() => setShowAddDialog(true)}>
-              <Plus className="w-4 h-4 mr-1.5" /> Add Factory
-            </Button>
-          )}
+          <h3 className="text-lg font-semibold text-foreground mb-1">No factories found</h3>
+          <p className="text-sm text-muted-foreground mb-6">Add your first manufacturing partner.</p>
+          {canAdd && <Button onClick={() => setShowAddDialog(true)}><Plus className="w-4 h-4 mr-1.5" /> Add Factory</Button>}
         </div>
       ) : (
-        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filtered.map((factory) => (
-            <div key={factory.id} className="rounded-xl border border-border bg-card p-5 hover:shadow-sm transition-shadow">
-              {/* Header */}
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-sm font-bold text-primary flex-shrink-0">
-                    {factory.name.slice(0, 2).toUpperCase()}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-semibold text-foreground text-sm truncate">{factory.name}</p>
-                    {(factory.city || factory.country) && (
-                      <p className="text-xs text-muted-foreground flex items-center gap-1 truncate">
-                        <MapPin className="w-3 h-3 flex-shrink-0" />
-                        {[factory.city, factory.country].filter(Boolean).join(', ')}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className={cn('w-2 h-2 rounded-full', factory.is_active ? 'bg-emerald-500' : 'bg-zinc-400')} />
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-7 w-7"><MoreVertical className="w-3.5 h-3.5" /></Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild>
-                        <Link href={`/factories/${factory.id}`}>View Profile</Link>
-                      </DropdownMenuItem>
-                      {canAdd && unassignedProjects.length > 0 && (
-                        <DropdownMenuItem onClick={() => { setAssignDialog(factory); setSelectedProject('') }}>
-                          Assign to Project
-                        </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </div>
+        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-3">
+          {filtered.map(factory => {
+            const sc = STATUS_CONFIG[factory.status] || STATUS_CONFIG.active
+            const utilPct = factory.utilisation_pct ?? (factory.total_lines ? Math.round(((factory.active_lines ?? 0) / factory.total_lines) * 100) : 0)
+            const utilColor = utilPct >= 100 ? '#E24B4A' : utilPct >= 80 ? '#BA7517' : '#1D9E75'
 
-              {/* Certifications */}
-              {factory.certifications && factory.certifications.length > 0 && (
-                <div className="flex flex-wrap gap-1 mb-3">
-                  {(factory.certifications as string[]).slice(0, 3).map((cert) => (
-                    <Badge key={cert} variant="secondary" className="text-[10px]">
-                      <Shield className="w-2.5 h-2.5 mr-0.5" />{cert}
-                    </Badge>
-                  ))}
-                  {(factory.certifications as string[]).length > 3 && (
-                    <Badge variant="secondary" className="text-[10px]">+{(factory.certifications as string[]).length - 3}</Badge>
+            return (
+              <div key={factory.id} className="bg-card border border-border overflow-hidden hover:shadow-md transition-shadow group"
+                style={{ borderLeft: `3px solid ${sc.border}`, borderRadius: '0 10px 10px 0' }}>
+
+                {/* Photo area */}
+                <div style={{ position: 'relative', height: '120px', overflow: 'hidden' }}>
+                  {factory.photo_url ? (
+                    <>
+                      <img src={factory.photo_url} alt={factory.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <button onClick={() => handlePhotoUpload(factory.id)}
+                          style={{ fontSize: '10px', padding: '4px 12px', borderRadius: '6px', background: '#fff', color: '#111', border: 'none', cursor: 'pointer' }}>
+                          Change photo
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <div onClick={() => handlePhotoUpload(factory.id)}
+                      style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px', background: 'var(--muted)', cursor: 'pointer' }}>
+                      <Camera className="w-6 h-6" style={{ color: 'var(--muted-foreground)', opacity: 0.4 }} />
+                      <span style={{ fontSize: '10px', color: 'var(--muted-foreground)' }}>Click to upload photo</span>
+                    </div>
                   )}
+                  {/* Status pill */}
+                  <span className="absolute top-2 left-2" style={{ fontSize: '9px', padding: '2px 8px', borderRadius: '5px', fontWeight: 600, background: sc.bg, color: sc.color }}>
+                    {sc.label}
+                  </span>
+                  {/* Menu */}
+                  <div className="absolute top-2 right-2">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 bg-white/80 dark:bg-black/50 hover:bg-white dark:hover:bg-black/80 rounded-full">
+                          <MoreHorizontal className="w-3.5 h-3.5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-44">
+                        <DropdownMenuItem asChild><Link href={`/factories/${factory.id}`}>View factory</Link></DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handlePhotoUpload(factory.id)}>
+                          {factory.photo_url ? 'Change photo' : 'Upload photo'}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href={`/audits/factory/new?factoryId=${factory.id}`}>New audit</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href={`/audits/factory?factoryId=${factory.id}`}>View audit history</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        {canAdd && unassignedProjects.length > 0 && (
+                          <DropdownMenuItem onClick={() => { setAssignDialog(factory); setSelectedProject('') }}>Assign to project</DropdownMenuItem>
+                        )}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="text-destructive" onClick={() => handleDeactivate(factory)}>
+                          {factory.status === 'inactive' ? 'Activate' : 'Deactivate'}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
-              )}
 
-              {/* Stats row */}
-              <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3">
-                <span className="flex items-center gap-1">
-                  <BarChart3 className="w-3 h-3" /> {factory.totalInspections} inspections
-                </span>
-              </div>
+                {/* Card body */}
+                <div style={{ padding: '10px 12px 12px' }}>
+                  <Link href={`/factories/${factory.id}`} className="block">
+                    <p style={{ fontSize: '13px', fontWeight: 500, color: 'var(--foreground)' }} className="truncate">{factory.name}</p>
+                  </Link>
 
-              {/* Pass Rate Progress Bar */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground w-16">Pass Rate</span>
-                <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                  <div
-                    className={cn('h-full rounded-full transition-all',
-                      factory.passRate === null ? '' :
-                      factory.passRate >= 80 ? 'bg-emerald-500' :
-                      factory.passRate >= 60 ? 'bg-amber-500' : 'bg-red-500'
-                    )}
-                    style={{ width: `${factory.passRate ?? 0}%` }}
-                  />
+                  {/* Audit score row */}
+                  {factory.latest_audit_score != null ? (
+                    <div style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '5px 8px', borderRadius: '6px', marginTop: '6px', marginBottom: '6px',
+                      background: factory.latest_audit_result === 'failed' ? '#FCEBEB' : 'var(--muted)',
+                    }}>
+                      <div>
+                        <div style={{ fontSize: '10px', color: 'var(--muted-foreground)' }}>Factory audit score</div>
+                        {factory.latest_audit_date && (
+                          <div style={{ fontSize: '9px', color: 'var(--muted-foreground)' }}>
+                            {new Date(factory.latest_audit_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{
+                          fontSize: '14px', fontWeight: 500,
+                          color: factory.latest_audit_score >= 75 ? '#085041' : factory.latest_audit_score >= 50 ? '#BA7517' : '#E24B4A',
+                        }}>
+                          {factory.latest_audit_score}%
+                        </span>
+                        <span style={{
+                          fontSize: '9px', padding: '2px 6px', borderRadius: '5px', fontWeight: 500,
+                          background: factory.latest_audit_score >= 75 ? '#E1F5EE' : factory.latest_audit_score >= 50 ? '#FAEEDA' : '#FCEBEB',
+                          color: factory.latest_audit_score >= 75 ? '#085041' : factory.latest_audit_score >= 50 ? '#633806' : '#791F1F',
+                        }}>
+                          {factory.latest_audit_result === 'approved' ? 'Approved' : factory.latest_audit_result === 'conditional' ? 'Conditional' : 'Failed'}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ padding: '5px 8px', background: 'var(--muted)', borderRadius: '6px', fontSize: '10px', color: 'var(--muted-foreground)', marginTop: '6px', marginBottom: '6px' }}>
+                      No audit yet &mdash;{' '}
+                      <Link href={`/audits/factory/new?factoryId=${factory.id}`} style={{ color: '#BA7517', cursor: 'pointer' }}>
+                        Schedule audit &rarr;
+                      </Link>
+                    </div>
+                  )}
+
+                  {/* Failed banner */}
+                  {factory.latest_audit_result === 'failed' && (
+                    <div style={{ padding: '5px 8px', background: '#FCEBEB', borderRadius: '6px', fontSize: '10px', color: '#791F1F', marginBottom: '6px' }}>
+                      Re-audit required &mdash; no new orders until passed
+                    </div>
+                  )}
+
+                  {/* Utilisation bar */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--muted-foreground)', marginBottom: '3px' }}>
+                    <span>Utilisation</span>
+                    <span style={{ color: utilPct >= 100 ? '#E24B4A' : 'inherit' }}>
+                      {factory.active_lines ?? 0}/{factory.total_lines ?? 4} lines{utilPct >= 100 ? ' \u2014 Full' : ''}
+                    </span>
+                  </div>
+                  <div style={{ height: '3px', background: 'var(--muted)', borderRadius: '2px', overflow: 'hidden', marginBottom: '8px' }}>
+                    <div style={{ width: `${Math.min(utilPct, 100)}%`, height: '100%', background: utilColor, borderRadius: '2px', transition: 'width 0.3s' }} />
+                  </div>
+
+                  {/* KPI boxes */}
+                  <div style={{ display: 'flex', gap: '6px', marginBottom: '8px' }}>
+                    {[
+                      { val: factory.activeOrders, label: 'Active orders' },
+                      { val: `${factory.passRate || 0}%`, label: 'Pass rate', color: (factory.passRate || 0) >= 90 ? '#1D9E75' : '#BA7517' },
+                      { val: factory.total_lines ?? 4, label: 'Lines' },
+                    ].map((kpi, i) => (
+                      <div key={i} style={{ flex: 1, textAlign: 'center', padding: '5px', background: 'var(--muted)', borderRadius: '6px' }}>
+                        <div style={{ fontSize: '14px', fontWeight: 500, color: (kpi as any).color || 'var(--foreground)' }}>{kpi.val}</div>
+                        <div style={{ fontSize: '9px', color: 'var(--muted-foreground)' }}>{kpi.label}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Certifications */}
+                  {factory.certifications && (factory.certifications as string[]).length > 0 && (
+                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                      {(factory.certifications as string[]).map(cert => (
+                        <span key={cert} style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '5px', background: 'var(--muted)', color: 'var(--muted-foreground)' }}>
+                          {cert}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Footer */}
+                  <div style={{ borderTop: '1px solid var(--border)', paddingTop: '6px', display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--muted-foreground)' }}>
+                    <span className="flex items-center gap-1">
+                      <MapPin className="w-3 h-3" /> {[factory.city, factory.country].filter(Boolean).join(', ') || '\u2014'}
+                    </span>
+                    {factory.activeOrders > 0 && <span>{factory.activeOrders} active orders</span>}
+                  </div>
                 </div>
-                <span className="text-xs font-medium w-10 text-right">
-                  {factory.passRate !== null ? `${factory.passRate}%` : '—'}
-                </span>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
-      {/* Add Factory Dialog */}
-      <FactoryFormDialog
-        open={showAddDialog}
-        onClose={() => setShowAddDialog(false)}
-        title="Add Factory"
-        submitLabel="Add Factory"
-        isSelfRegister={false}
-      />
-
-      {/* Register My Factory Dialog */}
-      <FactoryFormDialog
-        open={showRegisterDialog}
-        onClose={() => setShowRegisterDialog(false)}
-        title="Register My Factory"
-        submitLabel="Register"
-        isSelfRegister={true}
-      />
-
-      {/* Assign to Project Dialog */}
+      {/* ── Dialogs (kept from original) ── */}
+      <FactoryFormDialog open={showAddDialog} onClose={() => setShowAddDialog(false)} title="Add Factory" submitLabel="Add Factory" isSelfRegister={false} />
+      <FactoryFormDialog open={showRegisterDialog} onClose={() => setShowRegisterDialog(false)} title="Register My Factory" submitLabel="Register" isSelfRegister={true} />
       <Dialog open={!!assignDialog} onOpenChange={() => setAssignDialog(null)}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Assign {assignDialog?.name} to Project</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Assign {assignDialog?.name} to Project</DialogTitle></DialogHeader>
           <div className="py-4">
             {unassignedProjects.length === 0 ? (
               <p className="text-sm text-muted-foreground">No unassigned projects available.</p>
             ) : (
               <Select value={selectedProject} onValueChange={setSelectedProject}>
                 <SelectTrigger><SelectValue placeholder="Select a project" /></SelectTrigger>
-                <SelectContent>
-                  {unassignedProjects.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                  ))}
-                </SelectContent>
+                <SelectContent>{unassignedProjects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
               </Select>
             )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setAssignDialog(null)}>Cancel</Button>
-            <Button onClick={handleAssign} disabled={!selectedProject || pending}>
-              {pending ? 'Assigning...' : 'Assign'}
-            </Button>
+            <Button onClick={handleAssign} disabled={!selectedProject || pending}>{pending ? 'Assigning...' : 'Assign'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -301,14 +378,8 @@ export function FactoriesClient({ factories, projects, userRole }: Props) {
 }
 
 /* ── Factory Form Dialog ── */
-function FactoryFormDialog({
-  open, onClose, title, submitLabel, isSelfRegister,
-}: {
-  open: boolean
-  onClose: () => void
-  title: string
-  submitLabel: string
-  isSelfRegister: boolean
+function FactoryFormDialog({ open, onClose, title, submitLabel, isSelfRegister }: {
+  open: boolean; onClose: () => void; title: string; submitLabel: string; isSelfRegister: boolean
 }) {
   const [name, setName] = useState('')
   const [country, setCountry] = useState('')
@@ -320,93 +391,46 @@ function FactoryFormDialog({
   const [certs, setCerts] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
 
-  function toggleCert(c: string) {
-    setCerts((prev) => prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c])
-  }
-
-  function resetForm() {
-    setName(''); setCountry(''); setCity(''); setContactName('')
-    setContactEmail(''); setContactPhone(''); setCode(''); setCerts([])
-  }
+  function toggleCert(c: string) { setCerts(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c]) }
+  function resetForm() { setName(''); setCountry(''); setCity(''); setContactName(''); setContactEmail(''); setContactPhone(''); setCode(''); setCerts([]) }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim()) return
     setSaving(true)
     try {
-      await createFactory({
-        name, country, city, contact_name: contactName,
-        contact_email: contactEmail, contact_phone: contactPhone,
-        code, certifications: certs, is_self_registered: isSelfRegister,
-      })
-      toast.success(isSelfRegister
-        ? 'Factory registered! A team member will review and approve it shortly.'
-        : 'Factory added successfully')
-      resetForm()
-      onClose()
-    } catch (err) {
-      toast.error('Failed to save', { description: err instanceof Error ? err.message : 'Unknown error' })
-    } finally {
-      setSaving(false)
-    }
+      await createFactory({ name, country, city, contact_name: contactName, contact_email: contactEmail, contact_phone: contactPhone, code, certifications: certs, is_self_registered: isSelfRegister })
+      toast.success(isSelfRegister ? 'Factory registered!' : 'Factory added')
+      resetForm(); onClose()
+    } catch (err: any) { toast.error(err?.message || 'Failed') }
+    finally { setSaving(false) }
   }
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-        </DialogHeader>
+        <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label>Factory Name *</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="ABC Garments Ltd." required />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Factory Code</Label>
-              <Input value={code} onChange={(e) => setCode(e.target.value)} placeholder="e.g. FAC-001" />
-            </div>
+            <div className="space-y-1.5"><Label>Factory Name *</Label><Input value={name} onChange={e => setName(e.target.value)} placeholder="ABC Garments Ltd." required /></div>
+            <div className="space-y-1.5"><Label>Factory Code</Label><Input value={code} onChange={e => setCode(e.target.value)} placeholder="e.g. FAC-001" /></div>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label>Country *</Label>
-              <Input value={country} onChange={(e) => setCountry(e.target.value)} placeholder="India" required />
-            </div>
-            <div className="space-y-1.5">
-              <Label>City</Label>
-              <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="Tirupur" />
-            </div>
+            <div className="space-y-1.5"><Label>Country *</Label><Input value={country} onChange={e => setCountry(e.target.value)} placeholder="India" required /></div>
+            <div className="space-y-1.5"><Label>City</Label><Input value={city} onChange={e => setCity(e.target.value)} placeholder="Tirupur" /></div>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label>Contact Name *</Label>
-              <Input value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder="John Smith" required />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Contact Email *</Label>
-              <Input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="john@factory.com" required />
-            </div>
+            <div className="space-y-1.5"><Label>Contact Name *</Label><Input value={contactName} onChange={e => setContactName(e.target.value)} placeholder="John Smith" required /></div>
+            <div className="space-y-1.5"><Label>Contact Email *</Label><Input type="email" value={contactEmail} onChange={e => setContactEmail(e.target.value)} placeholder="john@factory.com" required /></div>
           </div>
-          <div className="space-y-1.5">
-            <Label>Contact Phone</Label>
-            <Input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="+91 98765 43210" />
-          </div>
+          <div className="space-y-1.5"><Label>Contact Phone</Label><Input value={contactPhone} onChange={e => setContactPhone(e.target.value)} placeholder="+91 98765 43210" /></div>
           <div className="space-y-2">
             <Label>Certifications</Label>
             <div className="flex flex-wrap gap-2">
-              {CERT_OPTIONS.map((cert) => (
-                <button
-                  key={cert}
-                  type="button"
-                  onClick={() => toggleCert(cert)}
-                  className={cn(
-                    'px-3 py-1.5 rounded-lg text-xs font-medium border transition-all',
-                    certs.includes(cert)
-                      ? 'bg-primary text-primary-foreground border-primary'
-                      : 'border-border text-muted-foreground hover:border-muted-foreground/60'
-                  )}
-                >
+              {CERT_OPTIONS.map(cert => (
+                <button key={cert} type="button" onClick={() => toggleCert(cert)}
+                  className={cn('px-3 py-1.5 rounded-lg text-xs font-medium border transition-all',
+                    certs.includes(cert) ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:border-muted-foreground/60')}>
                   {cert}
                 </button>
               ))}
@@ -414,9 +438,7 @@ function FactoryFormDialog({
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit" disabled={saving}>
-              {saving ? 'Saving...' : submitLabel}
-            </Button>
+            <Button type="submit" disabled={saving}>{saving ? 'Saving...' : submitLabel}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

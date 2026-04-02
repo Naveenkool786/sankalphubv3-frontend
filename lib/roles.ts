@@ -7,6 +7,7 @@ import {
   BarChart3,
   Settings,
   Factory,
+  FileSearch,
 } from 'lucide-react'
 import type { UserRole } from '@/types/database'
 
@@ -29,6 +30,7 @@ const ALL_NAV: NavItem[] = [
   { label: 'Inspections',    path: '/inspections', icon: ClipboardCheck },
   { label: 'Planning',       path: '/planning',    icon: CalendarRange },
   { label: 'Factories',      path: '/factories',   icon: Factory },
+  { label: 'Factory Audits', path: '/audits/factory', icon: FileSearch },
   { label: 'Analytics',      path: '/analytics',   icon: BarChart3 },
   { label: 'Settings',       path: '/settings',    icon: Settings },
 ]
@@ -45,12 +47,12 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
   brand_manager: {
     label: 'Brand Manager',
     badgeClass: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
-    navItems: nav('Dashboard', 'Projects', 'Inspections', 'Planning', 'Factories', 'Analytics', 'Settings'),
+    navItems: nav('Dashboard', 'Projects', 'Inspections', 'Planning', 'Factories', 'Factory Audits', 'Analytics', 'Settings'),
   },
   factory_manager: {
     label: 'Factory Manager',
     badgeClass: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
-    navItems: nav('Dashboard', 'Projects', 'Inspections', 'Planning', 'Settings'),
+    navItems: nav('Dashboard', 'Projects', 'Inspections', 'Planning', 'Factory Audits', 'Settings'),
   },
   inspector: {
     label: 'Inspector',

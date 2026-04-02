@@ -12,6 +12,8 @@ export type OrgPlan =
   | 'professional'       // legacy v2
   | 'enterprise'         // legacy v2
 export type UserRole = 'super_admin' | 'brand_manager' | 'factory_manager' | 'inspector' | 'viewer'
+export type FactoryStatus = 'active' | 'at_capacity' | 'under_review' | 'inactive'
+export type AuditResult = 'approved' | 'conditional' | 'failed'
 export type ProjectStatus = 'draft' | 'active' | 'confirmed' | 'in_production' | 'inspection' | 'in_inspection' | 'completed' | 'delayed' | 'cancelled'
 export type InspectionStatus = 'draft' | 'scheduled' | 'confirmed' | 'in_progress' | 'report_pending' | 'submitted' | 'approved' | 'cancelled'
 export type InspectionResult = 'pending' | 'pass' | 'fail' | 'conditional_pass'
@@ -82,11 +84,49 @@ export interface Database {
           audit_compliance: Json
           max_capacity: number | null
           is_active: boolean
+          photo_url: string | null
+          latest_audit_score: number | null
+          latest_audit_date: string | null
+          latest_audit_result: string | null
+          status: string
+          utilisation_pct: number
+          total_lines: number
+          active_lines: number
+          pass_rate: number
           created_at: string
           updated_at: string
         }
         Insert: Omit<Database['public']['Tables']['factories']['Row'], 'id' | 'created_at' | 'updated_at'>
         Update: Partial<Database['public']['Tables']['factories']['Insert']>
+      }
+      factory_audits: {
+        Row: {
+          id: string
+          org_id: string
+          factory_id: string
+          audited_by: string | null
+          auditor_name: string
+          auditor_type: string
+          audit_type: string
+          audit_date: string
+          score_legal: number
+          score_safety: number
+          score_conditions: number
+          score_capacity: number
+          score_quality: number
+          score_environment: number
+          total_score: number
+          result: string
+          report_url: string | null
+          key_findings: string | null
+          corrective_actions: string | null
+          next_audit_due: string | null
+          status: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['factory_audits']['Row'], 'id' | 'total_score' | 'result' | 'created_at' | 'updated_at'>
+        Update: Partial<Database['public']['Tables']['factory_audits']['Insert']>
       }
       projects: {
         Row: {
