@@ -39,10 +39,13 @@ function LoginContent() {
       const result = await loginWithPassword(email, password)
       if (result?.error) {
         toast.error('Sign in failed', { description: result.error })
+        setSignInLoading(false)
+        return
       }
+      // Full page navigation — ensures proxy sees the fresh session cookies
+      window.location.href = '/dashboard'
     } catch {
-      // redirect() throws a NEXT_REDIRECT error — this is expected
-    } finally {
+      toast.error('Sign in failed', { description: 'An unexpected error occurred' })
       setSignInLoading(false)
     }
   }

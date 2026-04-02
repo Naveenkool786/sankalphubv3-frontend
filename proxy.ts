@@ -4,62 +4,71 @@ import { NextResponse, type NextRequest } from 'next/server'
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          )
-          supabaseResponse = NextResponse.next({ request })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
-        },
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  // If env vars missing, don't crash — just pass through
+  if (!supabaseUrl || !supabaseKey) {
+    return supabaseResponse
+  }
+
+  const supabase = createServerClient(supabaseUrl, supabaseKey, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll()
       },
-    }
-  )
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value }) =>
+          request.cookies.set(name, value)
+        )
+        supabaseResponse = NextResponse.next({ request })
+        cookiesToSet.forEach(({ name, value, options }) =>
+          supabaseResponse.cookies.set(name, value, options)
+        )
+      },
+    },
+  })
 
-  const { data: { user } } = await supabase.auth.getUser()
+  // Refresh session — wrapped in try/catch so a Supabase outage
+  // doesn't take down the entire site
+  let user = null
+  try {
+    const { data } = await supabase.auth.getUser()
+    user = data.user
+  } catch {
+    // If getUser fails, treat as unauthenticated
+  }
 
-  const PUBLIC_PATHS = [
-    '/',
-    '/login',
-    '/signup',
-    '/onboarding',
-    '/privacy',
-    '/terms',
-    '/demo',
-    '/pricing',
-  ]
+  const { pathname } = request.nextUrl
 
-  const isPublicPath =
-    PUBLIC_PATHS.some(p => request.nextUrl.pathname === p) ||
-    request.nextUrl.pathname.startsWith('/auth/') ||
-    request.nextUrl.pathname.startsWith('/api/demo') ||
-    request.nextUrl.pathname.startsWith('/api/signup')
+  // Public routes — always accessible
+  const isPublic =
+    pathname === '/' ||
+    pathname === '/login' ||
+    pathname === '/signup' ||
+    pathname === '/onboarding' ||
+    pathname === '/privacy' ||
+    pathname === '/terms' ||
+    pathname === '/demo' ||
+    pathname === '/pricing' ||
+    pathname.startsWith('/auth/') ||
+    pathname.startsWith('/api/')
 
   // No session + protected route → login
-  if (!user && !isPublicPath) {
+  if (!user && !isPublic) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
   // Has session + on login page → dashboard
-  if (user && request.nextUrl.pathname === '/login') {
+  if (user && pathname === '/login') {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)
   }
 
-  // IMPORTANT: always return supabaseResponse — never return
-  // NextResponse.next() directly as it loses the cookie updates
+  // IMPORTANT: always return supabaseResponse — it carries cookie updates
   return supabaseResponse
 }
 
