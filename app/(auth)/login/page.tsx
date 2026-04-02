@@ -30,18 +30,35 @@ function LoginContent() {
   const [recoveryLoading, setRecoveryLoading] = useState(false)
   const [recoverySent, setRecoverySent] = useState(false)
 
+  // Visible debug state
+  const [debugInfo, setDebugInfo] = useState('')
+
   async function handlePasswordLogin(e: React.FormEvent) {
     e.preventDefault()
     setSignInLoading(true)
+    setDebugInfo('')
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    console.log('Login attempt:', email)
+    console.log('Supabase URL:', supabaseUrl)
+    setDebugInfo(`Attempting login for ${email}...\nSupabase URL: ${supabaseUrl}`)
 
     const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+
+    console.log('Login result:', { data, error })
 
     if (error) {
+      const msg = `Sign in failed: ${error.message}`
+      console.error(msg)
+      setDebugInfo(prev => prev + '\n' + msg)
       toast.error('Sign in failed', { description: error.message })
       setSignInLoading(false)
       return
     }
+
+    setDebugInfo(prev => prev + '\nLogin success! User: ' + data.user?.email + '\nRedirecting to /dashboard...')
+    console.log('Login success, redirecting to /dashboard')
 
     // Full page navigation — proxy will see the session cookies
     window.location.href = '/dashboard'
@@ -99,6 +116,13 @@ function LoginContent() {
               </p>
             </div>
           </div>
+
+          {/* Debug info — remove after fixing */}
+          {debugInfo && (
+            <pre className="text-xs bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded p-3 whitespace-pre-wrap text-yellow-900 dark:text-yellow-100 max-h-40 overflow-auto">
+              {debugInfo}
+            </pre>
+          )}
 
           {/* Tabs */}
           <Tabs defaultValue={defaultTab} className="w-full">
