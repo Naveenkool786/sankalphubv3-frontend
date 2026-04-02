@@ -130,21 +130,31 @@ export function NotificationBell() {
   /* ── DATA + REALTIME ── */
   useEffect(() => {
     const supabase = createClient()
+    let tableExists = true
 
-    async function fetch() {
+    async function fetchNotifications() {
       try {
-        const { data } = await (supabase.from('notifications') as any)
+        const { data, error } = await (supabase.from('notifications') as any)
           .select('*')
           .order('created_at', { ascending: false })
           .limit(50)
+        if (error) {
+          // Table doesn't exist yet — skip silently, don't retry
+          tableExists = false
+          return
+        }
         if (data) setNotifications(data)
-      } catch { /* silent */ }
+      } catch {
+        tableExists = false
+      }
     }
-    fetch()
+    fetchNotifications()
 
+    // Only subscribe to realtime if the table exists
     const channel = supabase
       .channel('notifications-realtime')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, (payload: any) => {
+        if (!tableExists) return
         const n = payload.new as Notification
         setNotifications(prev => [n, ...prev])
         playSound(n.sound_category, n.is_critical)
@@ -165,16 +175,20 @@ export function NotificationBell() {
 
   /* ── MARK READ ── */
   async function markRead(id: string) {
-    const supabase = createClient()
-    await (supabase.from('notifications') as any).update({ is_read: true }).eq('id', id)
+    try {
+      const supabase = createClient()
+      await (supabase.from('notifications') as any).update({ is_read: true }).eq('id', id)
+    } catch { /* table may not exist yet */ }
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n))
   }
 
   async function markAllRead() {
     const unreadIds = notifications.filter(n => !n.is_read).map(n => n.id)
     if (unreadIds.length === 0) return
-    const supabase = createClient()
-    await (supabase.from('notifications') as any).update({ is_read: true }).in('id', unreadIds)
+    try {
+      const supabase = createClient()
+      await (supabase.from('notifications') as any).update({ is_read: true }).in('id', unreadIds)
+    } catch { /* table may not exist yet */ }
     setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))
   }
 
