@@ -40,7 +40,8 @@ function LoginContent() {
     if (error) {
       toast.error('Sign in failed', { description: error.message })
     } else {
-      router.push('/dashboard')
+      // Hard redirect to ensure auth cookies are sent with the server request
+      window.location.href = '/dashboard'
     }
   }
 
