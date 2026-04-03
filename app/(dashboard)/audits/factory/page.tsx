@@ -39,7 +39,7 @@ export default async function AuditHistoryPage({ searchParams }: { searchParams:
   }
 
   return (
-    <div className="p-6 lg:p-8 max-w-[900px] mx-auto">
+    <div className="p-6 lg:p-8">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
@@ -70,7 +70,7 @@ export default async function AuditHistoryPage({ searchParams }: { searchParams:
           <h3 className="text-lg font-semibold text-foreground mb-1">No audits yet</h3>
           <p className="text-sm text-muted-foreground mb-6">Start your first factory audit to track compliance scores.</p>
           <Button asChild>
-            <Link href="/audits/factory/new"><Plus className="w-4 h-4 mr-1.5" /> New Audit</Link>
+            <Link href="/audits/factory/new"><Plus className="w-4 h-4 mr-1.5" /> Start your first audit</Link>
           </Button>
         </div>
       ) : (

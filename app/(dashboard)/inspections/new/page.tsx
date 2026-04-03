@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import { ArrowLeft, ArrowRight, Check, Camera, Upload, Loader2, Plus, Trash2, Search } from 'lucide-react'
 import { toast } from 'sonner'
+import { BackButton } from '@/components/ui/BackButton'
 import { getSampleSize, getAQLLimits, calculateAQL } from '@/lib/inspection/aql-engine'
 import { getChecklistForCategory, getTotalItemCount, type ChecklistSection } from '@/lib/inspection/checklists'
 import { exportInspectionPDF } from '@/lib/export/inspectionPdf'
@@ -319,10 +320,10 @@ export default function NewInspectionPage() {
   }
 
   /* ── Styles ── */
-  const cardStyle: React.CSSProperties = { background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '14px', padding: '24px' }
+  const cardStyle: React.CSSProperties = { background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '14px', padding: '20px' }
   const inputStyle: React.CSSProperties = { width: '100%', padding: '9px 12px', background: 'var(--input)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--foreground)', fontSize: '13px', outline: 'none' }
   const labelStyle: React.CSSProperties = { fontSize: '12px', fontWeight: 500, color: 'var(--muted-foreground)', display: 'block', marginBottom: '5px' }
-  const twoCol: React.CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '14px', alignItems: 'start' }
+  const twoCol: React.CSSProperties = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'start' }
 
   /* ── Step validation ── */
   const canProceed = (s: number) => {
@@ -358,9 +359,7 @@ export default function NewInspectionPage() {
 
   return (
     <div className="p-6 lg:p-8 ">
-      <button onClick={() => router.push('/inspections')} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-6 transition-colors">
-        <ArrowLeft className="w-3.5 h-3.5" /> Inspections
-      </button>
+      <BackButton href="/inspections" label="Back to Inspections" />
 
       <h1 className="text-xl font-bold text-foreground mb-1">New Inspection</h1>
       <p className="text-sm text-muted-foreground mb-6">7-step quality inspection workflow</p>

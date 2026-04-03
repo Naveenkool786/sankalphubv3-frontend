@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import { ArrowLeft, ArrowRight, Check, Camera, Upload, Loader2, Building2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { BackButton } from '@/components/ui/BackButton'
 
 /* ── Constants ── */
 const STEPS = ['Factory details', 'Capacity & QC', 'Review & save']
@@ -275,7 +276,7 @@ export default function NewFactoryPage() {
   }
 
   /* ── Shared styles ── */
-  const cardStyle: React.CSSProperties = { background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '14px', padding: '24px' }
+  const cardStyle: React.CSSProperties = { background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '14px', padding: '20px' }
   const inputStyle: React.CSSProperties = { width: '100%', padding: '9px 12px', background: 'var(--input)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--foreground)', fontSize: '13px', outline: 'none' }
   const labelStyle: React.CSSProperties = { fontSize: '12px', fontWeight: 500, color: 'var(--muted-foreground)', display: 'block', marginBottom: '5px' }
 
@@ -292,9 +293,7 @@ export default function NewFactoryPage() {
 
   return (
     <div className="p-6 lg:p-8 ">
-      <button onClick={() => router.push('/factories')} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-6 transition-colors">
-        <ArrowLeft className="w-3.5 h-3.5" /> Factories
-      </button>
+      <BackButton href="/factories" label="Back to Factories" />
 
       <h1 className="text-xl font-bold text-foreground mb-1">Add Factory</h1>
       <p className="text-sm text-muted-foreground mb-6">Set up a new manufacturing partner</p>
@@ -321,20 +320,20 @@ export default function NewFactoryPage() {
               </span>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '6px' }}>
+          <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
             <button onClick={() => {
               setForm(savedDraft.form)
               setStep(savedDraft.step || 1)
               setSavedDraft(null)
             }}
-              style={{ fontSize: '11px', padding: '5px 12px', borderRadius: '7px', background: '#BA7517', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 500 }}>
+              style={{ fontSize: '11px', padding: '5px 14px', borderRadius: '7px', background: '#BA7517', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 500, whiteSpace: 'nowrap' }}>
               Continue draft &rarr;
             </button>
             <button onClick={() => {
               localStorage.removeItem('factory-wizard-draft')
               setSavedDraft(null)
             }}
-              style={{ fontSize: '11px', padding: '5px 12px', borderRadius: '7px', background: 'transparent', color: '#633806', border: '0.5px solid #C9A96E', cursor: 'pointer' }}>
+              style={{ fontSize: '11px', padding: '5px 14px', borderRadius: '7px', background: 'transparent', color: '#633806', border: '0.5px solid #C9A96E', cursor: 'pointer', whiteSpace: 'nowrap' }}>
               Start fresh
             </button>
           </div>
@@ -375,7 +374,7 @@ export default function NewFactoryPage() {
 
       {/* ══════════════ STEP 1 — Factory Details ══════════════ */}
       {step === 1 && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '14px', alignItems: 'stretch' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'start' }}>
           {/* Left — Form */}
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div style={{ ...cardStyle, flex: 1, display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -565,7 +564,7 @@ export default function NewFactoryPage() {
 
       {/* ══════════════ STEP 3 — Review & Save ══════════════ */}
       {step === 3 && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '14px', alignItems: 'stretch' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'start' }}>
           {/* Left — Summary */}
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div style={{ ...cardStyle, flex: 1 }}>

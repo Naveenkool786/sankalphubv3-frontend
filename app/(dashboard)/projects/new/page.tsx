@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import { Check, Upload, FileText, Sparkles, ArrowLeft, ArrowRight, Camera, Loader2, Download, FileSpreadsheet } from 'lucide-react'
 import { toast } from 'sonner'
+import { BackButton } from '@/components/ui/BackButton'
 import { exportProjectPDF } from '@/lib/export/projectPdf'
 import { exportProjectExcel } from '@/lib/export/projectExcel'
 
@@ -242,7 +243,7 @@ export default function NewProjectPage() {
 
   /* ── Shared styles ── */
   const cardStyle: React.CSSProperties = {
-    background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '14px', padding: '24px',
+    background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '14px', padding: '20px',
   }
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '9px 12px', background: 'var(--input)', border: '1px solid var(--border)',
@@ -265,9 +266,7 @@ export default function NewProjectPage() {
   return (
     <div className="p-6 lg:p-8 ">
       {/* Back link */}
-      <button onClick={() => router.push('/projects')} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-6 transition-colors">
-        <ArrowLeft className="w-3.5 h-3.5" /> Back to Projects
-      </button>
+      <BackButton href="/projects" label="Back to Projects" />
 
       <h1 className="text-xl font-bold text-foreground mb-1">Create New Project</h1>
       <p className="text-sm text-muted-foreground mb-6">Fill in project details across 4 steps.</p>
@@ -310,7 +309,7 @@ export default function NewProjectPage() {
 
       {/* ══════════════ STEP 1 — Basics + Upload ══════════════ */}
       {step === 1 && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '14px', alignItems: 'stretch' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'start' }}>
           {/* Left — Form */}
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div style={{ ...cardStyle, flex: 1, display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -569,7 +568,7 @@ export default function NewProjectPage() {
 
       {/* ══════════════ STEP 4 — Review & Save ══════════════ */}
       {step === 4 && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '14px', alignItems: 'stretch' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'start' }}>
           {/* Left — Summary */}
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div style={{ ...cardStyle, flex: 1 }}>
