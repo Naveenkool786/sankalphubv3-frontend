@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { FolderKanban, ClipboardCheck, Factory, TrendingUp, Users, FileText, Check } from 'lucide-react'
+import { FolderKanban, ClipboardCheck, Factory, TrendingUp, Check } from 'lucide-react'
 
 /* ─── TYPES ─── */
 
@@ -33,34 +33,71 @@ const ACTIVITY_COLORS: Record<string, string> = {
 }
 
 const SLICER_STEPS = [
-  { title: 'Create account', sub: 'Organisation set up \u00B7 Role selected', link: '/settings', doneAction: 'View settings' },
-  { title: 'Add your first factory', sub: 'Connect your manufacturing partner', link: '/factories/new' },
-  { title: 'Create first project', sub: 'Season, styles and deadlines', link: '/projects/new' },
-  { title: 'Inspection template', sub: 'Garments \u00B7 Footwear \u00B7 Gloves \u00B7 Headwear', link: '/settings/templates' },
-  { title: 'Run first inspection', sub: 'AQL \u00B7 Defect logging \u00B7 PDF report', link: '/inspections/new' },
-  { title: 'Invite your team', sub: 'Brand Manager \u00B7 Inspector \u00B7 Factory Manager', link: '/settings/users' },
+  { title: 'Create account', sub: 'Organisation set up \u00B7 Role selected', link: '/settings', iconPath: 'user' },
+  { title: 'Add your first factory', sub: 'Connect your manufacturing partner', link: '/factories/new', iconPath: 'factory' },
+  { title: 'Create first project', sub: 'Season, styles and deadlines', link: '/projects/new', iconPath: 'project' },
+  { title: 'Inspection template', sub: 'Garments \u00B7 Footwear \u00B7 Gloves \u00B7 Headwear', link: '/settings/templates', iconPath: 'template' },
+  { title: 'Run first inspection', sub: 'AQL \u00B7 Defect logging \u00B7 PDF report', link: '/inspections/new', iconPath: 'check' },
+  { title: 'Invite your team', sub: 'Brand Manager \u00B7 Inspector \u00B7 Factory Manager', link: '/settings/users', iconPath: 'team' },
 ]
 
-/* ─── SLICER CARD STYLE ─── */
+/* ─── STEP ICON HELPER ─── */
+
+const STEP_ICONS: Record<string, string> = {
+  user: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  factory: '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+  project: '<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>',
+  template: '<path d="M14 2H6a2 2 0 0 0-2 2v16h16V8z"/><polyline points="14 2 14 8 20 8"/>',
+  check: '<path d="M9 11l3 3L22 4"/>',
+  team: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+}
+
+function getStepIcon(iconPath: string, color: string) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+      stroke={color} strokeWidth="2" strokeLinecap="round"
+      dangerouslySetInnerHTML={{ __html: STEP_ICONS[iconPath] || '' }} />
+  )
+}
+
+/* ─── SLICER CARD STYLE — variable widths per brief ─── */
 
 function getCardStyle(index: number, doneCount: number): React.CSSProperties {
   const base: React.CSSProperties = {
-    flexShrink: 0, width: '190px', minHeight: '220px', borderRadius: '16px', padding: '18px',
-    cursor: 'pointer', transition: 'all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)', position: 'relative',
-    overflow: 'hidden', display: 'flex', flexDirection: 'column',
-    border: '1px solid var(--border)', background: 'var(--card)',
+    borderRadius: '16px', border: '1px solid var(--border)', background: 'var(--card)',
+    padding: '16px', cursor: 'pointer',
+    transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+    position: 'relative', overflow: 'hidden',
+    display: 'flex', flexDirection: 'column', flexShrink: 0,
   }
-  if (index < doneCount) {
-    return { ...base, opacity: 0.45, border: '1px solid #9FE1CB', background: '#E1F5EE', transform: 'scale(0.97)', filter: 'saturate(0.6)' }
+
+  // DONE — small, faded green
+  if (index < doneCount) return {
+    ...base, width: '130px', minHeight: '180px',
+    opacity: 0.42, background: '#E1F5EE', border: '1px solid #9FE1CB',
+    transform: 'scale(0.95)', filter: 'saturate(0.5)',
   }
-  if (index === doneCount) {
-    return { ...base, opacity: 1, border: '2px solid #BA7517', background: 'var(--card)', transform: 'scale(1.06) translateY(-8px)', filter: 'none', boxShadow: '0 8px 24px rgba(186, 117, 23, 0.15)' }
+
+  // ACTIVE — largest, lifts up with glow
+  if (index === doneCount) return {
+    ...base, width: '200px', minHeight: '230px',
+    opacity: 1, border: '2px solid #BA7517', background: 'var(--card)',
+    transform: 'scale(1.05) translateY(-14px)', filter: 'none',
+    boxShadow: '0 12px 32px rgba(186, 117, 23, 0.18)', zIndex: 10,
   }
-  const dist = Math.min(index - doneCount, 5)
-  const opMap = [1, 0.72, 0.55, 0.40, 0.28, 0.18]
-  const scMap = [1, 0.99, 0.98, 0.97, 0.96, 0.95]
-  const saMap = [1, 0.85, 0.6, 0.4, 0.3, 0.2]
-  return { ...base, opacity: opMap[dist], transform: `scale(${scMap[dist]})`, filter: `saturate(${saMap[dist]})` }
+
+  // UPCOMING — progressively shrink and fade
+  const dist = index - doneCount
+  const upcomingMap = [
+    null,
+    { width: '150px', minHeight: '200px', opacity: 0.70, transform: 'scale(0.97) translateY(-2px)', filter: 'saturate(0.8)' },
+    { width: '140px', minHeight: '190px', opacity: 0.50, transform: 'scale(0.95) translateY(0)', filter: 'saturate(0.55)' },
+    { width: '130px', minHeight: '180px', opacity: 0.35, transform: 'scale(0.93) translateY(2px)', filter: 'saturate(0.35)' },
+    { width: '120px', minHeight: '170px', opacity: 0.22, transform: 'scale(0.91) translateY(4px)', filter: 'saturate(0.2)' },
+    { width: '110px', minHeight: '160px', opacity: 0.14, transform: 'scale(0.89) translateY(6px)', filter: 'saturate(0.1)' },
+  ]
+  const d = Math.min(dist, 5)
+  return { ...base, ...(upcomingMap[d] as any) }
 }
 
 /* ─── COMPONENT ─── */
@@ -115,58 +152,96 @@ export function DashboardClient({ data }: { data: DashboardData }) {
       {/* ── Slicer Cards ── */}
       <div style={{ marginBottom: '8px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-          <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--muted-foreground)' }}>Get started \u2014 complete each step to unlock the next</span>
-          <span style={{ fontSize: '10px', color: 'var(--muted-foreground)' }}>{data.doneCount} of 6 complete</span>
+          <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--muted-foreground)' }}>Get started &mdash; complete each step to unlock the next</span>
+          <span style={{ fontSize: '11px', color: 'var(--muted-foreground)' }}>{data.doneCount} of 6 complete</span>
         </div>
 
-        <div style={{ paddingTop: '12px', marginTop: '-12px', overflow: 'visible' }}>
-        <div className="hide-scrollbar" style={{ display: 'flex', gap: '12px', overflowX: 'auto', overflowY: 'visible', paddingBottom: '8px', paddingTop: '8px', alignItems: 'flex-end' }}>
-          {SLICER_STEPS.map((step, i) => {
-            const isDone = i < data.doneCount
-            const isActive = i === data.doneCount
-            const isPending = i > data.doneCount
-            return (
-              <div key={i} style={getCardStyle(i, data.doneCount)} onClick={() => !isPending && router.push(step.link)}>
-                {/* Top: icon + badge */}
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '16px' }}>
-                  <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: isDone ? '#E1F5EE' : isActive ? '#FAEEDA' : 'var(--muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {isDone ? <Check className="w-4 h-4" style={{ color: '#1D9E75' }} /> :
-                     i === 0 ? <Users className="w-4 h-4" style={{ color: isActive ? '#BA7517' : 'var(--muted-foreground)' }} /> :
-                     i === 1 ? <Factory className="w-4 h-4" style={{ color: isActive ? '#BA7517' : 'var(--muted-foreground)' }} /> :
-                     i === 2 ? <FolderKanban className="w-4 h-4" style={{ color: isActive ? '#BA7517' : 'var(--muted-foreground)' }} /> :
-                     i === 3 ? <FileText className="w-4 h-4" style={{ color: isActive ? '#BA7517' : 'var(--muted-foreground)' }} /> :
-                     i === 4 ? <ClipboardCheck className="w-4 h-4" style={{ color: isActive ? '#BA7517' : 'var(--muted-foreground)' }} /> :
-                     <Users className="w-4 h-4" style={{ color: isActive ? '#BA7517' : 'var(--muted-foreground)' }} />}
+        {/* Background container — Dribbble reference style */}
+        <div style={{
+          background: 'var(--muted)', borderRadius: '20px', border: '0.5px solid var(--border)',
+          padding: '20px', paddingTop: '28px', paddingBottom: '16px', overflow: 'visible',
+        }}>
+          {/* Cards row — centered, bottom-aligned */}
+          <div style={{
+            display: 'flex', gap: '10px', alignItems: 'flex-end',
+            justifyContent: 'center', overflow: 'visible', paddingBottom: '4px',
+          }}>
+            {SLICER_STEPS.map((step, i) => {
+              const isDone = i < data.doneCount
+              const isActive = i === data.doneCount
+              const isPending = i > data.doneCount
+              const iconColor = isDone ? '#1D9E75' : isActive ? '#BA7517' : 'var(--muted-foreground)'
+              const iconBg = isDone ? '#E1F5EE' : isActive ? '#FAEEDA' : 'var(--background)'
+
+              return (
+                <div key={i} style={getCardStyle(i, data.doneCount)} onClick={() => !isPending && router.push(step.link)}>
+                  {/* Top: icon + badge */}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '14px' }}>
+                    <div style={{
+                      width: isActive ? '42px' : '34px', height: isActive ? '42px' : '34px',
+                      borderRadius: '10px', background: iconBg,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      flexShrink: 0, transition: 'all 0.4s',
+                    }}>
+                      {isDone ? (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" strokeWidth="2.5"><path d="M9 11l3 3L22 4"/></svg>
+                      ) : getStepIcon(step.iconPath, iconColor)}
+                    </div>
+                    <span style={{
+                      fontSize: '9px', padding: '3px 8px', borderRadius: '10px', fontWeight: 500,
+                      background: isDone ? '#E1F5EE' : isActive ? '#BA7517' : 'var(--background)',
+                      color: isDone ? '#085041' : isActive ? '#fff' : 'var(--muted-foreground)',
+                    }}>
+                      {isDone ? 'Done' : isActive ? 'Next up' : `Step ${i + 1}`}
+                    </span>
                   </div>
-                  <span style={{ fontSize: '9px', padding: '3px 8px', borderRadius: '10px', fontWeight: 500, background: isDone ? '#E1F5EE' : isActive ? '#BA7517' : 'var(--muted)', color: isDone ? '#085041' : isActive ? '#fff' : 'var(--muted-foreground)' }}>
-                    {isDone ? 'Done' : isActive ? 'Next up' : `Step ${i + 1}`}
-                  </span>
+
+                  {/* Title */}
+                  <div style={{
+                    fontWeight: 500, lineHeight: 1.3, marginBottom: '5px',
+                    fontSize: isActive ? '14px' : '12px',
+                    color: isDone ? '#085041' : isActive ? 'var(--foreground)' : 'var(--muted-foreground)',
+                  }}>{step.title}</div>
+
+                  {/* Subtitle — flex:1 pushes action to bottom */}
+                  <div style={{
+                    fontSize: isActive ? '11px' : '10px',
+                    color: 'var(--muted-foreground)', lineHeight: 1.5, flex: 1,
+                  }}>{step.sub}</div>
+
+                  {/* Action — pinned to bottom */}
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: '4px',
+                    fontSize: isActive ? '12px' : '10px', fontWeight: 500, marginTop: '14px',
+                    color: isDone ? '#1D9E75' : isActive ? '#BA7517' : 'var(--muted-foreground)',
+                  }}>
+                    {isDone ? (
+                      <><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 11l3 3L22 4"/></svg> Completed</>
+                    ) : isActive ? (
+                      <>Get started <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg></>
+                    ) : 'Locked'}
+                  </div>
+
+                  {/* Bottom progress bar */}
+                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '3px' }}>
+                    <div style={{ height: '100%', width: isDone ? '100%' : '0%', background: isDone ? '#1D9E75' : '#BA7517', transition: 'width 0.5s ease' }} />
+                  </div>
                 </div>
+              )
+            })}
+          </div>
 
-                {/* Title + sub */}
-                <div style={{ fontSize: '14px', fontWeight: 500, marginBottom: '6px', lineHeight: 1.3, color: isDone ? '#085041' : isActive ? 'var(--foreground)' : 'var(--muted-foreground)' }}>{step.title}</div>
-                <div style={{ fontSize: '11px', color: 'var(--muted-foreground)', lineHeight: 1.6, flex: 1 }}>{step.sub}</div>
-
-                {/* Action */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: 500, marginTop: '16px', color: isDone ? '#1D9E75' : isActive ? '#BA7517' : 'var(--muted-foreground)' }}>
-                  {isDone ? (<><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 11l3 3L22 4"/></svg> Completed</>) : isActive ? (<>Get started <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg></>) : 'Locked'}
-                </div>
-
-                {/* Bottom bar */}
-                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '3px' }}>
-                  <div style={{ height: '100%', width: isDone ? '100%' : '0%', background: isDone ? '#1D9E75' : '#BA7517', transition: 'width 0.5s ease' }} />
-                </div>
-              </div>
-            )
-          })}
-        </div>
-        </div>
-
-        {/* Dot indicators */}
-        <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', marginTop: '12px' }}>
-          {SLICER_STEPS.map((_, i) => (
-            <div key={i} style={{ height: '6px', width: i === data.doneCount ? '20px' : '6px', borderRadius: i === data.doneCount ? '3px' : '50%', background: i < data.doneCount ? '#1D9E75' : i === data.doneCount ? '#BA7517' : 'var(--border)', transition: 'all 0.3s', cursor: 'pointer' }} />
-          ))}
+          {/* Dot indicators */}
+          <div style={{ display: 'flex', gap: '5px', justifyContent: 'center', marginTop: '14px' }}>
+            {SLICER_STEPS.map((_, i) => (
+              <div key={i} style={{
+                height: '5px', width: i === data.doneCount ? '20px' : '5px',
+                borderRadius: i === data.doneCount ? '3px' : '50%',
+                background: i < data.doneCount ? '#1D9E75' : i === data.doneCount ? '#BA7517' : 'var(--border)',
+                transition: 'all 0.3s ease', cursor: 'pointer',
+              }} />
+            ))}
+          </div>
         </div>
       </div>
 
@@ -244,8 +319,8 @@ export function DashboardClient({ data }: { data: DashboardData }) {
             return (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', fontSize: '11px' }}>
                 <div style={{ width: '18px', height: '18px', borderRadius: '50%', background: isDone ? '#1D9E75' : isActive ? '#BA7517' : 'var(--muted)', border: !isDone && !isActive ? '1.5px solid var(--border)' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  {isDone && <Check className="w-2 h-2 text-white" />}
-                  {isActive && <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#fff' }} />}
+                  {isDone && <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><path d="M9 11l3 3L22 4"/></svg>}
+                  {isActive && <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="3"/></svg>}
                 </div>
                 <span style={{ color: isDone ? '#085041' : isActive ? '#633806' : 'var(--muted-foreground)', fontWeight: isActive ? 500 : 400 }}>{step.title}</span>
               </div>
