@@ -372,8 +372,8 @@ export default function NewProjectPage() {
           </div>
 
           {/* Right — AI Upload */}
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <div style={{ ...cardStyle, flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <div>
+            <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column' }}>
               <div className="flex items-center gap-2 mb-3">
                 <h2 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--foreground)' }}>Upload &amp; auto-fill</h2>
                 <span style={{ fontSize: '9px', background: '#EEEDFE', color: '#534AB7', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>AI</span>
