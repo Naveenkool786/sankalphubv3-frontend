@@ -127,7 +127,7 @@ export default function NewFactoryPage() {
 
   /* ── Save draft to Supabase (silent, via API route) ── */
   const saveDraftToSupabase = useCallback(async () => {
-    if (!form.name || !orgId) return
+    if (!form.name || !orgId || !userId) return
     try {
       const res = await fetch('/api/factories/save', {
         method: 'POST',
@@ -211,6 +211,7 @@ export default function NewFactoryPage() {
 
   /* ── Save ── */
   const handleSave = async (asDraft: boolean) => {
+    if (!orgId || !userId) { toast.error('Session expired — please refresh the page'); return }
     if (!form.name.trim()) { toast.error('Factory name is required'); return }
     if (!form.country.trim()) { toast.error('Country is required'); return }
     if (!form.contactName.trim()) { toast.error('Contact name is required'); return }

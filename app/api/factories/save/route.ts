@@ -4,6 +4,15 @@ import { createAdminClient } from '@/lib/supabase/admin'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
+
+    // Validate required UUID fields
+    if (!body.org_id || body.org_id === '') {
+      return NextResponse.json({ error: 'org_id is required — please refresh the page' }, { status: 400 })
+    }
+    if (!body.created_by || body.created_by === '') {
+      return NextResponse.json({ error: 'created_by is required — please refresh the page' }, { status: 400 })
+    }
+
     const supabase = createAdminClient()
 
     const factoryData: any = {
