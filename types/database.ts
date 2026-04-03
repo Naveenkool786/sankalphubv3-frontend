@@ -205,11 +205,43 @@ export interface Database {
           email_recipients: string[] | null
           report_file: string | null
           created_by: string | null
+          category: string | null
+          product_type: string | null
+          style_ref: string | null
+          colour: string | null
+          lot_size: number | null
+          inspection_level: string | null
+          photo_buyer_sample: string | null
+          photo_front: string | null
+          photo_back: string | null
+          photo_lining: string | null
+          critical_allowed: number
+          major_allowed: number
+          minor_allowed: number
+          aql_result: string | null
+          inspector_decision: string | null
+          inspector_comments: string | null
+          inspector_signature: string | null
           created_at: string
           updated_at: string
         }
         Insert: Omit<Database['public']['Tables']['inspections']['Row'], 'id' | 'created_at' | 'updated_at'>
         Update: Partial<Database['public']['Tables']['inspections']['Insert']>
+      }
+      inspection_checklist_items: {
+        Row: {
+          id: string
+          inspection_id: string
+          section: string
+          item_number: number
+          question: string
+          result: string | null
+          photo_url: string | null
+          notes: string | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['inspection_checklist_items']['Row'], 'id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['inspection_checklist_items']['Insert']>
       }
       inspection_templates: {
         Row: {
@@ -236,8 +268,12 @@ export interface Database {
           inspection_id: string
           severity: DefectSeverity
           description: string
+          defect_code: string | null
           location: string | null
           image_url: string | null
+          source: string
+          quantity: number
+          notes: string | null
           created_at: string
         }
         Insert: Omit<Database['public']['Tables']['defect_records']['Row'], 'id' | 'created_at'>

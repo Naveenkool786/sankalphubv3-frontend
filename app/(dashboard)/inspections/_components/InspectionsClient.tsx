@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Plus, Search, ClipboardCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { InspectionRow, INSPECTION_STATUS_CONFIG, type InspectionRow as InspectionRowType } from './InspectionRow'
-import { StartInspectionDialog } from './StartInspectionDialog'
 import { InspectionDetailDialog } from './InspectionDetailDialog'
 import type { InspectionStatus } from '@/types/database'
 
@@ -25,9 +25,9 @@ interface Props {
 }
 
 export function InspectionsClient({ inspections, projects, templates, canManage }: Props) {
+  const router = useRouter()
   const [search, setSearch] = useState('')
   const [activeTab, setActiveTab] = useState<InspectionStatus | 'all'>('all')
-  const [startOpen, setStartOpen] = useState(false)
   const [selectedInspection, setSelectedInspection] = useState<InspectionRowType | null>(null)
 
   const filtered = useMemo(() => {
@@ -57,8 +57,8 @@ export function InspectionsClient({ inspections, projects, templates, canManage 
             {filtered.length} record{filtered.length !== 1 ? 's' : ''} found
           </p>
         </div>
-        <Button size="sm" className="gap-2" onClick={() => setStartOpen(true)}>
-          <Plus className="w-4 h-4" /> Start Inspection
+        <Button size="sm" className="gap-2" onClick={() => router.push('/inspections/new')}>
+          <Plus className="w-4 h-4" /> New Inspection
         </Button>
       </div>
 
@@ -110,7 +110,7 @@ export function InspectionsClient({ inspections, projects, templates, canManage 
               : 'Start your first inspection to begin tracking quality.'}
           </p>
           {!search && (
-            <Button size="sm" className="mt-4 gap-2" onClick={() => setStartOpen(true)}>
+            <Button size="sm" className="mt-4 gap-2" onClick={() => router.push('/inspections/new')}>
               <Plus className="w-4 h-4" /> Start Inspection
             </Button>
           )}
@@ -128,12 +128,6 @@ export function InspectionsClient({ inspections, projects, templates, canManage 
       )}
 
       {/* Dialogs */}
-      <StartInspectionDialog
-        open={startOpen}
-        onClose={() => setStartOpen(false)}
-        projects={projects}
-        templates={templates}
-      />
       <InspectionDetailDialog
         inspection={selectedInspection}
         open={!!selectedInspection}
