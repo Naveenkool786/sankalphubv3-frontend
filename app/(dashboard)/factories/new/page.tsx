@@ -125,28 +125,28 @@ export default function NewFactoryPage() {
     })()
   }, [searchParams])
 
-  /* ── Save draft to Supabase (silent) ── */
+  /* ── Save draft to Supabase (silent, via API route) ── */
   const saveDraftToSupabase = useCallback(async () => {
     if (!form.name || !orgId) return
     try {
-      const supabase = getSupabase()
-      const draftData: any = {
-        org_id: orgId, name: form.name || 'Untitled factory', code: form.code || null,
-        country: form.country || null, city: form.city || null,
-        contact_name: form.contactName || null, contact_email: form.contactEmail || null,
-        contact_phone: form.contactPhone || null, website: form.website || null,
-        notes: form.notes || null, status: 'inactive',
-        total_lines: parseInt(form.totalLines) || null, max_capacity: parseInt(form.maxCapacity) || null,
-        categories: form.categories.length > 0 ? form.categories : null,
-        certifications: form.certifications.length > 0 ? form.certifications.join(', ') : null,
-        aql_default: form.aqlDefault || null, created_by: userId,
-      }
-      if (draftId) {
-        await (supabase.from('factories') as any).update(draftData).eq('id', draftId)
-      } else {
-        const { data } = await (supabase.from('factories') as any).insert(draftData).select('id').single()
-        if (data) setDraftId(data.id)
-      }
+      const res = await fetch('/api/factories/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...(draftId ? { id: draftId } : {}),
+          org_id: orgId, name: form.name || 'Untitled factory', code: form.code || null,
+          country: form.country || null, city: form.city || null,
+          contact_name: form.contactName || null, contact_email: form.contactEmail || null,
+          contact_phone: form.contactPhone || null, website: form.website || null,
+          notes: form.notes || null, status: 'inactive',
+          total_lines: parseInt(form.totalLines) || null, max_capacity: parseInt(form.maxCapacity) || null,
+          categories: form.categories.length > 0 ? form.categories : null,
+          certifications: form.certifications.length > 0 ? form.certifications.join(', ') : null,
+          aql_default: form.aqlDefault || null, created_by: userId,
+        }),
+      })
+      const json = await res.json()
+      if (json.data?.id && !draftId) setDraftId(json.data.id)
     } catch { /* silent */ }
   }, [form, orgId, userId, draftId])
 
@@ -231,39 +231,35 @@ export default function NewFactoryPage() {
         }
       }
 
-      // Save factory (update draft or insert new)
-      const factoryData: any = {
-        org_id: orgId,
-        name: form.name.trim(),
-        code: form.code.trim() || null,
-        country: form.country.trim(),
-        city: form.city.trim() || null,
-        contact_name: form.contactName.trim(),
-        contact_email: form.contactEmail.trim(),
-        contact_phone: form.contactPhone.trim() || null,
-        website: form.website.trim() || null,
-        notes: form.notes.trim() || null,
-        status: asDraft ? 'inactive' : form.status,
-        photo_url: photoUrl || form.photoPreview || null,
-        total_lines: parseInt(form.totalLines) || null,
-        max_capacity: parseInt(form.maxCapacity) || null,
-        categories: form.categories.length > 0 ? form.categories : null,
-        certifications: form.certifications.length > 0 ? form.certifications.join(', ') : null,
-        aql_default: form.aqlDefault || null,
-        inspection_preference: form.inspectionPreference || null,
-        created_by: userId,
-      }
-
-      let error: any = null
-      if (draftId) {
-        const res = await (supabase.from('factories') as any).update(factoryData).eq('id', draftId)
-        error = res.error
-      } else {
-        const res = await (supabase.from('factories') as any).insert(factoryData)
-        error = res.error
-      }
-
-      if (error) throw new Error(error.message)
+      // Save factory via API route (bypasses RLS)
+      const res = await fetch('/api/factories/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...(draftId ? { id: draftId } : {}),
+          org_id: orgId,
+          name: form.name.trim(),
+          code: form.code.trim() || null,
+          country: form.country.trim(),
+          city: form.city.trim() || null,
+          contact_name: form.contactName.trim(),
+          contact_email: form.contactEmail.trim(),
+          contact_phone: form.contactPhone.trim() || null,
+          website: form.website.trim() || null,
+          notes: form.notes.trim() || null,
+          status: asDraft ? 'inactive' : form.status,
+          photo_url: photoUrl || form.photoPreview || null,
+          total_lines: parseInt(form.totalLines) || null,
+          max_capacity: parseInt(form.maxCapacity) || null,
+          categories: form.categories.length > 0 ? form.categories : null,
+          certifications: form.certifications.length > 0 ? form.certifications.join(', ') : null,
+          aql_default: form.aqlDefault || null,
+          inspection_preference: form.inspectionPreference || null,
+          created_by: userId,
+        }),
+      })
+      const result = await res.json()
+      if (!res.ok) throw new Error(result.error)
       localStorage.removeItem('factory-wizard-draft')
       toast.success(asDraft ? 'Draft saved' : 'Factory added')
       router.push('/factories')
