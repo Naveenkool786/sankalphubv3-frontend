@@ -93,6 +93,12 @@ export interface Database {
           total_lines: number
           active_lines: number
           pass_rate: number
+          website: string | null
+          notes: string | null
+          categories: Json
+          aql_default: string | null
+          inspection_preference: string | null
+          created_by: string | null
           created_at: string
           updated_at: string
         }

@@ -14,12 +14,21 @@ export async function createFactory(data: {
   contact_phone: string
   code: string
   certifications: string[]
-  is_self_registered: boolean
+  is_self_registered?: boolean
+  website?: string
+  notes?: string
+  status?: string
+  photo_url?: string
+  total_lines?: number | null
+  max_capacity?: number | null
+  categories?: string[]
+  aql_default?: string
+  inspection_preference?: string
 }) {
   const ctx = await getUserContext()
   const supabase = createAdminClient()
 
-  const status = data.is_self_registered ? false : true // pending vs active
+  const isActive = data.status === 'inactive' ? false : !data.is_self_registered
 
   const { error } = await (supabase.from('factories') as any).insert({
     org_id: ctx.orgId,
@@ -32,7 +41,17 @@ export async function createFactory(data: {
     contact_phone: data.contact_phone || null,
     certifications: data.certifications.length > 0 ? data.certifications : null,
     audit_compliance: data.is_self_registered ? { self_registered: true, status: 'pending' } : null,
-    is_active: status,
+    is_active: isActive,
+    status: data.status || (isActive ? 'active' : 'inactive'),
+    website: data.website || null,
+    notes: data.notes || null,
+    photo_url: data.photo_url || null,
+    total_lines: data.total_lines ?? null,
+    max_capacity: data.max_capacity ?? null,
+    categories: data.categories && data.categories.length > 0 ? data.categories : null,
+    aql_default: data.aql_default || null,
+    inspection_preference: data.inspection_preference || null,
+    created_by: ctx.userId,
   })
 
   if (error) throw new Error(error.message)

@@ -4,16 +4,15 @@ import { useState, useMemo, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
-import { Factory, Plus, UserPlus, Search, MapPin, Shield, MoreHorizontal, Building2, Camera, Package } from 'lucide-react'
+import { Plus, Search, MapPin, MoreHorizontal, Building2, Camera } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
-import { createFactory, assignFactoryToProject, updateFactoryStatus } from '../actions'
+import { assignFactoryToProject, updateFactoryStatus } from '../actions'
 import { toast } from 'sonner'
 import type { UserRole } from '@/types/database'
 
@@ -45,7 +44,6 @@ const FILTER_TABS = [
   { label: 'Inactive', value: 'inactive' },
 ]
 
-const CERT_OPTIONS = ['ISO 9001', 'GOTS', 'OEKO-TEX', 'BSCI', 'SA8000', 'WRAP', 'GRS']
 
 interface Props { factories: FactoryRow[]; projects: ProjectRow[]; userRole: UserRole; orgId?: string }
 
@@ -53,14 +51,11 @@ export function FactoriesClient({ factories, projects, userRole, orgId }: Props)
   const router = useRouter()
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
-  const [showAddDialog, setShowAddDialog] = useState(false)
-  const [showRegisterDialog, setShowRegisterDialog] = useState(false)
   const [assignDialog, setAssignDialog] = useState<FactoryRow | null>(null)
   const [selectedProject, setSelectedProject] = useState('')
   const [pending, startTransition] = useTransition()
 
   const canAdd = ['super_admin', 'brand_manager'].includes(userRole)
-  const canSelfRegister = ['factory_manager', 'super_admin'].includes(userRole)
 
   const filtered = useMemo(() => {
     return factories.filter(f => {
@@ -143,13 +138,8 @@ export function FactoriesClient({ factories, projects, userRole, orgId }: Props)
               + New audit
             </Button>
           )}
-          {canSelfRegister && (
-            <Button variant="outline" size="sm" onClick={() => setShowRegisterDialog(true)}>
-              <UserPlus className="w-4 h-4 mr-1.5" /> Register
-            </Button>
-          )}
           {canAdd && (
-            <Button size="sm" onClick={() => setShowAddDialog(true)}>
+            <Button size="sm" onClick={() => router.push('/factories/new')}>
               <Plus className="w-4 h-4 mr-1.5" /> Add Factory
             </Button>
           )}
@@ -179,7 +169,7 @@ export function FactoriesClient({ factories, projects, userRole, orgId }: Props)
           <Building2 className="w-12 h-12 mx-auto text-muted-foreground/30 mb-4" />
           <h3 className="text-lg font-semibold text-foreground mb-1">No factories found</h3>
           <p className="text-sm text-muted-foreground mb-6">Add your first manufacturing partner.</p>
-          {canAdd && <Button onClick={() => setShowAddDialog(true)}><Plus className="w-4 h-4 mr-1.5" /> Add Factory</Button>}
+          {canAdd && <Button onClick={() => router.push('/factories/new')}><Plus className="w-4 h-4 mr-1.5" /> Add Factory</Button>}
         </div>
       ) : (
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -352,8 +342,6 @@ export function FactoriesClient({ factories, projects, userRole, orgId }: Props)
       )}
 
       {/* ── Dialogs (kept from original) ── */}
-      <FactoryFormDialog open={showAddDialog} onClose={() => setShowAddDialog(false)} title="Add Factory" submitLabel="Add Factory" isSelfRegister={false} />
-      <FactoryFormDialog open={showRegisterDialog} onClose={() => setShowRegisterDialog(false)} title="Register My Factory" submitLabel="Register" isSelfRegister={true} />
       <Dialog open={!!assignDialog} onOpenChange={() => setAssignDialog(null)}>
         <DialogContent>
           <DialogHeader><DialogTitle>Assign {assignDialog?.name} to Project</DialogTitle></DialogHeader>
@@ -377,71 +365,3 @@ export function FactoriesClient({ factories, projects, userRole, orgId }: Props)
   )
 }
 
-/* ── Factory Form Dialog ── */
-function FactoryFormDialog({ open, onClose, title, submitLabel, isSelfRegister }: {
-  open: boolean; onClose: () => void; title: string; submitLabel: string; isSelfRegister: boolean
-}) {
-  const [name, setName] = useState('')
-  const [country, setCountry] = useState('')
-  const [city, setCity] = useState('')
-  const [contactName, setContactName] = useState('')
-  const [contactEmail, setContactEmail] = useState('')
-  const [contactPhone, setContactPhone] = useState('')
-  const [code, setCode] = useState('')
-  const [certs, setCerts] = useState<string[]>([])
-  const [saving, setSaving] = useState(false)
-
-  function toggleCert(c: string) { setCerts(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c]) }
-  function resetForm() { setName(''); setCountry(''); setCity(''); setContactName(''); setContactEmail(''); setContactPhone(''); setCode(''); setCerts([]) }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!name.trim()) return
-    setSaving(true)
-    try {
-      await createFactory({ name, country, city, contact_name: contactName, contact_email: contactEmail, contact_phone: contactPhone, code, certifications: certs, is_self_registered: isSelfRegister })
-      toast.success(isSelfRegister ? 'Factory registered!' : 'Factory added')
-      resetForm(); onClose()
-    } catch (err: any) { toast.error(err?.message || 'Failed') }
-    finally { setSaving(false) }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5"><Label>Factory Name *</Label><Input value={name} onChange={e => setName(e.target.value)} placeholder="ABC Garments Ltd." required /></div>
-            <div className="space-y-1.5"><Label>Factory Code</Label><Input value={code} onChange={e => setCode(e.target.value)} placeholder="e.g. FAC-001" /></div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5"><Label>Country *</Label><Input value={country} onChange={e => setCountry(e.target.value)} placeholder="India" required /></div>
-            <div className="space-y-1.5"><Label>City</Label><Input value={city} onChange={e => setCity(e.target.value)} placeholder="Tirupur" /></div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5"><Label>Contact Name *</Label><Input value={contactName} onChange={e => setContactName(e.target.value)} placeholder="John Smith" required /></div>
-            <div className="space-y-1.5"><Label>Contact Email *</Label><Input type="email" value={contactEmail} onChange={e => setContactEmail(e.target.value)} placeholder="john@factory.com" required /></div>
-          </div>
-          <div className="space-y-1.5"><Label>Contact Phone</Label><Input value={contactPhone} onChange={e => setContactPhone(e.target.value)} placeholder="+91 98765 43210" /></div>
-          <div className="space-y-2">
-            <Label>Certifications</Label>
-            <div className="flex flex-wrap gap-2">
-              {CERT_OPTIONS.map(cert => (
-                <button key={cert} type="button" onClick={() => toggleCert(cert)}
-                  className={cn('px-3 py-1.5 rounded-lg text-xs font-medium border transition-all',
-                    certs.includes(cert) ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:border-muted-foreground/60')}>
-                  {cert}
-                </button>
-              ))}
-            </div>
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit" disabled={saving}>{saving ? 'Saving...' : submitLabel}</Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  )
-}
