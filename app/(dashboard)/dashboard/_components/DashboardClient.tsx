@@ -1,332 +1,288 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import {
-  ShieldCheck, CircleCheck, Truck, FolderKanban, AlertTriangle, Factory as FactoryIcon,
-  TrendingUp, ArrowUpRight, Plus,
-} from 'lucide-react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { cn } from '@/lib/utils'
-import { KpiCard, type KpiCardProps } from './KpiCard'
+import { FolderKanban, ClipboardCheck, Factory, TrendingUp, Users, FileText, Check } from 'lucide-react'
 
 /* ─── TYPES ─── */
 
-export interface TrendPoint {
-  date: string
-  passRate: number
-  defectRate: number
-  aqlScore: number
-  reworkRate: number
-}
-
-export interface CategoryRow {
-  label: string
-  count: number
-  percentage: number
-  bg: string
-  color: string
-}
-
-export interface RecentInspection {
-  id: string
-  inspectionNo: string
-  factoryName: string | null
-  category: string | null
-  aqlLevel: string
-  score: number | null
-  result: string
-  date: string
-}
-
 export interface DashboardData {
   firstName: string
-  // Inline metrics
-  inspectionsToday: number
-  defectFreeRate: number
-  pendingApprovals: number
-  activeFactories: number
-  criticalAlerts: number
-  // KPI cards
-  kpiCards: KpiCardProps[]
-  // Category analysis
-  categories: string[]
-  categoryData: Record<string, CategoryRow[]>
-  // Trend chart
-  trendData: TrendPoint[]
-  // Recent inspections
-  recentInspections: RecentInspection[]
-  // Factory audit scores
+  role: string
+  projectCount: number
+  inspectionCount: number
+  factoryCount: number
+  passRate: number | null
+  passed: number
+  totalInspections: number
+  doneCount: number
+  hasFactory: boolean
+  hasProject: boolean
+  hasTemplate: boolean
+  hasInspection: boolean
+  hasTeamMember: boolean
+  recentActivity: { title: string; detail: string; category: string; createdAt: string }[]
   factoryAuditScores?: { id: string; name: string; score: number; result: string }[]
 }
 
 /* ─── CONSTANTS ─── */
 
-const TOOLTIP_STYLE = {
-  background: 'var(--card)',
-  border: '1px solid var(--border)',
-  borderRadius: 8,
-  fontSize: 12,
+const ACTIVITY_COLORS: Record<string, string> = {
+  brand: '#378ADD', factory: '#BA7517', inspection_pass: '#1D9E75',
+  inspection_fail: '#E24B4A', system: '#534AB7',
 }
 
-const RESULT_BADGE: Record<string, { bg: string; color: string }> = {
-  pass: { bg: '#E1F5EE', color: '#085041' },
-  fail: { bg: '#FCEBEB', color: '#791F1F' },
-  conditional_pass: { bg: '#FAEEDA', color: '#633806' },
-  pending: { bg: '#FAEEDA', color: '#633806' },
+const SLICER_STEPS = [
+  { title: 'Create account', sub: 'Organisation set up \u00B7 Role selected', link: '/settings', doneAction: 'View settings' },
+  { title: 'Add your first factory', sub: 'Connect your manufacturing partner', link: '/factories/new' },
+  { title: 'Create first project', sub: 'Season, styles and deadlines', link: '/projects/new' },
+  { title: 'Inspection template', sub: 'Garments \u00B7 Footwear \u00B7 Gloves \u00B7 Headwear', link: '/settings/templates' },
+  { title: 'Run first inspection', sub: 'AQL \u00B7 Defect logging \u00B7 PDF report', link: '/inspections/new' },
+  { title: 'Invite your team', sub: 'Brand Manager \u00B7 Inspector \u00B7 Factory Manager', link: '/settings/users' },
+]
+
+/* ─── SLICER CARD STYLE ─── */
+
+function getCardStyle(index: number, doneCount: number): React.CSSProperties {
+  const base: React.CSSProperties = {
+    flexShrink: 0, width: '176px', borderRadius: '14px', padding: '14px',
+    cursor: 'pointer', transition: 'all 0.35s ease', position: 'relative',
+    overflow: 'hidden', display: 'flex', flexDirection: 'column',
+    border: '0.5px solid var(--border)', background: 'var(--card)',
+  }
+  if (index < doneCount) {
+    return { ...base, opacity: 0.45, borderColor: '#9FE1CB', background: '#E1F5EE', transform: 'scale(0.97)', filter: 'saturate(0.6)' }
+  }
+  if (index === doneCount) {
+    return { ...base, opacity: 1, border: '2px solid #BA7517', background: 'var(--card)', transform: 'scale(1.04) translateY(-4px)', filter: 'none' }
+  }
+  const dist = Math.min(index - doneCount, 5)
+  const opMap = [1, 0.72, 0.55, 0.40, 0.28, 0.18]
+  const scMap = [1, 0.99, 0.98, 0.97, 0.96, 0.95]
+  const saMap = [1, 0.85, 0.6, 0.4, 0.3, 0.2]
+  return { ...base, opacity: opMap[dist], transform: `scale(${scMap[dist]})`, filter: `saturate(${saMap[dist]})` }
 }
 
 /* ─── COMPONENT ─── */
 
 export function DashboardClient({ data }: { data: DashboardData }) {
-  const [activeCategory, setActiveCategory] = useState(data.categories[0] ?? 'All')
-  const [trendRange, setTrendRange] = useState('30')
+  const router = useRouter()
 
-  const filteredTrend = useMemo(() => {
-    const days = parseInt(trendRange)
-    return data.trendData.slice(-days)
-  }, [data.trendData, trendRange])
+  const roleLabel = data.role === 'super_admin' ? 'Super Admin'
+    : data.role === 'brand_manager' ? 'Brand Manager'
+    : data.role === 'factory_manager' ? 'Factory Manager'
+    : data.role?.charAt(0).toUpperCase() + data.role?.slice(1) || 'User'
 
-  const activeCategoryRows = data.categoryData[activeCategory] ?? []
-
-  const metrics = [
-    { label: 'Inspections today', value: data.inspectionsToday },
-    { label: 'Defect-free rate', value: `${data.defectFreeRate}%` },
-    { label: 'Pending approvals', value: data.pendingApprovals },
-    { label: 'Active factories', value: data.activeFactories },
-    { label: 'Critical alerts', value: data.criticalAlerts, danger: data.criticalAlerts > 0 },
-  ]
+  const greeting = (() => {
+    const h = new Date().getHours()
+    if (h < 12) return 'Good morning'
+    if (h < 17) return 'Good afternoon'
+    return 'Good evening'
+  })()
 
   return (
     <div>
-      {/* ── PAGE HEADER ── */}
-      <div className="flex items-start justify-between mb-4 flex-wrap gap-3">
+      {/* ── Header ── */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
         <div>
-          <h1 className="text-lg font-medium text-foreground">Dashboard</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Welcome back, {data.firstName} &middot; Last updated just now
+          <h1 style={{ fontSize: '22px', fontWeight: 500, marginBottom: '3px' }}>
+            {greeting}, {data.firstName}
+          </h1>
+          <p style={{ fontSize: '13px', color: 'var(--muted-foreground)' }}>
+            {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })} &middot; SankalpHub &middot; {roleLabel}
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="text-xs h-8">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5" />
-            Live
-          </Button>
-          <Button variant="outline" size="sm" className="text-xs h-8">Export</Button>
-          <Button size="sm" className="text-xs h-8 gap-1" style={{ background: '#BA7517', color: '#fff', border: 'none' }} asChild>
-            <Link href="/projects"><Plus size={14} /> New Project</Link>
-          </Button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button onClick={() => router.push('/analytics')}
+            style={{ padding: '7px 14px', borderRadius: '20px', border: '0.5px solid var(--border)', background: 'var(--background)', color: 'var(--muted-foreground)', fontSize: '12px', cursor: 'pointer' }}>
+            View reports
+          </button>
+          <button onClick={() => router.push('/inspections/new')}
+            style={{ padding: '7px 16px', borderRadius: '20px', background: '#BA7517', color: '#fff', border: 'none', fontSize: '12px', fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            New inspection
+          </button>
         </div>
       </div>
 
-      {/* ── INLINE METRICS BAR ── */}
-      <div className="rounded-lg border border-border bg-card px-4 py-2.5 flex items-center gap-0 overflow-x-auto mb-4">
-        {metrics.map((m, i) => (
-          <div key={m.label} className="flex items-center">
-            {i > 0 && <div className="w-px h-5 bg-border mx-4 shrink-0" />}
-            <div className="shrink-0">
-              <span className={cn('text-lg font-medium', m.danger ? 'text-[#E24B4A]' : 'text-foreground')}>{m.value}</span>
-              <span className="text-[11px] text-muted-foreground ml-1.5">{m.label}</span>
+      {/* ── KPI Cards ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '24px' }}>
+        {[
+          { label: 'Active projects', value: data.projectCount, sub: data.projectCount ? `${data.projectCount} running` : 'No projects yet', icon: <FolderKanban className="w-3 h-3" />, iconColor: '#BA7517', iconBg: '#FAEEDA', link: '/projects' },
+          { label: 'Inspections run', value: data.inspectionCount, sub: data.inspectionCount ? `${data.inspectionCount} completed` : 'Start your first', icon: <ClipboardCheck className="w-3 h-3" />, iconColor: '#1D9E75', iconBg: '#E1F5EE', link: '/inspections' },
+          { label: 'Factories', value: data.factoryCount, sub: data.factoryCount ? `${data.factoryCount} connected` : 'Add a factory', icon: <Factory className="w-3 h-3" />, iconColor: '#378ADD', iconBg: '#E6F1FB', link: '/factories' },
+          { label: 'Pass rate', value: data.passRate !== null ? `${data.passRate}%` : '\u2014', sub: data.totalInspections > 0 ? `${data.passed}/${data.totalInspections} passed` : 'No data yet', icon: <TrendingUp className="w-3 h-3" />, iconColor: '#534AB7', iconBg: '#EEEDFE', link: '/analytics' },
+        ].map((kpi, i) => (
+          <div key={i} onClick={() => router.push(kpi.link)}
+            style={{ background: 'var(--card)', borderRadius: '12px', border: '0.5px solid var(--border)', padding: '14px 16px', cursor: 'pointer', transition: 'border-color .15s' }}
+            onMouseEnter={e => (e.currentTarget.style.borderColor = '#C9A96E')}
+            onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', fontSize: '11px', color: 'var(--muted-foreground)' }}>
+              <div style={{ width: '18px', height: '18px', borderRadius: '5px', background: kpi.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: kpi.iconColor }}>{kpi.icon}</div>
+              {kpi.label}
             </div>
+            <div style={{ fontSize: '28px', fontWeight: 500, lineHeight: 1, marginBottom: '4px', color: 'var(--foreground)' }}>{kpi.value}</div>
+            <div style={{ fontSize: '11px', color: 'var(--muted-foreground)' }}>{kpi.sub}</div>
           </div>
         ))}
       </div>
 
-      {/* ── KPI CARDS ROW 1 ── */}
-      <div className="grid md:grid-cols-3 gap-4 mb-4">
-        {data.kpiCards.slice(0, 3).map((kpi, i) => (
-          <KpiCard key={i} {...kpi} />
-        ))}
-      </div>
+      {/* ── Slicer Cards ── */}
+      <div style={{ marginBottom: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+          <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--muted-foreground)' }}>Get started \u2014 complete each step to unlock the next</span>
+          <span style={{ fontSize: '10px', color: 'var(--muted-foreground)' }}>{data.doneCount} of 6 complete</span>
+        </div>
 
-      {/* ── KPI CARDS ROW 2 ── */}
-      <div className="grid md:grid-cols-3 gap-4 mb-4">
-        {data.kpiCards.slice(3, 6).map((kpi, i) => (
-          <KpiCard key={i} {...kpi} />
-        ))}
-      </div>
+        <div className="hide-scrollbar" style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '6px', alignItems: 'stretch' }}>
+          {SLICER_STEPS.map((step, i) => {
+            const isDone = i < data.doneCount
+            const isActive = i === data.doneCount
+            const isPending = i > data.doneCount
+            return (
+              <div key={i} style={getCardStyle(i, data.doneCount)} onClick={() => !isPending && router.push(step.link)}>
+                {/* Top: icon + badge */}
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: isDone ? '#E1F5EE' : isActive ? '#FAEEDA' : 'var(--muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {isDone ? <Check className="w-4 h-4" style={{ color: '#1D9E75' }} /> :
+                     i === 0 ? <Users className="w-4 h-4" style={{ color: isActive ? '#BA7517' : 'var(--muted-foreground)' }} /> :
+                     i === 1 ? <Factory className="w-4 h-4" style={{ color: isActive ? '#BA7517' : 'var(--muted-foreground)' }} /> :
+                     i === 2 ? <FolderKanban className="w-4 h-4" style={{ color: isActive ? '#BA7517' : 'var(--muted-foreground)' }} /> :
+                     i === 3 ? <FileText className="w-4 h-4" style={{ color: isActive ? '#BA7517' : 'var(--muted-foreground)' }} /> :
+                     i === 4 ? <ClipboardCheck className="w-4 h-4" style={{ color: isActive ? '#BA7517' : 'var(--muted-foreground)' }} /> :
+                     <Users className="w-4 h-4" style={{ color: isActive ? '#BA7517' : 'var(--muted-foreground)' }} />}
+                  </div>
+                  <span style={{ fontSize: '9px', padding: '2px 7px', borderRadius: '10px', fontWeight: 500, background: isDone ? '#E1F5EE' : isActive ? '#BA7517' : 'var(--muted)', color: isDone ? '#085041' : isActive ? '#fff' : 'var(--muted-foreground)' }}>
+                    {isDone ? 'Done' : isActive ? 'Next up' : `Step ${i + 1}`}
+                  </span>
+                </div>
 
-      {/* ── BOTTOM SECTION ── */}
-      <div className="grid lg:grid-cols-2 gap-4 mb-4">
-        {/* Left — Category Analysis */}
-        <div className="rounded-[10px] border border-border bg-card p-4">
-          <h3 className="text-sm font-medium text-foreground mb-3">Quality analysis by category</h3>
-          {/* Tabs */}
-          <div className="flex gap-1.5 flex-wrap mb-4">
-            {data.categories.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={cn(
-                  'text-[10px] px-2.5 py-1 rounded-full border transition-colors',
-                  activeCategory === cat
-                    ? 'text-white border-transparent'
-                    : 'border-border text-muted-foreground hover:text-foreground',
-                )}
-                style={activeCategory === cat ? { backgroundColor: '#BA7517' } : undefined}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-          {/* Defect rows */}
-          <div className="space-y-1.5">
-            {activeCategoryRows.map(row => (
-              <div
-                key={row.label}
-                className="flex items-center justify-between px-2.5 py-[7px] rounded-md"
-                style={{ backgroundColor: row.bg, color: row.color }}
-              >
-                <span className="text-[11px] font-medium">{row.label}</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-[13px] font-medium">{row.count}</span>
-                  <span className="text-[10px] opacity-70">{row.percentage}%</span>
+                {/* Title + sub */}
+                <div style={{ fontSize: '13px', fontWeight: 500, marginBottom: '4px', lineHeight: 1.3, color: isDone ? '#085041' : isActive ? 'var(--foreground)' : 'var(--muted-foreground)' }}>{step.title}</div>
+                <div style={{ fontSize: '10px', color: 'var(--muted-foreground)', lineHeight: 1.5, flex: 1 }}>{step.sub}</div>
+
+                {/* Action */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 500, marginTop: '12px', color: isDone ? '#1D9E75' : isActive ? '#BA7517' : 'var(--muted-foreground)' }}>
+                  {isDone ? <><Check className="w-2.5 h-2.5" /> Completed</> : isActive ? <>Get started <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg></> : 'Locked'}
+                </div>
+
+                {/* Bottom bar */}
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '3px', background: 'var(--border)' }}>
+                  <div style={{ height: '100%', width: isDone ? '100%' : '0%', background: isDone ? '#1D9E75' : '#BA7517', borderRadius: '0 3px 3px 0', transition: 'width 0.4s' }} />
                 </div>
               </div>
-            ))}
-            {activeCategoryRows.length === 0 && (
-              <p className="text-xs text-muted-foreground text-center py-4">No data for this category</p>
-            )}
-          </div>
+            )
+          })}
         </div>
 
-        {/* Right — Quality Trend */}
-        <div className="rounded-[10px] border border-border bg-card p-4">
-          <div className="flex items-center justify-between mb-3">
+        {/* Dot indicators */}
+        <div style={{ display: 'flex', gap: '5px', justifyContent: 'center', marginTop: '10px' }}>
+          {SLICER_STEPS.map((_, i) => (
+            <div key={i} style={{ height: '6px', width: i === data.doneCount ? '18px' : '6px', borderRadius: i === data.doneCount ? '3px' : '50%', background: i < data.doneCount ? '#1D9E75' : i === data.doneCount ? '#BA7517' : 'var(--border)', transition: 'all 0.3s' }} />
+          ))}
+        </div>
+      </div>
+
+      {/* ── Quick Actions ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', margin: '20px 0' }}>
+        {[
+          { label: 'New inspection', sub: 'Start a quality check', iconBg: '#FAEEDA', iconColor: '#BA7517', link: '/inspections/new', icon: <ClipboardCheck className="w-4 h-4" /> },
+          { label: 'New project', sub: 'Create production order', iconBg: '#E6F1FB', iconColor: '#185FA5', link: '/projects/new', icon: <FolderKanban className="w-4 h-4" /> },
+          { label: 'Add factory', sub: 'Connect manufacturer', iconBg: '#E1F5EE', iconColor: '#1D9E75', link: '/factories/new', icon: <Factory className="w-4 h-4" /> },
+        ].map((qa, i) => (
+          <div key={i} onClick={() => router.push(qa.link)}
+            style={{ background: 'var(--card)', borderRadius: '12px', border: '0.5px solid var(--border)', padding: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', transition: 'all .15s' }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = '#C9A96E'; e.currentTarget.style.background = '#FAEEDA' }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--card)' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '9px', background: qa.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: qa.iconColor, flexShrink: 0 }}>{qa.icon}</div>
             <div>
-              <h3 className="text-sm font-medium text-foreground">Quality trend</h3>
-              <p className="text-[10px] text-muted-foreground">Operational metrics over time</p>
+              <div style={{ fontSize: '12px', fontWeight: 500 }}>{qa.label}</div>
+              <div style={{ fontSize: '10px', color: 'var(--muted-foreground)', marginTop: '2px' }}>{qa.sub}</div>
             </div>
-            <Select value={trendRange} onValueChange={setTrendRange}>
-              <SelectTrigger className="h-7 w-auto text-[10px] rounded-full px-2.5">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="7" className="text-xs">Last 7 days</SelectItem>
-                <SelectItem value="30" className="text-xs">Last 30 days</SelectItem>
-                <SelectItem value="90" className="text-xs">Last 90 days</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
+        ))}
+      </div>
 
-          {filteredTrend.length > 0 ? (
-            <ResponsiveContainer width="100%" height={150}>
-              <LineChart data={filteredTrend} margin={{ top: 4, right: 8, bottom: 0, left: -20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" />
-                <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-                <YAxis tick={{ fontSize: 10 }} domain={[0, 100]} />
-                <Tooltip contentStyle={TOOLTIP_STYLE} />
-                <Line type="monotone" dataKey="passRate" stroke="#1D9E75" strokeWidth={2} dot={false} name="Pass rate %" />
-                <Line type="monotone" dataKey="defectRate" stroke="#E24B4A" strokeWidth={2} dot={false} name="Defect rate %" />
-                <Line type="monotone" dataKey="aqlScore" stroke="#378ADD" strokeWidth={2} strokeDasharray="4 3" dot={false} name="AQL score %" />
-                <Line type="monotone" dataKey="reworkRate" stroke="#EF9F27" strokeWidth={2} strokeDasharray="2 4" dot={false} name="Rework %" />
-              </LineChart>
-            </ResponsiveContainer>
+      {/* ── Bottom Two-Column ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+        {/* Recent activity */}
+        <div style={{ background: 'var(--card)', borderRadius: '12px', border: '0.5px solid var(--border)', padding: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+            <span style={{ fontSize: '12px', fontWeight: 500 }}>Recent activity</span>
+            <span style={{ fontSize: '9px', padding: '2px 7px', borderRadius: '6px', background: 'var(--muted)', color: 'var(--muted-foreground)', fontWeight: 500 }}>Today</span>
+          </div>
+          {data.recentActivity.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '20px 0' }}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--muted-foreground)" strokeWidth="1" strokeLinecap="round" style={{ margin: '0 auto 8px', display: 'block', opacity: 0.3 }}>
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <div style={{ fontSize: '12px', color: 'var(--muted-foreground)' }}>No activity yet</div>
+              <div style={{ fontSize: '11px', color: 'var(--muted-foreground)', marginTop: '3px' }}>Actions will appear here</div>
+            </div>
           ) : (
-            <div className="h-[150px] flex items-center justify-center text-xs text-muted-foreground">No trend data available</div>
-          )}
-
-          {/* Legend */}
-          <div className="flex items-center gap-4 mt-2 flex-wrap">
-            {[
-              { label: 'Pass rate', color: '#1D9E75', dash: false },
-              { label: 'Defect rate', color: '#E24B4A', dash: false },
-              { label: 'AQL score', color: '#378ADD', dash: true },
-              { label: 'Rework %', color: '#EF9F27', dash: true },
-            ].map(l => (
-              <div key={l.label} className="flex items-center gap-1">
-                {l.dash ? (
-                  <svg width="12" height="2"><line x1="0" y1="1" x2="12" y2="1" stroke={l.color} strokeWidth="2" strokeDasharray="3 2" /></svg>
-                ) : (
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: l.color }} />
-                )}
-                <span className="text-[10px] text-muted-foreground">{l.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ── RECENT INSPECTIONS TABLE ── */}
-      <div className="rounded-[10px] border border-border bg-card overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-          <h3 className="text-sm font-medium text-foreground">Recent inspections</h3>
-          <Link href="/inspections" className="text-[11px] font-medium" style={{ color: '#C9A96E' }}>
-            View all <ArrowUpRight size={12} className="inline" />
-          </Link>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-[11px]" style={{ tableLayout: 'fixed' }}>
-            <thead>
-              <tr className="border-b border-border">
-                <th className="text-left px-4 py-2 font-medium text-muted-foreground uppercase tracking-wider" style={{ width: '14%' }}>Inspection</th>
-                <th className="text-left px-4 py-2 font-medium text-muted-foreground uppercase tracking-wider" style={{ width: '18%' }}>Factory</th>
-                <th className="text-left px-4 py-2 font-medium text-muted-foreground uppercase tracking-wider" style={{ width: '14%' }}>Category</th>
-                <th className="text-left px-4 py-2 font-medium text-muted-foreground uppercase tracking-wider" style={{ width: '8%' }}>AQL</th>
-                <th className="text-left px-4 py-2 font-medium text-muted-foreground uppercase tracking-wider" style={{ width: '10%' }}>Score</th>
-                <th className="text-left px-4 py-2 font-medium text-muted-foreground uppercase tracking-wider" style={{ width: '10%' }}>Result</th>
-                <th className="text-left px-4 py-2 font-medium text-muted-foreground uppercase tracking-wider" style={{ width: '12%' }}>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.recentInspections.length === 0 ? (
-                <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">No inspections yet</td></tr>
-              ) : (
-                data.recentInspections.map((insp) => {
-                  const badge = RESULT_BADGE[insp.result] ?? RESULT_BADGE.pending
-                  return (
-                    <tr key={insp.id} className="border-b border-border last:border-0 hover:bg-accent/20 transition-colors">
-                      <td className="px-4 py-2.5 font-medium text-foreground truncate">{insp.inspectionNo}</td>
-                      <td className="px-4 py-2.5 text-muted-foreground truncate">{insp.factoryName ?? '—'}</td>
-                      <td className="px-4 py-2.5 text-muted-foreground truncate">{insp.category ?? '—'}</td>
-                      <td className="px-4 py-2.5 text-muted-foreground">{insp.aqlLevel}</td>
-                      <td className="px-4 py-2.5 text-foreground font-medium">{insp.score != null ? `${insp.score}%` : '—'}</td>
-                      <td className="px-4 py-2.5">
-                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded" style={{ backgroundColor: badge.bg, color: badge.color }}>
-                          {insp.result === 'conditional_pass' ? 'Review' : insp.result.charAt(0).toUpperCase() + insp.result.slice(1)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-2.5 text-muted-foreground">{insp.date}</td>
-                    </tr>
-                  )
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* ── Factory Audit Scores Widget ── */}
-      {data.factoryAuditScores && data.factoryAuditScores.length > 0 && (
-        <div className="bg-card border border-border rounded-xl p-5 mt-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-foreground">Factory Audit Scores</h3>
-            <Link href="/audits/factory" className="text-xs text-primary hover:underline">View all &rarr;</Link>
-          </div>
-          <div className="space-y-2">
-            {data.factoryAuditScores.map(f => {
-              const isApproved = f.result === 'approved'
-              const isConditional = f.result === 'conditional'
-              return (
-                <div key={f.id} className="flex items-center gap-3 py-1.5">
-                  <span className="text-xs text-foreground flex-1 truncate">{f.name}</span>
-                  <span className="text-sm font-medium" style={{ color: isApproved ? '#085041' : isConditional ? '#BA7517' : '#E24B4A' }}>
-                    {f.score}%
-                  </span>
-                  <span style={{
-                    fontSize: '9px', padding: '1px 6px', borderRadius: '4px', fontWeight: 600,
-                    background: isApproved ? '#E1F5EE' : isConditional ? '#FAEEDA' : '#FCEBEB',
-                    color: isApproved ? '#085041' : isConditional ? '#633806' : '#791F1F',
-                  }}>
-                    {isApproved ? 'Approved' : isConditional ? 'Conditional' : 'Failed'}
-                  </span>
+            data.recentActivity.map((item, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 0', borderBottom: i < data.recentActivity.length - 1 ? '0.5px solid var(--border)' : 'none' }}>
+                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: ACTIVITY_COLORS[item.category] || '#534AB7', flexShrink: 0 }} />
+                <div style={{ fontSize: '12px', flex: 1 }}>{item.title}</div>
+                <div style={{ fontSize: '10px', color: 'var(--muted-foreground)' }}>
+                  {item.createdAt ? new Date(item.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : ''}
                 </div>
-              )
-            })}
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Setup progress */}
+        <div style={{ background: 'var(--card)', borderRadius: '12px', border: '0.5px solid var(--border)', padding: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+            <span style={{ fontSize: '12px', fontWeight: 500 }}>Setup progress</span>
+            <span style={{ fontSize: '9px', padding: '2px 7px', borderRadius: '6px', background: '#FAEEDA', color: '#633806', fontWeight: 500 }}>{data.doneCount} of 6</span>
           </div>
+
+          {/* Progress bar */}
+          <div style={{ marginBottom: '14px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--muted-foreground)', marginBottom: '5px' }}>
+              <span>Overall progress</span>
+              <span style={{ color: '#BA7517', fontWeight: 500 }}>{Math.round((data.doneCount / 6) * 100)}%</span>
+            </div>
+            <div style={{ height: '6px', background: 'var(--muted)', borderRadius: '3px', overflow: 'hidden' }}>
+              <div style={{ width: `${Math.round((data.doneCount / 6) * 100)}%`, height: '100%', background: '#BA7517', borderRadius: '3px', transition: 'width 0.6s' }} />
+            </div>
+          </div>
+
+          {/* Step list */}
+          {SLICER_STEPS.map((step, i) => {
+            const isDone = i < data.doneCount
+            const isActive = i === data.doneCount
+            return (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', fontSize: '11px' }}>
+                <div style={{ width: '18px', height: '18px', borderRadius: '50%', background: isDone ? '#1D9E75' : isActive ? '#BA7517' : 'var(--muted)', border: !isDone && !isActive ? '1.5px solid var(--border)' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  {isDone && <Check className="w-2 h-2 text-white" />}
+                  {isActive && <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#fff' }} />}
+                </div>
+                <span style={{ color: isDone ? '#085041' : isActive ? '#633806' : 'var(--muted-foreground)', fontWeight: isActive ? 500 : 400 }}>{step.title}</span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* ── Factory Audit Scores ── */}
+      {data.factoryAuditScores && data.factoryAuditScores.length > 0 && (
+        <div style={{ background: 'var(--card)', borderRadius: '12px', border: '0.5px solid var(--border)', padding: '16px', marginTop: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+            <span style={{ fontSize: '12px', fontWeight: 500 }}>Factory audit scores</span>
+            <Link href="/audits/factory" style={{ fontSize: '10px', color: '#BA7517' }}>View all &rarr;</Link>
+          </div>
+          {data.factoryAuditScores.map(f => (
+            <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 0', fontSize: '12px' }}>
+              <span style={{ flex: 1 }}>{f.name}</span>
+              <span style={{ fontWeight: 500, color: f.result === 'approved' ? '#085041' : f.result === 'conditional' ? '#BA7517' : '#E24B4A' }}>{f.score}%</span>
+              <span style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '4px', fontWeight: 600, background: f.result === 'approved' ? '#E1F5EE' : f.result === 'conditional' ? '#FAEEDA' : '#FCEBEB', color: f.result === 'approved' ? '#085041' : f.result === 'conditional' ? '#633806' : '#791F1F' }}>
+                {f.result === 'approved' ? 'Approved' : f.result === 'conditional' ? 'Conditional' : 'Failed'}
+              </span>
+            </div>
+          ))}
         </div>
       )}
     </div>
