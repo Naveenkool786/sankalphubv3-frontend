@@ -311,8 +311,8 @@ export default function NewProjectPage() {
         })}
       </div>
 
-      {/* ══════════════ STEP 1 — Basics + Upload ══════════════ */}
-      {step === 1 && (
+      {/* ══════════════ STEP 1 — Basics + Product Image + Upload ══════════════ */}
+      {step === 1 && (<>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'stretch' }}>
           {/* Left — Form */}
           <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -350,12 +350,16 @@ export default function NewProjectPage() {
                 <label style={labelStyle}>Description</label>
                 <textarea style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }} value={form.description} onChange={e => set('description', e.target.value)} placeholder="Brief product description" />
               </div>
+            </div>
+          </div>
 
-              {/* Product image */}
-              <div>
-                <label style={labelStyle}>Product image</label>
+          {/* Right — Product Image */}
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ ...cardStyle, flex: 1, display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <h2 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--foreground)' }}>Product image</h2>
+              <div style={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column' }}>
                 {form.productImagePreview ? (
-                  <div style={{ position: 'relative', flex: 'none', height: '300px', width: '100%', borderRadius: '8px', overflow: 'hidden', background: 'var(--muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ borderRadius: '8px', background: 'var(--muted)', flex: '0 0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '300px', position: 'relative', overflow: 'hidden' }}>
                     <img src={form.productImagePreview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center' }} />
                     <button onClick={() => { set('productImageFile', null); set('productImagePreview', '') }}
                       style={{ position: 'absolute', top: '6px', right: '6px', background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', borderRadius: '6px', padding: '3px 10px', fontSize: '10px', cursor: 'pointer' }}>
@@ -364,8 +368,8 @@ export default function NewProjectPage() {
                   </div>
                 ) : (
                   <div onClick={() => fileInputRef.current?.click()}
-                    style={{ border: '1.5px dashed var(--border)', borderRadius: '8px', padding: '16px', textAlign: 'center', cursor: 'pointer', background: 'var(--muted)' }}>
-                    <Camera className="w-5 h-5 mx-auto mb-1" style={{ color: 'var(--muted-foreground)' }} />
+                    style={{ border: '1.5px dashed var(--border)', borderRadius: '8px', cursor: 'pointer', background: 'var(--muted)', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
+                    <Camera className="w-5 h-5 mb-1" style={{ color: 'var(--muted-foreground)' }} />
                     <p style={{ fontSize: '11px', color: 'var(--foreground)' }}>Click to upload product image</p>
                     <p style={{ fontSize: '9px', color: 'var(--muted-foreground)' }}>JPG, PNG, WebP &middot; max 5MB</p>
                   </div>
@@ -374,71 +378,69 @@ export default function NewProjectPage() {
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Right — AI Upload */}
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <div style={{ ...cardStyle, flex: 1, display: 'flex', flexDirection: 'column' }}>
-              <div className="flex items-center gap-2 mb-3">
-                <h2 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--foreground)' }}>Upload &amp; auto-fill</h2>
-                <span style={{ fontSize: '9px', background: '#EEEDFE', color: '#534AB7', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>AI</span>
-              </div>
+        {/* Upload & auto-fill — full width below grid */}
+        <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', marginTop: '16px' }}>
+          <div className="flex items-center gap-2 mb-3">
+            <h2 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--foreground)' }}>Upload &amp; auto-fill</h2>
+            <span style={{ fontSize: '9px', background: '#EEEDFE', color: '#534AB7', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>AI</span>
+          </div>
 
-              {extractedFields.length > 0 ? (
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {extractedFields.map(f => (
-                    <div key={f.key} className="flex items-center gap-2" style={{ fontSize: '11px' }}>
-                      <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#1D9E75', flexShrink: 0 }} />
-                      <span style={{ color: 'var(--muted-foreground)', minWidth: '60px' }}>{f.label}</span>
-                      <span style={{ color: 'var(--foreground)', flex: 1, fontWeight: 500 }}>{f.value}</span>
-                    </div>
-                  ))}
-                  {fillCount > 0 ? (
-                    <div className="flex items-center gap-2 mt-2" style={{ fontSize: '11px', color: '#1D9E75' }}>
-                      <Check className="w-3.5 h-3.5" /> {fillCount} fields filled
-                    </div>
-                  ) : (
-                    <button onClick={fillAllFields}
-                      style={{ marginTop: 'auto', width: '100%', padding: '8px', background: '#BA7517', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
-                      Fill all fields &rarr;
-                    </button>
-                  )}
+          {extractedFields.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {extractedFields.map(f => (
+                <div key={f.key} className="flex items-center gap-2" style={{ fontSize: '11px' }}>
+                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#1D9E75', flexShrink: 0 }} />
+                  <span style={{ color: 'var(--muted-foreground)', minWidth: '60px' }}>{f.label}</span>
+                  <span style={{ color: 'var(--foreground)', flex: 1, fontWeight: 500 }}>{f.value}</span>
+                </div>
+              ))}
+              {fillCount > 0 ? (
+                <div className="flex items-center gap-2 mt-2" style={{ fontSize: '11px', color: '#1D9E75' }}>
+                  <Check className="w-3.5 h-3.5" /> {fillCount} fields filled
                 </div>
               ) : (
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                  onClick={() => !extracting && docInputRef.current?.click()}>
-                  <div style={{ border: '1.5px dashed var(--border)', borderRadius: '10px', padding: '24px 16px', textAlign: 'center', cursor: extracting ? 'default' : 'pointer', width: '100%' }}>
-                    {extracting ? (
-                      <Loader2 className="w-6 h-6 mx-auto mb-2 animate-spin" style={{ color: '#BA7517' }} />
-                    ) : (
-                      <Upload className="w-6 h-6 mx-auto mb-2" style={{ color: 'var(--muted-foreground)' }} />
-                    )}
-                    <p style={{ fontSize: '11px', color: 'var(--foreground)' }}>
-                      {extracting ? 'Extracting fields...' : 'Drop PO or tech pack'}
-                    </p>
-                    <p style={{ fontSize: '9px', color: 'var(--muted-foreground)', marginTop: '4px' }}>
-                      Excel, PDF, Word, CSV
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5 justify-center mt-1">
-                    {[
-                      { label: 'Excel', color: '#185FA5', bg: '#E6F1FB' },
-                      { label: 'PDF', color: '#1D6B3D', bg: '#E1F5EE' },
-                      { label: 'Word', color: '#534AB7', bg: '#EEEDFE' },
-                      { label: 'CSV', color: '#854F0B', bg: '#FAEEDA' },
-                    ].map(b => (
-                      <span key={b.label} style={{ fontSize: '9px', padding: '2px 8px', borderRadius: '4px', background: b.bg, color: b.color, fontWeight: 600 }}>{b.label}</span>
-                    ))}
-                  </div>
-                  <p style={{ fontSize: '9px', color: 'var(--muted-foreground)', textAlign: 'center', lineHeight: '1.5', marginTop: '4px', padding: '0 4px' }}>
-                    AI reads your PO or tech pack and fills project name, factory, sizes, PO number, delivery date, AQL level
-                  </p>
-                </div>
+                <button onClick={fillAllFields}
+                  style={{ marginTop: '8px', width: '100%', padding: '8px', background: '#BA7517', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
+                  Fill all fields &rarr;
+                </button>
               )}
-              <input ref={docInputRef} type="file" accept=".xlsx,.xls,.pdf,.docx,.csv" style={{ display: 'none' }} onChange={handleDocUpload} />
             </div>
-          </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', cursor: extracting ? 'default' : 'pointer' }}
+              onClick={() => !extracting && docInputRef.current?.click()}>
+              <div style={{ border: '1.5px dashed var(--border)', borderRadius: '10px', padding: '20px 16px', textAlign: 'center', flex: 1 }}>
+                {extracting ? (
+                  <Loader2 className="w-6 h-6 mx-auto mb-2 animate-spin" style={{ color: '#BA7517' }} />
+                ) : (
+                  <Upload className="w-6 h-6 mx-auto mb-2" style={{ color: 'var(--muted-foreground)' }} />
+                )}
+                <p style={{ fontSize: '11px', color: 'var(--foreground)' }}>
+                  {extracting ? 'Extracting fields...' : 'Drop PO or tech pack'}
+                </p>
+                <p style={{ fontSize: '9px', color: 'var(--muted-foreground)', marginTop: '4px' }}>
+                  Excel, PDF, Word, CSV
+                </p>
+                <div className="flex flex-wrap gap-1.5 justify-center mt-2">
+                  {[
+                    { label: 'Excel', color: '#185FA5', bg: '#E6F1FB' },
+                    { label: 'PDF', color: '#1D6B3D', bg: '#E1F5EE' },
+                    { label: 'Word', color: '#534AB7', bg: '#EEEDFE' },
+                    { label: 'CSV', color: '#854F0B', bg: '#FAEEDA' },
+                  ].map(b => (
+                    <span key={b.label} style={{ fontSize: '9px', padding: '2px 8px', borderRadius: '4px', background: b.bg, color: b.color, fontWeight: 600 }}>{b.label}</span>
+                  ))}
+                </div>
+              </div>
+              <p style={{ fontSize: '9px', color: 'var(--muted-foreground)', lineHeight: '1.5', maxWidth: '200px' }}>
+                AI reads your PO or tech pack and fills project name, factory, sizes, PO number, delivery date, AQL level
+              </p>
+            </div>
+          )}
+          <input ref={docInputRef} type="file" accept=".xlsx,.xls,.pdf,.docx,.csv" style={{ display: 'none' }} onChange={handleDocUpload} />
         </div>
-      )}
+      </>)}
 
       {/* ══════════════ STEP 2 — Factory & Production ══════════════ */}
       {step === 2 && (
