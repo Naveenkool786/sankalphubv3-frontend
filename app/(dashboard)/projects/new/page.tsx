@@ -355,8 +355,8 @@ export default function NewProjectPage() {
               <div>
                 <label style={labelStyle}>Product image</label>
                 {form.productImagePreview ? (
-                  <div style={{ position: 'relative', height: '120px', borderRadius: '8px', overflow: 'hidden' }}>
-                    <img src={form.productImagePreview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <div style={{ position: 'relative', flex: 'none', height: '300px', width: '100%', borderRadius: '8px', overflow: 'hidden', background: 'var(--muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <img src={form.productImagePreview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center' }} />
                     <button onClick={() => { set('productImageFile', null); set('productImagePreview', '') }}
                       style={{ position: 'absolute', top: '6px', right: '6px', background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', borderRadius: '6px', padding: '3px 10px', fontSize: '10px', cursor: 'pointer' }}>
                       Remove
