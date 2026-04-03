@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import { ArrowLeft, ArrowRight, Check, Camera, Upload, Loader2, Building2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -30,6 +30,7 @@ interface ExtractedData {
 
 export default function NewFactoryPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const photoInputRef = useRef<HTMLInputElement>(null)
   const docInputRef = useRef<HTMLInputElement>(null)
   const [step, setStep] = useState(1)
@@ -38,6 +39,8 @@ export default function NewFactoryPage() {
   const [extractedFields, setExtractedFields] = useState<ExtractedData | null>(null)
   const [orgId, setOrgId] = useState('')
   const [userId, setUserId] = useState('')
+  const [draftId, setDraftId] = useState<string | null>(null)
+  const [savedDraft, setSavedDraft] = useState<any>(null)
 
   const [form, setForm] = useState({
     name: '', code: '', country: '', city: '',
@@ -75,6 +78,83 @@ export default function NewFactoryPage() {
       if (oid) setOrgId(oid)
     })()
   }, [])
+
+  /* ── localStorage auto-save (every 10s) ── */
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (form.name) {
+        localStorage.setItem('factory-wizard-draft', JSON.stringify({ form, step, savedAt: new Date().toISOString() }))
+      }
+    }, 10000)
+    return () => clearInterval(interval)
+  }, [form, step])
+
+  /* ── Restore draft from localStorage on mount ── */
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('factory-wizard-draft')
+      if (raw) {
+        const draft = JSON.parse(raw)
+        if (draft?.form?.name) setSavedDraft(draft)
+      }
+    } catch { localStorage.removeItem('factory-wizard-draft') }
+  }, [])
+
+  /* ── Restore draft from Supabase via ?draftId= ── */
+  useEffect(() => {
+    const did = searchParams.get('draftId')
+    if (!did) return
+    (async () => {
+      const supabase = getSupabase()
+      const { data } = await (supabase.from('factories') as any).select('*').eq('id', did).single()
+      if (data) {
+        setDraftId(data.id)
+        setSavedDraft(null) // don't show localStorage banner
+        localStorage.removeItem('factory-wizard-draft')
+        setForm({
+          name: data.name || '', code: data.code || '', country: data.country || '', city: data.city || '',
+          contactName: data.contact_name || '', contactEmail: data.contact_email || '', contactPhone: data.contact_phone || '',
+          website: data.website || '', notes: data.notes || '', status: 'active',
+          photoFile: null, photoPreview: data.photo_url || '',
+          totalLines: data.total_lines?.toString() || '', maxCapacity: data.max_capacity?.toString() || '',
+          categories: data.categories || [], certifications: data.certifications || [],
+          aqlDefault: data.aql_default || '2.5', inspectionPreference: data.inspection_preference || 'final',
+        })
+      }
+    })()
+  }, [searchParams])
+
+  /* ── Save draft to Supabase (silent) ── */
+  const saveDraftToSupabase = useCallback(async () => {
+    if (!form.name || !orgId) return
+    try {
+      const supabase = getSupabase()
+      const draftData: any = {
+        org_id: orgId, name: form.name || 'Untitled factory', code: form.code || null,
+        country: form.country || null, city: form.city || null,
+        contact_name: form.contactName || null, contact_email: form.contactEmail || null,
+        contact_phone: form.contactPhone || null, website: form.website || null,
+        notes: form.notes || null, status: 'inactive', is_active: false,
+        total_lines: parseInt(form.totalLines) || null, max_capacity: parseInt(form.maxCapacity) || null,
+        categories: form.categories.length > 0 ? form.categories : null,
+        certifications: form.certifications.length > 0 ? form.certifications : null,
+        aql_default: form.aqlDefault || null, created_by: userId,
+      }
+      if (draftId) {
+        await (supabase.from('factories') as any).update(draftData).eq('id', draftId)
+      } else {
+        const { data } = await (supabase.from('factories') as any).insert(draftData).select('id').single()
+        if (data) setDraftId(data.id)
+      }
+    } catch { /* silent */ }
+  }, [form, orgId, userId, draftId])
+
+  /* ── Save draft on beforeunload ── */
+  useEffect(() => {
+    const handleUnload = () => saveDraftToSupabase()
+    window.addEventListener('beforeunload', handleUnload)
+    return () => window.removeEventListener('beforeunload', handleUnload)
+  }, [saveDraftToSupabase])
 
   /* ── Photo upload ── */
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -150,8 +230,8 @@ export default function NewFactoryPage() {
         }
       }
 
-      // Insert factory
-      const { error } = await (supabase.from('factories') as any).insert({
+      // Save factory (update draft or insert new)
+      const factoryData: any = {
         org_id: orgId,
         name: form.name.trim(),
         code: form.code.trim() || null,
@@ -164,7 +244,7 @@ export default function NewFactoryPage() {
         notes: form.notes.trim() || null,
         status: asDraft ? 'inactive' : form.status,
         is_active: asDraft ? false : form.status === 'active',
-        photo_url: photoUrl || null,
+        photo_url: photoUrl || form.photoPreview || null,
         total_lines: parseInt(form.totalLines) || null,
         max_capacity: parseInt(form.maxCapacity) || null,
         categories: form.categories.length > 0 ? form.categories : null,
@@ -172,9 +252,19 @@ export default function NewFactoryPage() {
         aql_default: form.aqlDefault || null,
         inspection_preference: form.inspectionPreference || null,
         created_by: userId,
-      })
+      }
+
+      let error: any = null
+      if (draftId) {
+        const res = await (supabase.from('factories') as any).update(factoryData).eq('id', draftId)
+        error = res.error
+      } else {
+        const res = await (supabase.from('factories') as any).insert(factoryData)
+        error = res.error
+      }
 
       if (error) throw new Error(error.message)
+      localStorage.removeItem('factory-wizard-draft')
       toast.success(asDraft ? 'Draft saved' : 'Factory added')
       router.push('/factories')
     } catch (err: any) {
@@ -195,6 +285,7 @@ export default function NewFactoryPage() {
       if (!form.name.trim()) { toast.error('Factory name is required'); return }
       if (!form.country.trim()) { toast.error('Country is required'); return }
     }
+    saveDraftToSupabase() // fire-and-forget
     if (step < 3) setStep(step + 1)
   }
   const goBack = () => { if (step > 1) setStep(step - 1) }
@@ -207,6 +298,48 @@ export default function NewFactoryPage() {
 
       <h1 className="text-xl font-bold text-foreground mb-1">Add Factory</h1>
       <p className="text-sm text-muted-foreground mb-6">Set up a new manufacturing partner</p>
+
+      {/* ── Draft restore banner ── */}
+      {savedDraft && !draftId && (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '10px 14px', background: '#FAEEDA', border: '0.5px solid #C9A96E',
+          borderRadius: '8px', marginBottom: '16px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#633806" strokeWidth="2" strokeLinecap="round">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+              <polyline points="17 21 17 13 7 13 7 21"/>
+              <polyline points="7 3 7 8 15 8"/>
+            </svg>
+            <div>
+              <span style={{ fontSize: '12px', fontWeight: 500, color: '#633806' }}>
+                Unsaved draft found &mdash; {savedDraft.form?.name}
+              </span>
+              <span style={{ fontSize: '10px', color: '#854F0B', marginLeft: '8px' }}>
+                Saved {new Date(savedDraft.savedAt).toLocaleTimeString()}
+              </span>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            <button onClick={() => {
+              setForm(savedDraft.form)
+              setStep(savedDraft.step || 1)
+              setSavedDraft(null)
+            }}
+              style={{ fontSize: '11px', padding: '5px 12px', borderRadius: '7px', background: '#BA7517', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 500 }}>
+              Continue draft &rarr;
+            </button>
+            <button onClick={() => {
+              localStorage.removeItem('factory-wizard-draft')
+              setSavedDraft(null)
+            }}
+              style={{ fontSize: '11px', padding: '5px 12px', borderRadius: '7px', background: 'transparent', color: '#633806', border: '0.5px solid #C9A96E', cursor: 'pointer' }}>
+              Start fresh
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Stepper ── */}
       <div className="flex items-center gap-0 mb-8">

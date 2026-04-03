@@ -45,6 +45,16 @@ const FILTER_TABS = [
 ]
 
 
+function getMissingFields(f: FactoryRow): string {
+  const missing: string[] = []
+  if (!f.country) missing.push('country')
+  if (!f.contact_name) missing.push('contact name')
+  if (!f.contact_email) missing.push('contact email')
+  if (!f.total_lines) missing.push('production lines')
+  if (missing.length === 0) return 'Review and confirm'
+  return `Missing: ${missing.join(', ')}`
+}
+
 interface Props { factories: FactoryRow[]; projects: ProjectRow[]; userRole: UserRole; orgId?: string }
 
 export function FactoriesClient({ factories, projects, userRole, orgId }: Props) {
@@ -328,12 +338,24 @@ export function FactoriesClient({ factories, projects, userRole, orgId }: Props)
                   )}
 
                   {/* Footer */}
-                  <div style={{ borderTop: '1px solid var(--border)', paddingTop: '6px', display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--muted-foreground)' }}>
-                    <span className="flex items-center gap-1">
-                      <MapPin className="w-3 h-3" /> {[factory.city, factory.country].filter(Boolean).join(', ') || '\u2014'}
-                    </span>
-                    {factory.activeOrders > 0 && <span>{factory.activeOrders} active orders</span>}
-                  </div>
+                  {factory.status === 'inactive' && !factory.latest_audit_score ? (
+                    <div style={{ borderTop: '1px solid var(--border)', paddingTop: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: '9px', color: 'var(--muted-foreground)' }}>
+                        {getMissingFields(factory)}
+                      </span>
+                      <button onClick={e => { e.stopPropagation(); router.push(`/factories/new?draftId=${factory.id}`) }}
+                        style={{ fontSize: '10px', padding: '3px 10px', borderRadius: '6px', background: '#FAEEDA', color: '#633806', border: '0.5px solid #C9A96E', cursor: 'pointer', fontWeight: 500 }}>
+                        Continue &rarr;
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ borderTop: '1px solid var(--border)', paddingTop: '6px', display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--muted-foreground)' }}>
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-3 h-3" /> {[factory.city, factory.country].filter(Boolean).join(', ') || '\u2014'}
+                      </span>
+                      {factory.activeOrders > 0 && <span>{factory.activeOrders} active orders</span>}
+                    </div>
+                  )}
                 </div>
               </div>
             )
