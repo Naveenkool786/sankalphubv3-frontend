@@ -323,7 +323,7 @@ export default function NewInspectionPage() {
   const cardStyle: React.CSSProperties = { background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '14px', padding: '20px' }
   const inputStyle: React.CSSProperties = { width: '100%', padding: '9px 12px', background: 'var(--input)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--foreground)', fontSize: '13px', outline: 'none' }
   const labelStyle: React.CSSProperties = { fontSize: '12px', fontWeight: 500, color: 'var(--muted-foreground)', display: 'block', marginBottom: '5px' }
-  const twoCol: React.CSSProperties = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'start' }
+  const twoCol: React.CSSProperties = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'stretch' }
 
   /* ── Step validation ── */
   const canProceed = (s: number) => {
@@ -389,9 +389,9 @@ export default function NewInspectionPage() {
       {/* ═══════ STEP 1 — Setup ═══════ */}
       {step === 1 && (
         <div style={twoCol}>
-          <div style={cardStyle}>
-            <h2 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '16px' }}>Inspection Details</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ ...cardStyle, flex: 1, display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <h2 style={{ fontSize: '14px', fontWeight: 600 }}>Inspection Details</h2>
               <div><label style={labelStyle}>Project *</label>
                 <select style={{ ...inputStyle, appearance: 'auto' as any }} value={form.projectId} onChange={e => handleProjectSelect(e.target.value)}>
                   <option value="">Select project</option>
@@ -412,9 +412,9 @@ export default function NewInspectionPage() {
               </div>
             </div>
           </div>
-          <div style={cardStyle}>
-            <h2 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '16px' }}>Inspector Details</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ ...cardStyle, flex: 1, display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <h2 style={{ fontSize: '14px', fontWeight: 600 }}>Inspector Details</h2>
               <div><label style={labelStyle}>Inspector name *</label><input style={inputStyle} value={form.auditorName} onChange={e => set('auditorName', e.target.value)} placeholder="Full name" /></div>
               <div><label style={labelStyle}>Inspector type</label>
                 <select style={{ ...inputStyle, appearance: 'auto' as any }} value={form.auditorType} onChange={e => set('auditorType', e.target.value)}>
@@ -424,18 +424,18 @@ export default function NewInspectionPage() {
                 </select>
               </div>
               <div><label style={labelStyle}>Contact</label><input style={inputStyle} type="tel" value={form.auditorContact} onChange={e => set('auditorContact', e.target.value)} placeholder="+91 98765 43210" /></div>
-            </div>
-            {/* Completion checklist */}
-            <div style={{ marginTop: '20px', padding: '12px', background: 'var(--muted)', borderRadius: '8px' }}>
-              <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--foreground)', marginBottom: '8px' }}>Completion checklist</p>
-              {step1Complete.map(c => (
-                <div key={c.label} className="flex items-center gap-2" style={{ fontSize: '11px', marginBottom: '4px' }}>
-                  <div style={{ width: '14px', height: '14px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: c.done ? '#1D9E75' : 'var(--border)' }}>
-                    {c.done && <Check className="w-2.5 h-2.5 text-white" />}
+              {/* Completion checklist — fills remaining height */}
+              <div style={{ flex: 1, padding: '12px 14px', background: 'var(--muted)', borderRadius: '8px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '8px' }}>
+                <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--foreground)', marginBottom: '4px' }}>Completion checklist</p>
+                {step1Complete.map(c => (
+                  <div key={c.label} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px' }}>
+                    <div style={{ width: '16px', height: '16px', borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: c.done ? '#1D9E75' : 'transparent', border: c.done ? 'none' : '1.5px solid var(--border)' }}>
+                      {c.done && <Check className="w-2 h-2 text-white" />}
+                    </div>
+                    <span style={{ color: c.done ? '#1D9E75' : 'var(--muted-foreground)' }}>{c.label}</span>
                   </div>
-                  <span style={{ color: c.done ? '#1D9E75' : 'var(--muted-foreground)' }}>{c.label}</span>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </div>

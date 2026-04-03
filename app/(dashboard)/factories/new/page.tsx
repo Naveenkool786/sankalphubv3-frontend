@@ -374,7 +374,7 @@ export default function NewFactoryPage() {
 
       {/* ══════════════ STEP 1 — Factory Details ══════════════ */}
       {step === 1 && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'stretch' }}>
           {/* Left — Form */}
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div style={{ ...cardStyle, flex: 1, display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -424,7 +424,7 @@ export default function NewFactoryPage() {
 
           {/* Right — Photo + AI upload */}
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <div style={{ ...cardStyle, flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ ...cardStyle, flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {/* Photo */}
               {form.photoPreview ? (
                 <div style={{ position: 'relative', height: '130px', borderRadius: '8px', overflow: 'hidden', marginBottom: '10px' }}>
@@ -436,7 +436,7 @@ export default function NewFactoryPage() {
                 </div>
               ) : (
                 <div onClick={() => photoInputRef.current?.click()}
-                  style={{ height: '130px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px', border: '1.5px dashed var(--border)', borderRadius: '8px', cursor: 'pointer', background: 'var(--muted)', marginBottom: '10px' }}>
+                  style={{ flex: 1, minHeight: '140px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', border: '1.5px dashed var(--border)', borderRadius: '10px', cursor: 'pointer', background: 'var(--muted)', padding: '16px', transition: 'border-color .15s' }}>
                   <Building2 className="w-7 h-7" style={{ color: '#BA7517' }} />
                   <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--foreground)' }}>Upload factory photo</span>
                   <span style={{ fontSize: '9px', color: 'var(--muted-foreground)' }}>JPG, PNG, WebP &middot; max 5MB</span>
@@ -466,7 +466,7 @@ export default function NewFactoryPage() {
                   </button>
                 </div>
               ) : (
-                <div style={{ flex: 1, border: '1.5px dashed var(--border)', borderRadius: '8px', padding: '14px', textAlign: 'center', cursor: extracting ? 'default' : 'pointer', background: 'var(--muted)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                <div style={{ flex: 1, minHeight: '140px', border: '1.5px dashed var(--border)', borderRadius: '10px', padding: '16px', textAlign: 'center', cursor: extracting ? 'default' : 'pointer', background: 'var(--muted)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'border-color .15s' }}
                   onClick={() => !extracting && docInputRef.current?.click()}>
                   {extracting ? (
                     <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#BA7517' }} />
@@ -564,7 +564,7 @@ export default function NewFactoryPage() {
 
       {/* ══════════════ STEP 3 — Review & Save ══════════════ */}
       {step === 3 && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'stretch' }}>
           {/* Left — Summary */}
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div style={{ ...cardStyle, flex: 1 }}>
