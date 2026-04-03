@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import { Check, Upload, FileText, Sparkles, ArrowLeft, ArrowRight, Camera, Loader2, Download, FileSpreadsheet } from 'lucide-react'
@@ -63,8 +63,21 @@ export default function NewProjectPage() {
   const [extracting, setExtracting] = useState(false)
   const [extractedFields, setExtractedFields] = useState<ExtractedField[]>([])
   const [fillCount, setFillCount] = useState(0)
+  const [orgId, setOrgId] = useState('')
+  const [userId, setUserId] = useState('')
   const [factories, setFactories] = useState<{ id: string; name: string }[]>([])
   const [factoriesLoaded, setFactoriesLoaded] = useState(false)
+
+  // Load org context via server API (bypasses RLS)
+  useEffect(() => {
+    (async () => {
+      const res = await fetch('/api/user/context')
+      if (!res.ok) return
+      const ctx = await res.json()
+      if (ctx.user_id) setUserId(ctx.user_id)
+      if (ctx.org_id) setOrgId(ctx.org_id)
+    })()
+  }, [])
 
   const [form, setForm] = useState<FormData>({
     name: '', season: '', category: '', productType: '', description: '',
@@ -87,19 +100,14 @@ export default function NewProjectPage() {
 
   /* ── Load factories on Step 2 ── */
   const loadFactories = useCallback(async () => {
-    if (factoriesLoaded) return
+    if (factoriesLoaded || !orgId) return
     try {
       const supabase = getSupabase()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      const { data: profile } = await supabase.from('profiles').select('org_id').eq('id', user.id).single()
-      const orgId = (profile as any)?.org_id
-      if (!orgId) return
       const { data } = await (supabase.from('factories') as any).select('id, name').eq('org_id', orgId).eq('is_active', true).order('name')
       if (data) setFactories(data)
       setFactoriesLoaded(true)
     } catch { /* silent */ }
-  }, [factoriesLoaded])
+  }, [factoriesLoaded, orgId])
 
   /* ── Image upload handler ── */
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -158,15 +166,11 @@ export default function NewProjectPage() {
 
   /* ── Save project ── */
   const handleSave = async (asDraft: boolean) => {
+    if (!orgId || !userId) { toast.error('Loading session — please wait a moment and try again'); return }
     if (!form.name.trim()) { toast.error('Project name is required'); return }
     setSaving(true)
     try {
       const supabase = getSupabase()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { toast.error('Not authenticated'); setSaving(false); return }
-      const { data: profile } = await supabase.from('profiles').select('org_id').eq('id', user.id).single()
-      const orgId = (profile as any)?.org_id
-      if (!orgId) { toast.error('No organization found'); setSaving(false); return }
 
       // Upload image if exists
       let imageUrl = ''
@@ -206,7 +210,7 @@ export default function NewProjectPage() {
         priority: form.priority || 'medium',
         notes: form.notes || null,
         status: asDraft ? 'draft' : 'confirmed',
-        created_by: user.id,
+        created_by: userId,
       })
 
       toast.success(asDraft ? 'Draft saved' : 'Project created')

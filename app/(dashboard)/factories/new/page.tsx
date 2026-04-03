@@ -67,16 +67,14 @@ export default function NewFactoryPage() {
     return createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
   }
 
-  // Load org context
+  // Load org context via server API (bypasses RLS)
   useEffect(() => {
     (async () => {
-      const supabase = getSupabase()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      setUserId(user.id)
-      const { data: profile } = await supabase.from('profiles').select('org_id').eq('id', user.id).single()
-      const oid = (profile as any)?.org_id
-      if (oid) setOrgId(oid)
+      const res = await fetch('/api/user/context')
+      if (!res.ok) return
+      const ctx = await res.json()
+      if (ctx.user_id) setUserId(ctx.user_id)
+      if (ctx.org_id) setOrgId(ctx.org_id)
     })()
   }, [])
 
@@ -211,7 +209,7 @@ export default function NewFactoryPage() {
 
   /* ── Save ── */
   const handleSave = async (asDraft: boolean) => {
-    if (!orgId || !userId) { toast.error('Session expired — please refresh the page'); return }
+    if (!orgId || !userId) { toast.error('Loading session — please wait a moment and try again'); return }
     if (!form.name.trim()) { toast.error('Factory name is required'); return }
     if (!form.country.trim()) { toast.error('Country is required'); return }
     if (!form.contactName.trim()) { toast.error('Contact name is required'); return }

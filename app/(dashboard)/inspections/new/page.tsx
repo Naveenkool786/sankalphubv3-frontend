@@ -99,20 +99,19 @@ export default function NewInspectionPage() {
     }
   }, [form.lotSize, form.inspectionLevel])
 
-  // Load projects + factories
+  // Load org context via server API (bypasses RLS), then load projects + factories
   useEffect(() => {
     (async () => {
+      const res = await fetch('/api/user/context')
+      if (!res.ok) return
+      const ctx = await res.json()
+      if (ctx.user_id) setUserId(ctx.user_id)
+      if (!ctx.org_id) return
+      setOrgId(ctx.org_id)
       const supabase = getSupabase()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      setUserId(user.id)
-      const { data: profile } = await supabase.from('profiles').select('org_id').eq('id', user.id).single()
-      const oid = (profile as any)?.org_id
-      if (!oid) return
-      setOrgId(oid)
       const [{ data: projs }, { data: facts }] = await Promise.all([
-        (supabase.from('projects') as any).select('id, name, factory_id, product_category, po_number, quantity, aql_level, factories(name)').eq('org_id', oid).order('name'),
-        (supabase.from('factories') as any).select('id, name').eq('org_id', oid).eq('is_active', true).order('name'),
+        (supabase.from('projects') as any).select('id, name, factory_id, product_category, po_number, quantity, aql_level, factories(name)').eq('org_id', ctx.org_id).order('name'),
+        (supabase.from('factories') as any).select('id, name').eq('org_id', ctx.org_id).eq('is_active', true).order('name'),
       ])
       if (projs) setProjects(projs)
       if (facts) setFactories(facts)

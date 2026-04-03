@@ -52,18 +52,17 @@ export default function NewFactoryAuditPage() {
     return createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
   }
 
-  // Load factories
+  // Load org context via server API (bypasses RLS), then load factories
   useEffect(() => {
     (async () => {
+      const res = await fetch('/api/user/context')
+      if (!res.ok) return
+      const ctx = await res.json()
+      if (ctx.user_id) setUserId(ctx.user_id)
+      if (!ctx.org_id) return
+      setOrgId(ctx.org_id)
       const supabase = getSupabase()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      setUserId(user.id)
-      const { data: profile } = await supabase.from('profiles').select('org_id').eq('id', user.id).single()
-      const oid = (profile as any)?.org_id
-      if (!oid) return
-      setOrgId(oid)
-      const { data } = await (supabase.from('factories') as any).select('id, name').eq('org_id', oid).eq('is_active', true).order('name')
+      const { data } = await (supabase.from('factories') as any).select('id, name').eq('org_id', ctx.org_id).eq('is_active', true).order('name')
       if (data) setFactories(data)
     })()
   }, [])
