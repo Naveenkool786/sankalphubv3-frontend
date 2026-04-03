@@ -357,7 +357,7 @@ export default function NewInspectionPage() {
   const limits = getAQLLimits(form.sampleSize, form.aqlLevel)
 
   return (
-    <div className="p-6 lg:p-8 max-w-[960px] mx-auto">
+    <div className="p-6 lg:p-8 ">
       <button onClick={() => router.push('/inspections')} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-6 transition-colors">
         <ArrowLeft className="w-3.5 h-3.5" /> Inspections
       </button>

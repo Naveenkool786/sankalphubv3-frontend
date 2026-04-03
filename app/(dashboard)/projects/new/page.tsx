@@ -263,7 +263,7 @@ export default function NewProjectPage() {
   const goBack = () => { if (step > 1) setStep(step - 1) }
 
   return (
-    <div className="p-6 lg:p-8 max-w-[960px] mx-auto">
+    <div className="p-6 lg:p-8 ">
       {/* Back link */}
       <button onClick={() => router.push('/projects')} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-6 transition-colors">
         <ArrowLeft className="w-3.5 h-3.5" /> Back to Projects
@@ -310,7 +310,7 @@ export default function NewProjectPage() {
 
       {/* ══════════════ STEP 1 — Basics + Upload ══════════════ */}
       {step === 1 && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '14px', alignItems: 'stretch' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '14px', alignItems: 'stretch' }}>
           {/* Left — Form */}
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div style={{ ...cardStyle, flex: 1, display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -569,7 +569,7 @@ export default function NewProjectPage() {
 
       {/* ══════════════ STEP 4 — Review & Save ══════════════ */}
       {step === 4 && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '14px', alignItems: 'stretch' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '14px', alignItems: 'stretch' }}>
           {/* Left — Summary */}
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div style={{ ...cardStyle, flex: 1 }}>

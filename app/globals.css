@@ -115,9 +115,63 @@ body {
 /* SankalpHub — Global placeholder size */
 ::placeholder {
   font-size: 9px !important;
-  opacity: 0.7;
+  opacity: 0.6;
 }
 input::placeholder,
 textarea::placeholder {
   font-size: 9px !important;
+}
+
+/* ─── Consistent form element heights (40px) ─── */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+input[type="date"],
+input[type="search"],
+select {
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 0 12px !important;
+  font-size: 13px !important;
+  border-radius: 8px !important;
+  border: 0.5px solid var(--border) !important;
+  background: var(--background) !important;
+  color: var(--foreground) !important;
+  box-sizing: border-box !important;
+}
+
+textarea {
+  min-height: 80px !important;
+  padding: 10px 12px !important;
+  font-size: 13px !important;
+  border-radius: 8px !important;
+  border: 0.5px solid var(--border) !important;
+  resize: vertical !important;
+}
+
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 10px center !important;
+  padding-right: 32px !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none !important;
+  border-color: #C9A96E !important;
+  box-shadow: 0 0 0 2px rgba(201, 169, 110, 0.15) !important;
+}
+
+label {
+  display: block !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  margin-bottom: 5px !important;
 }
