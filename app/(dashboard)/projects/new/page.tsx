@@ -98,16 +98,16 @@ export default function NewProjectPage() {
     return createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
   }
 
-  /* ── Load factories on Step 2 ── */
+  /* ── Load factories on Step 2 (via server API — bypasses RLS) ── */
   const loadFactories = useCallback(async () => {
-    if (factoriesLoaded || !orgId) return
+    if (factoriesLoaded) return
     try {
-      const supabase = getSupabase()
-      const { data } = await (supabase.from('factories') as any).select('id, name').eq('org_id', orgId).eq('is_active', true).order('name')
+      const res = await fetch('/api/factories/list')
+      const { factories: data } = await res.json()
       if (data) setFactories(data)
       setFactoriesLoaded(true)
     } catch { /* silent */ }
-  }, [factoriesLoaded, orgId])
+  }, [factoriesLoaded])
 
   /* ── Image upload handler ── */
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {

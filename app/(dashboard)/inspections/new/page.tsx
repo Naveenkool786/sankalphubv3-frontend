@@ -100,19 +100,20 @@ export default function NewInspectionPage() {
   }, [form.lotSize, form.inspectionLevel])
 
   // Load org context via server API (bypasses RLS), then load projects + factories
+  // Load org context + projects + factories via server APIs (bypasses RLS)
   useEffect(() => {
     (async () => {
-      const res = await fetch('/api/user/context')
-      if (!res.ok) return
-      const ctx = await res.json()
+      const ctxRes = await fetch('/api/user/context')
+      if (!ctxRes.ok) return
+      const ctx = await ctxRes.json()
       if (ctx.user_id) setUserId(ctx.user_id)
-      if (!ctx.org_id) return
-      setOrgId(ctx.org_id)
-      const supabase = getSupabase()
-      const [{ data: projs }, { data: facts }] = await Promise.all([
-        (supabase.from('projects') as any).select('id, name, factory_id, product_category, po_number, quantity, aql_level, factories(name)').eq('org_id', ctx.org_id).order('name'),
-        (supabase.from('factories') as any).select('id, name').eq('org_id', ctx.org_id).eq('is_active', true).order('name'),
+      if (ctx.org_id) setOrgId(ctx.org_id)
+      const [projRes, factRes] = await Promise.all([
+        fetch('/api/projects/list'),
+        fetch('/api/factories/list'),
       ])
+      const { projects: projs } = await projRes.json()
+      const { factories: facts } = await factRes.json()
       if (projs) setProjects(projs)
       if (facts) setFactories(facts)
     })()
