@@ -85,6 +85,17 @@ export default function NewProjectPage() {
     })()
   }, [])
 
+  const [form, setForm] = useState<FormData>({
+    name: '', season: '', category: '', productType: '', description: '',
+    productImageFile: null, productImagePreview: '',
+    factoryId: '', factoryName: '', poNumber: '', quantity: '', unit: 'pcs',
+    country: '', buyerBrand: '',
+    sizes: {},
+    startDate: '', expectedDelivery: '', inspectionDate: '', shipmentDate: '',
+    aqlLevel: '2.5', inspectionType: 'final', sampleSize: '', lotSize: '',
+    priority: 'medium', notes: '', status: 'confirmed', tags: [],
+  })
+
   // Auto-calculate sample size when lot/qty or aql changes (or when arriving at step 3)
   useEffect(() => {
     const lot = parseInt(form.lotSize || form.quantity || '0', 10)
@@ -109,17 +120,6 @@ export default function NewProjectPage() {
     const sample = CODE_SAMPLE[code]
     if (sample) set('sampleSize', String(sample))
   }, [step, form.lotSize, form.quantity, form.aqlLevel])
-
-  const [form, setForm] = useState<FormData>({
-    name: '', season: '', category: '', productType: '', description: '',
-    productImageFile: null, productImagePreview: '',
-    factoryId: '', factoryName: '', poNumber: '', quantity: '', unit: 'pcs',
-    country: '', buyerBrand: '',
-    sizes: {},
-    startDate: '', expectedDelivery: '', inspectionDate: '', shipmentDate: '',
-    aqlLevel: '2.5', inspectionType: 'final', sampleSize: '', lotSize: '',
-    priority: 'medium', notes: '', status: 'confirmed', tags: [],
-  })
 
   const set = (key: keyof FormData, value: any) => setForm(f => ({ ...f, [key]: value }))
   const setSize = (k: string, v: string) => setForm(f => ({ ...f, sizes: { ...f.sizes, [k]: v } }))
