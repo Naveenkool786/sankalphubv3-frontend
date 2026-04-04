@@ -527,75 +527,137 @@ export default function NewProjectPage() {
 
       {/* ══════════════ STEP 3 — Timeline & QC ══════════════ */}
       {step === 3 && (
-        <div style={cardStyle}>
-          <h2 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--foreground)', marginBottom: '18px' }}>Timeline &amp; QC Settings</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'stretch' }}>
 
-          {/* Dates */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '20px' }}>
-            {[
-              { key: 'startDate', label: 'Start date' },
-              { key: 'expectedDelivery', label: 'Expected delivery *' },
-              { key: 'inspectionDate', label: 'Inspection date' },
-              { key: 'shipmentDate', label: 'Shipment date' },
-            ].map(f => (
-              <div key={f.key}>
-                <label style={labelStyle}>{f.label}</label>
-                <input style={inputStyle} type="date" value={(form as any)[f.key]} onChange={e => set(f.key as keyof FormData, e.target.value)} />
-              </div>
-            ))}
-          </div>
-
-          {/* QC */}
-          <h3 style={{ fontSize: '13px', fontWeight: 600, color: 'var(--foreground)', marginBottom: '10px' }}>QC Settings</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '16px' }}>
-            <div>
-              <label style={labelStyle}>AQL level *</label>
-              <select style={selectStyle} value={form.aqlLevel} onChange={e => set('aqlLevel', e.target.value)}>
-                {AQL_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-            </div>
-            <div>
-              <label style={labelStyle}>Inspection type</label>
-              <select style={selectStyle} value={form.inspectionType} onChange={e => set('inspectionType', e.target.value)}>
-                {INSPECTION_TYPES.map(t => <option key={t} value={t.toLowerCase().replace(/ /g, '_')}>{t}</option>)}
-              </select>
-            </div>
-            <div>
-              <label style={labelStyle}>Sample size</label>
-              <input style={inputStyle} type="number" value={form.sampleSize} onChange={e => set('sampleSize', e.target.value)} placeholder="Auto-calculated" />
-            </div>
-            <div>
-              <label style={labelStyle}>Lot size</label>
-              <input style={inputStyle} type="number" value={form.lotSize} onChange={e => set('lotSize', e.target.value)} placeholder="Enter lot size" />
-            </div>
-          </div>
-
-          {/* Priority */}
-          <div style={{ marginBottom: '16px' }}>
-            <label style={labelStyle}>Priority</label>
-            <div className="flex gap-2">
+          {/* ── Left: Timeline ── */}
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ ...cardStyle, flex: 1, display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <h2 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--foreground)', marginBottom: '4px' }}>Timeline</h2>
               {[
-                { v: 'high', label: 'High', bg: '#FCEBEB', color: '#791F1F' },
-                { v: 'medium', label: 'Medium', bg: '#FAEEDA', color: '#633806' },
-                { v: 'low', label: 'Low', bg: 'var(--muted)', color: 'var(--muted-foreground)' },
-              ].map(p => (
-                <button key={p.v} type="button" onClick={() => set('priority', p.v)}
-                  style={{
-                    padding: '6px 16px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
-                    border: form.priority === p.v ? '2px solid var(--foreground)' : '1px solid var(--border)',
-                    background: p.bg, color: p.color,
-                  }}>
-                  {p.label}
-                </button>
+                { key: 'startDate', label: 'Start date' },
+                { key: 'inspectionDate', label: 'Inspection date' },
+                { key: 'shipmentDate', label: 'Shipment date' },
+                { key: 'expectedDelivery', label: 'Expected delivery *' },
+              ].map(f => (
+                <div key={f.key}>
+                  <label style={labelStyle}>{f.label}</label>
+                  <input style={inputStyle} type="date" value={(form as any)[f.key]} onChange={e => set(f.key as keyof FormData, e.target.value)} />
+                </div>
               ))}
             </div>
           </div>
 
-          {/* Notes */}
-          <div>
-            <label style={labelStyle}>Notes</label>
-            <textarea style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} value={form.notes} onChange={e => set('notes', e.target.value)} placeholder="Additional notes for this project" />
+          {/* ── Right: QC Settings ── */}
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ ...cardStyle, flex: 1, display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <h2 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--foreground)', marginBottom: '4px' }}>QC Settings</h2>
+
+              {/* Lot Size — auto-filled from Factory tab quantity */}
+              <div>
+                <label style={labelStyle}>
+                  Lot size
+                  {(form.lotSize || form.quantity) && (
+                    <span style={{ marginLeft: '6px', fontSize: '10px', color: '#1D9E75', fontWeight: 600 }}>
+                      ✓ Auto-filled from Factory tab
+                    </span>
+                  )}
+                </label>
+                <input
+                  style={{ ...inputStyle, background: form.quantity && !form.lotSize ? 'var(--muted)' : 'var(--input)' }}
+                  type="number"
+                  value={form.lotSize || form.quantity}
+                  onChange={e => set('lotSize', e.target.value)}
+                  placeholder="Auto-filled from Factory tab"
+                />
+              </div>
+
+              {/* Inspection Type */}
+              <div>
+                <label style={labelStyle}>Inspection type</label>
+                <select style={selectStyle} value={form.inspectionType} onChange={e => set('inspectionType', e.target.value)}>
+                  {INSPECTION_TYPES.map(t => <option key={t} value={t.toLowerCase().replace(/ /g, '_')}>{t}</option>)}
+                </select>
+              </div>
+
+              {/* AQL Level — triggers auto sample size calculation */}
+              <div>
+                <label style={labelStyle}>AQL level *</label>
+                <select
+                  style={selectStyle}
+                  value={form.aqlLevel}
+                  onChange={e => {
+                    const aql = e.target.value
+                    set('aqlLevel', aql)
+                    const lot = parseInt(form.lotSize || form.quantity || '0', 10)
+                    if (!lot || lot < 2) return
+                    const ranges: [number, number][] = [
+                      [2, 8], [9, 15], [16, 25], [26, 50], [51, 90], [91, 150],
+                      [151, 280], [281, 500], [501, 1200], [1201, 3200], [3201, 10000],
+                      [10001, 35000], [35001, 150000], [150001, 500000], [500001, 999999999],
+                    ]
+                    const LOT_CODE_TABLE = [
+                      { l2: 'A' }, { l2: 'B' }, { l2: 'C' }, { l2: 'D' }, { l2: 'E' },
+                      { l2: 'F' }, { l2: 'G' }, { l2: 'H' }, { l2: 'J' }, { l2: 'K' },
+                      { l2: 'L' }, { l2: 'M' }, { l2: 'N' }, { l2: 'P' }, { l2: 'Q' },
+                    ]
+                    const CODE_SAMPLE: Record<string, number> = {
+                      A: 2, B: 3, C: 5, D: 8, E: 13, F: 20, G: 32,
+                      H: 50, J: 80, K: 125, L: 200, M: 315, N: 500, P: 800, Q: 1250, R: 2000,
+                    }
+                    const idx = ranges.findIndex(([min, max]) => lot >= min && lot <= max)
+                    if (idx < 0) return
+                    const code = LOT_CODE_TABLE[idx].l2
+                    const sample = CODE_SAMPLE[code]
+                    if (sample) set('sampleSize', String(sample))
+                  }}
+                >
+                  {AQL_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>
+
+              {/* Sample Size — auto-calculated */}
+              <div>
+                <label style={labelStyle}>
+                  Sample size
+                  {form.sampleSize && (
+                    <span style={{ marginLeft: '6px', fontSize: '10px', color: '#BA7517', fontWeight: 600 }}>
+                      ✓ Auto-calculated (ANSI Z1.4 Level II)
+                    </span>
+                  )}
+                </label>
+                <input
+                  style={{ ...inputStyle, background: form.sampleSize ? 'var(--muted)' : 'var(--input)' }}
+                  type="number"
+                  value={form.sampleSize}
+                  onChange={e => set('sampleSize', e.target.value)}
+                  placeholder="Select AQL level to auto-calculate"
+                />
+              </div>
+
+              {/* Priority */}
+              <div>
+                <label style={labelStyle}>Priority</label>
+                <div className="flex gap-2">
+                  {[
+                    { v: 'high', label: 'High', bg: '#FCEBEB', color: '#791F1F' },
+                    { v: 'medium', label: 'Medium', bg: '#FAEEDA', color: '#633806' },
+                    { v: 'low', label: 'Low', bg: 'var(--muted)', color: 'var(--muted-foreground)' },
+                  ].map(p => (
+                    <button key={p.v} type="button" onClick={() => set('priority', p.v)} style={{ padding: '6px 16px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', border: form.priority === p.v ? '2px solid var(--foreground)' : '1px solid var(--border)', background: p.bg, color: p.color }}>
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div>
+                <label style={labelStyle}>Notes</label>
+                <textarea style={{ ...inputStyle, minHeight: '68px', resize: 'vertical' }} value={form.notes} onChange={e => set('notes', e.target.value)} placeholder="Additional notes for this project" />
+              </div>
+            </div>
           </div>
+
         </div>
       )}
 
