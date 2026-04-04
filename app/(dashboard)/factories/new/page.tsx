@@ -224,8 +224,10 @@ export default function NewFactoryPage() {
       if (form.photoFile && orgId) {
         const ext = form.photoFile.name.split('.').pop()
         const path = `${orgId}/${Date.now()}.${ext}`
-        const { data: uploadData } = await supabase.storage.from('factory-photos').upload(path, form.photoFile, { upsert: true })
-        if (uploadData) {
+        const { data: uploadData, error: uploadError } = await supabase.storage.from('factory-photos').upload(path, form.photoFile, { upsert: true })
+        if (uploadError) {
+          toast.error('Photo upload failed: ' + uploadError.message)
+        } else if (uploadData) {
           photoUrl = supabase.storage.from('factory-photos').getPublicUrl(uploadData.path).data.publicUrl
         }
       }

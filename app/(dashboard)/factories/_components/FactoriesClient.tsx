@@ -45,6 +45,10 @@ const FILTER_TABS = [
 ]
 
 
+function isDraftFactory(f: FactoryRow): boolean {
+  return !f.country || !f.contact_name || !f.contact_email
+}
+
 function getMissingFields(f: FactoryRow): string {
   const missing: string[] = []
   if (!f.country) missing.push('country')
@@ -342,7 +346,7 @@ export function FactoriesClient({ factories, projects, userRole, orgId }: Props)
                   })()}
 
                   {/* Footer */}
-                  {factory.status === 'inactive' && !factory.latest_audit_score ? (
+                  {isDraftFactory(factory) ? (
                     <div style={{ borderTop: '1px solid var(--border)', paddingTop: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <span style={{ fontSize: '9px', color: 'var(--muted-foreground)' }}>
                         {getMissingFields(factory)}
