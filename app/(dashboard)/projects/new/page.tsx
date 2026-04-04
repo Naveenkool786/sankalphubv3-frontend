@@ -85,6 +85,31 @@ export default function NewProjectPage() {
     })()
   }, [])
 
+  // Auto-calculate sample size when lot/qty or aql changes (or when arriving at step 3)
+  useEffect(() => {
+    const lot = parseInt(form.lotSize || form.quantity || '0', 10)
+    if (!lot || lot < 2) return
+    const ranges: [number, number][] = [
+      [2, 8], [9, 15], [16, 25], [26, 50], [51, 90], [91, 150],
+      [151, 280], [281, 500], [501, 1200], [1201, 3200], [3201, 10000],
+      [10001, 35000], [35001, 150000], [150001, 500000], [500001, 999999999],
+    ]
+    const LOT_CODE_TABLE = [
+      { l2: 'A' }, { l2: 'B' }, { l2: 'C' }, { l2: 'D' }, { l2: 'E' },
+      { l2: 'F' }, { l2: 'G' }, { l2: 'H' }, { l2: 'J' }, { l2: 'K' },
+      { l2: 'L' }, { l2: 'M' }, { l2: 'N' }, { l2: 'P' }, { l2: 'Q' },
+    ]
+    const CODE_SAMPLE: Record<string, number> = {
+      A: 2, B: 3, C: 5, D: 8, E: 13, F: 20, G: 32,
+      H: 50, J: 80, K: 125, L: 200, M: 315, N: 500, P: 800, Q: 1250, R: 2000,
+    }
+    const idx = ranges.findIndex(([min, max]) => lot >= min && lot <= max)
+    if (idx < 0) return
+    const code = LOT_CODE_TABLE[idx].l2
+    const sample = CODE_SAMPLE[code]
+    if (sample) set('sampleSize', String(sample))
+  }, [step, form.lotSize, form.quantity, form.aqlLevel])
+
   const [form, setForm] = useState<FormData>({
     name: '', season: '', category: '', productType: '', description: '',
     productImageFile: null, productImagePreview: '',
