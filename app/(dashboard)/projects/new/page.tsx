@@ -52,7 +52,13 @@ const AQL_OPTIONS = [
   { value: '4.0', label: 'AQL 4.0 \u2014 Relaxed' },
 ]
 const INSPECTION_TYPES = ['Final', 'Pre-production', 'During production', 'Loading check']
-const SIZE_KEYS = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
+const SIZE_KEYS_MAP: Record<string, string[]> = {
+  Garments:  ['XSM', 'SML', 'MED', 'LAR', 'XL', '2XL', '3XL', '4XL', '5XL'],
+  Footwear:  ['5', '5H', '6', '6H', '7', '7H', '8', '8H', '9', '9H', '10', '10H', '11', '11H', '12', '12H', '13', '14'],
+  Gloves:    ['S', 'M', 'L', 'XL', '2XL', 'OSA'],
+  Headwear:  ['S', 'M', 'L', 'XL', '2XL', 'OSA'],
+}
+const DEFAULT_SIZE_KEYS: string[] = []
 
 export default function NewProjectPage() {
   const router = useRouter()
@@ -84,7 +90,7 @@ export default function NewProjectPage() {
     productImageFile: null, productImagePreview: '',
     factoryId: '', factoryName: '', poNumber: '', quantity: '', unit: 'pcs',
     country: '', buyerBrand: '',
-    sizes: { XS: '', S: '', M: '', L: '', XL: '', XXL: '' },
+    sizes: {},
     startDate: '', expectedDelivery: '', inspectionDate: '', shipmentDate: '',
     aqlLevel: '2.5', inspectionType: 'final', sampleSize: '', lotSize: '',
     priority: 'medium', notes: '', status: 'confirmed', tags: [],
@@ -481,15 +487,36 @@ export default function NewProjectPage() {
           </div>
 
           {/* Size breakdown */}
-          <h3 style={{ fontSize: '13px', fontWeight: 600, color: 'var(--foreground)', marginTop: '20px', marginBottom: '10px' }}>Size Breakdown</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
-            {SIZE_KEYS.map(k => (
-              <div key={k}>
-                <label style={labelStyle}>{k}</label>
-                <input style={inputStyle} type="number" value={form.sizes[k]} onChange={e => setSize(k, e.target.value)} placeholder="0" />
+          {(() => {
+            const sizeKeys = SIZE_KEYS_MAP[form.category] ?? DEFAULT_SIZE_KEYS
+            if (sizeKeys.length === 0) return null
+            return (
+              <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '16px', marginTop: '20px' }}>
+                <h3 style={{ fontSize: '13px', fontWeight: 600, color: 'var(--foreground)', marginBottom: '12px' }}>
+                  Size Breakdown
+                  {form.category && (
+                    <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--muted-foreground)', marginLeft: '8px', background: 'var(--muted)', padding: '2px 8px', borderRadius: '4px' }}>
+                      {form.category}
+                    </span>
+                  )}
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                  {sizeKeys.map(k => (
+                    <div key={k}>
+                      <label style={labelStyle}>{k}</label>
+                      <input
+                        style={inputStyle}
+                        type="number"
+                        value={form.sizes[k] ?? ''}
+                        onChange={e => setSize(k, e.target.value)}
+                        placeholder="0"
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
-          </div>
+            )
+          })()}
           {sizeTotal > 0 && (
             <p style={{ fontSize: '12px', fontWeight: 600, color: 'var(--foreground)', marginTop: '8px' }}>
               Total: {sizeTotal.toLocaleString()} pcs
