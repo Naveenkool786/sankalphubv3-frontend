@@ -55,7 +55,7 @@ export default async function FactoryProfilePage({ params }: { params: Promise<{
   const failed = allInspections.filter((i: any) => i.result === 'fail').length
   const passRate = totalInspections > 0 ? Math.round((passed / totalInspections) * 100) : null
 
-  const certs = (factory.certifications ?? []) as string[]
+  const certs: string[] = Array.isArray(factory.certifications) ? factory.certifications : typeof factory.certifications === 'string' ? factory.certifications.split(',').map((s: string) => s.trim()).filter(Boolean) : []
   const allProjects = (projects ?? []) as any[]
   const allDefects = (defects ?? []) as any[]
 

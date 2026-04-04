@@ -116,7 +116,7 @@ export default function NewFactoryPage() {
           website: data.website || '', notes: data.notes || '', status: 'active',
           photoFile: null, photoPreview: data.photo_url || '',
           totalLines: data.total_lines?.toString() || '', maxCapacity: data.max_capacity?.toString() || '',
-          categories: data.categories || [], certifications: data.certifications || [],
+          categories: data.categories || [], certifications: Array.isArray(data.certifications) ? data.certifications : typeof data.certifications === 'string' ? data.certifications.split(',').map((s: string) => s.trim()).filter(Boolean) : [],
           aqlDefault: data.aql_default || '2.5', inspectionPreference: data.inspection_preference || 'final',
         })
       }

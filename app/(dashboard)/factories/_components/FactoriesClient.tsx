@@ -327,15 +327,19 @@ export function FactoriesClient({ factories, projects, userRole, orgId }: Props)
                   </div>
 
                   {/* Certifications */}
-                  {factory.certifications && (factory.certifications as string[]).length > 0 && (
-                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '8px' }}>
-                      {(factory.certifications as string[]).map(cert => (
-                        <span key={cert} style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '5px', background: 'var(--muted)', color: 'var(--muted-foreground)' }}>
-                          {cert}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                  {(() => {
+                    const raw = factory.certifications as any
+                    const certs: string[] = Array.isArray(raw) ? raw : typeof raw === 'string' ? raw.split(',').map((s: string) => s.trim()).filter(Boolean) : []
+                    return certs.length > 0 ? (
+                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                        {certs.map(cert => (
+                          <span key={cert} style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '5px', background: 'var(--muted)', color: 'var(--muted-foreground)' }}>
+                            {cert}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null
+                  })()}
 
                   {/* Footer */}
                   {factory.status === 'inactive' && !factory.latest_audit_score ? (
