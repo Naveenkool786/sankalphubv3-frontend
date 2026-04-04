@@ -408,9 +408,9 @@ export default function NewProjectPage() {
               )}
             </div>
           ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', cursor: extracting ? 'default' : 'pointer' }}
+            <div style={{ cursor: extracting ? 'default' : 'pointer' }}
               onClick={() => !extracting && docInputRef.current?.click()}>
-              <div style={{ border: '1.5px dashed var(--border)', borderRadius: '10px', padding: '20px 16px', textAlign: 'center', flex: 1 }}>
+              <div style={{ border: '1.5px dashed var(--border)', borderRadius: '10px', padding: '20px 16px', textAlign: 'center' }}>
                 {extracting ? (
                   <Loader2 className="w-6 h-6 mx-auto mb-2 animate-spin" style={{ color: '#BA7517' }} />
                 ) : (
@@ -432,10 +432,10 @@ export default function NewProjectPage() {
                     <span key={b.label} style={{ fontSize: '9px', padding: '2px 8px', borderRadius: '4px', background: b.bg, color: b.color, fontWeight: 600 }}>{b.label}</span>
                   ))}
                 </div>
+                <p style={{ fontSize: '11px', color: 'var(--muted-foreground)', lineHeight: '1.5', maxWidth: 'none', width: '100%', whiteSpace: 'nowrap', textAlign: 'center', marginTop: '8px' }}>
+                  AI reads your PO or tech pack and fills project name, factory, sizes, PO number, delivery date, AQL level
+                </p>
               </div>
-              <p style={{ fontSize: '9px', color: 'var(--muted-foreground)', lineHeight: '1.5', maxWidth: '200px' }}>
-                AI reads your PO or tech pack and fills project name, factory, sizes, PO number, delivery date, AQL level
-              </p>
             </div>
           )}
           <input ref={docInputRef} type="file" accept=".xlsx,.xls,.pdf,.docx,.csv" style={{ display: 'none' }} onChange={handleDocUpload} />
