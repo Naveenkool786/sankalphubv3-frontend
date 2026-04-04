@@ -500,7 +500,7 @@ export default function NewProjectPage() {
                     </span>
                   )}
                 </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '10px' }}>
                   {sizeKeys.map(k => (
                     <div key={k}>
                       <label style={labelStyle}>{k}</label>
