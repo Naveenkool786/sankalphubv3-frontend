@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Factory, MapPin, Shield, Mail, Phone, User, ArrowLeft, BarChart3, ClipboardCheck, FolderKanban, AlertTriangle } from 'lucide-react'
 import { getUserContext, canManage } from '@/lib/getUserContext'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -10,7 +11,11 @@ import { cn } from '@/lib/utils'
 export default async function FactoryProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const ctx = await getUserContext()
-  const supabase = await createClient()
+  // Use service role client to bypass RLS (same pattern as factories list page)
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const supabase = serviceKey
+    ? createServiceClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceKey)
+    : await createClient()
 
   const { data: factory } = await (supabase.from('factories') as any)
     .select('*')
