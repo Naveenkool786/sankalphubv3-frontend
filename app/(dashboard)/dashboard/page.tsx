@@ -37,18 +37,65 @@ export default async function DashboardPage() {
   let recentActivity: any[] = []
   try {
     const { data, error } = await (supabase.from('notifications') as any)
-      .select('title, detail, sound_category, created_at')
+      .select('title, detail, sound_category, link, created_at')
       .eq('org_id', ctx.orgId)
       .order('created_at', { ascending: false })
       .limit(5)
     if (!error && data) recentActivity = data
   } catch { /* table may not exist */ }
 
-  // Inspection stats
+  // Inspection stats — current month
   const stats = (inspectionStats ?? []) as any[]
   const totalInspections = stats.length
   const passed = stats.filter((i: any) => i.aql_result === 'pass').length
   const passRate = totalInspections > 0 ? Math.round((passed / totalInspections) * 100) : null
+
+  // Trend data: last month inspection count for comparison
+  const now = new Date()
+  const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+  const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString()
+  const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59).toISOString()
+
+  const [{ count: thisMonthCount }, { count: lastMonthCount }] = await Promise.all([
+    (supabase.from('inspections') as any).select('*', { count: 'exact', head: true }).eq('org_id', ctx.orgId).gte('created_at', startOfThisMonth),
+    (supabase.from('inspections') as any).select('*', { count: 'exact', head: true }).eq('org_id', ctx.orgId).gte('created_at', startOfLastMonth).lte('created_at', endOfLastMonth),
+  ])
+
+  // Inspection trend: last 30 days by date
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()
+  let inspectionTrend: { date: string; pass: number; fail: number }[] = []
+  try {
+    const { data: trendData } = await (supabase.from('inspections') as any)
+      .select('created_at, aql_result')
+      .eq('org_id', ctx.orgId)
+      .gte('created_at', thirtyDaysAgo)
+    if (trendData) {
+      const byDate: Record<string, { pass: number; fail: number }> = {}
+      for (const row of trendData as any[]) {
+        const d = new Date(row.created_at).toISOString().slice(0, 10)
+        if (!byDate[d]) byDate[d] = { pass: 0, fail: 0 }
+        if (row.aql_result === 'pass') byDate[d].pass++
+        else byDate[d].fail++
+      }
+      inspectionTrend = Object.entries(byDate).sort(([a], [b]) => a.localeCompare(b)).map(([date, v]) => ({ date, ...v }))
+    }
+  } catch { /* table may not exist */ }
+
+  // Defect distribution by category
+  let defectsByCategory: { category: string; count: number }[] = []
+  try {
+    const { data: defectData } = await (supabase.from('defect_records') as any)
+      .select('category')
+      .eq('org_id', ctx.orgId)
+    if (defectData) {
+      const counts: Record<string, number> = {}
+      for (const d of defectData as any[]) {
+        const cat = d.category || 'Other'
+        counts[cat] = (counts[cat] || 0) + 1
+      }
+      defectsByCategory = Object.entries(counts).map(([category, count]) => ({ category, count })).sort((a, b) => b.count - a.count)
+    }
+  } catch { /* table may not exist */ }
 
   // Step completion
   const hasFactory = (hasFactoryData?.length || 0) > 0
@@ -73,6 +120,8 @@ export default async function DashboardPage() {
     passRate,
     passed,
     totalInspections,
+    inspectionTrend: thisMonthCount ?? 0,
+    lastMonthInspections: lastMonthCount ?? 0,
     doneCount,
     hasFactory,
     hasProject,
@@ -82,11 +131,14 @@ export default async function DashboardPage() {
     recentActivity: recentActivity.map((a: any) => ({
       title: a.title || '', detail: a.detail || '',
       category: a.sound_category || 'system',
+      link: a.link || null,
       createdAt: a.created_at || '',
     })),
     factoryAuditScores: ((auditedFactories ?? []) as any[]).map((f: any) => ({
       id: f.id, name: f.name, score: f.latest_audit_score, result: f.latest_audit_result,
     })),
+    inspectionTrendChart: inspectionTrend,
+    defectsByCategory,
   }
 
   return (

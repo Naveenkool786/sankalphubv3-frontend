@@ -2,7 +2,8 @@
 
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { FolderKanban, ClipboardCheck, Factory, TrendingUp, Check } from 'lucide-react'
+import { FolderKanban, ClipboardCheck, Factory, TrendingUp, TrendingDown, Minus, Check, Plus, Shield } from 'lucide-react'
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 
 /* ─── TYPES ─── */
 
@@ -15,14 +16,18 @@ export interface DashboardData {
   passRate: number | null
   passed: number
   totalInspections: number
+  inspectionTrend: number
+  lastMonthInspections: number
   doneCount: number
   hasFactory: boolean
   hasProject: boolean
   hasTemplate: boolean
   hasInspection: boolean
   hasTeamMember: boolean
-  recentActivity: { title: string; detail: string; category: string; createdAt: string }[]
+  recentActivity: { title: string; detail: string; category: string; link: string | null; createdAt: string }[]
   factoryAuditScores?: { id: string; name: string; score: number; result: string }[]
+  inspectionTrendChart: { date: string; pass: number; fail: number }[]
+  defectsByCategory: { category: string; count: number }[]
 }
 
 /* ─── CONSTANTS ─── */
@@ -60,7 +65,7 @@ function getStepIcon(iconPath: string, color: string) {
   )
 }
 
-/* ─── SLICER CARD STYLE — variable widths per brief ─── */
+/* ─── SLICER CARD STYLE ─── */
 
 function getCardStyle(index: number, doneCount: number): React.CSSProperties {
   const base: React.CSSProperties = {
@@ -70,23 +75,17 @@ function getCardStyle(index: number, doneCount: number): React.CSSProperties {
     position: 'relative', overflow: 'hidden',
     display: 'flex', flexDirection: 'column', flexShrink: 0,
   }
-
-  // DONE — small, faded green
   if (index < doneCount) return {
     ...base, width: '130px', minHeight: '180px',
     opacity: 0.42, background: '#E1F5EE', border: '1px solid #9FE1CB',
     transform: 'scale(0.95)', filter: 'saturate(0.5)',
   }
-
-  // ACTIVE — largest, lifts up with glow
   if (index === doneCount) return {
     ...base, width: '200px', minHeight: '230px',
     opacity: 1, border: '2px solid #BA7517', background: 'var(--card)',
     transform: 'scale(1.05) translateY(-14px)', filter: 'none',
     boxShadow: '0 12px 32px rgba(186, 117, 23, 0.18)', zIndex: 10,
   }
-
-  // UPCOMING — progressively shrink and fade
   const dist = index - doneCount
   const upcomingMap = [
     null,
@@ -100,10 +99,25 @@ function getCardStyle(index: number, doneCount: number): React.CSSProperties {
   return { ...base, ...(upcomingMap[d] as any) }
 }
 
+/* ─── TREND ARROW ─── */
+
+function TrendArrow({ current, previous }: { current: number; previous: number }) {
+  if (previous === 0 && current === 0) return <span className="text-[10px] text-muted-foreground flex items-center gap-0.5"><Minus className="w-3 h-3" /> No change</span>
+  const pct = previous > 0 ? Math.round(((current - previous) / previous) * 100) : current > 0 ? 100 : 0
+  if (pct > 0) return <span className="text-[10px] text-emerald-600 flex items-center gap-0.5"><TrendingUp className="w-3 h-3" /> +{pct}%</span>
+  if (pct < 0) return <span className="text-[10px] text-red-500 flex items-center gap-0.5"><TrendingDown className="w-3 h-3" /> {pct}%</span>
+  return <span className="text-[10px] text-muted-foreground flex items-center gap-0.5"><Minus className="w-3 h-3" /> No change</span>
+}
+
 /* ─── COMPONENT ─── */
 
 export function DashboardClient({ data }: { data: DashboardData }) {
   const router = useRouter()
+
+  const isAdmin = data.role === 'super_admin' || data.role === 'brand_manager'
+  const isFactoryManager = data.role === 'factory_manager'
+  const isInspector = data.role === 'inspector'
+  const isViewer = data.role === 'viewer'
 
   const roleLabel = data.role === 'super_admin' ? 'Super Admin'
     : data.role === 'brand_manager' ? 'Brand Manager'
@@ -117,176 +131,180 @@ export function DashboardClient({ data }: { data: DashboardData }) {
     return 'Good evening'
   })()
 
+  const passRateColor = data.passRate === null ? 'var(--muted-foreground)' : data.passRate >= 90 ? '#16a34a' : data.passRate >= 70 ? '#d97706' : '#dc2626'
+
   return (
     <div>
       {/* ── Header ── */}
-      <div style={{ marginBottom: '20px' }}>
-        <h1 style={{ fontSize: '22px', fontWeight: 500, marginBottom: '3px' }}>
-          {greeting}, {data.firstName}
-        </h1>
-        <p style={{ fontSize: '13px', color: 'var(--muted-foreground)' }}>
+      <div className="mb-5">
+        <h1 className="text-[22px] font-medium mb-0.5">{greeting}, {data.firstName}</h1>
+        <p className="text-[13px] text-muted-foreground">
           {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })} &middot; SankalpHub &middot; {roleLabel}
         </p>
       </div>
 
       {/* ── KPI Cards ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '24px' }}>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         {[
-          { label: 'Active projects', value: data.projectCount, sub: data.projectCount ? `${data.projectCount} running` : 'No projects yet', icon: <FolderKanban className="w-4 h-4" />, iconColor: '#BA7517', iconBg: '#FAEEDA', link: '/projects' },
-          { label: 'Inspections run', value: data.inspectionCount, sub: data.inspectionCount ? `${data.inspectionCount} completed` : 'Start your first', icon: <ClipboardCheck className="w-4 h-4" />, iconColor: '#1D9E75', iconBg: '#E1F5EE', link: '/inspections' },
-          { label: 'Factories', value: data.factoryCount, sub: data.factoryCount ? `${data.factoryCount} connected` : 'Add a factory', icon: <Factory className="w-4 h-4" />, iconColor: '#378ADD', iconBg: '#E6F1FB', link: '/factories' },
-          { label: 'Pass rate', value: data.passRate !== null ? `${data.passRate}%` : '\u2014', sub: data.totalInspections > 0 ? `${data.passed}/${data.totalInspections} passed` : 'No data yet', icon: <TrendingUp className="w-4 h-4" />, iconColor: '#534AB7', iconBg: '#EEEDFE', link: '/analytics' },
+          { label: 'Inspections (this month)', value: data.inspectionTrend, sub: <TrendArrow current={data.inspectionTrend} previous={data.lastMonthInspections} />, icon: <ClipboardCheck className="w-4 h-4" />, iconColor: '#1D9E75', iconBg: '#E1F5EE', link: '/inspections', valueColor: undefined },
+          { label: 'Pass rate', value: data.passRate !== null ? `${data.passRate}%` : '\u2014', sub: <span className="text-[10px] text-muted-foreground">{data.totalInspections > 0 ? `${data.passed}/${data.totalInspections} passed` : 'No data yet'}</span>, icon: <TrendingUp className="w-4 h-4" />, iconColor: '#534AB7', iconBg: '#EEEDFE', link: '/analytics', valueColor: passRateColor },
+          { label: 'Active projects', value: data.projectCount, sub: <span className="text-[10px] text-muted-foreground">{data.projectCount ? `${data.projectCount} running` : 'No projects yet'}</span>, icon: <FolderKanban className="w-4 h-4" />, iconColor: '#BA7517', iconBg: '#FAEEDA', link: '/projects', valueColor: undefined },
+          { label: 'Factory compliance', value: data.factoryAuditScores && data.factoryAuditScores.length > 0 ? `${Math.round(data.factoryAuditScores.reduce((s, f) => s + f.score, 0) / data.factoryAuditScores.length)}%` : '\u2014', sub: <span className="text-[10px] text-muted-foreground">{data.factoryCount} {data.factoryCount === 1 ? 'factory' : 'factories'}</span>, icon: <Shield className="w-4 h-4" />, iconColor: '#378ADD', iconBg: '#E6F1FB', link: '/factories', valueColor: undefined },
         ].map((kpi, i) => (
           <div key={i} onClick={() => router.push(kpi.link)}
-            style={{ background: 'var(--card)', borderRadius: '14px', border: '0.5px solid var(--border)', padding: '20px', cursor: 'pointer', textAlign: 'center', transition: 'all .2s ease' }}
-            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = '#C9A96E' }}
-            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--border)' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: kpi.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: kpi.iconColor, margin: '0 auto 12px' }}>{kpi.icon}</div>
-            <div style={{ fontSize: '32px', fontWeight: 500, lineHeight: 1, marginBottom: '6px', color: 'var(--foreground)' }}>{kpi.value}</div>
-            <div style={{ fontSize: '12px', color: 'var(--muted-foreground)', marginBottom: '4px', fontWeight: 500 }}>{kpi.label}</div>
-            <div style={{ fontSize: '11px', color: 'var(--muted-foreground)', opacity: 0.7 }}>{kpi.sub}</div>
+            className="bg-card rounded-[14px] border border-border p-5 cursor-pointer text-center transition-all hover:-translate-y-0.5 hover:border-primary/40">
+            <div className="w-10 h-10 rounded-[10px] flex items-center justify-center mx-auto mb-3" style={{ background: kpi.iconBg, color: kpi.iconColor }}>{kpi.icon}</div>
+            <div className="text-[32px] font-medium leading-none mb-1.5" style={{ color: kpi.valueColor || 'var(--foreground)' }}>{kpi.value}</div>
+            <div className="text-xs text-muted-foreground font-medium mb-1">{kpi.label}</div>
+            <div>{kpi.sub}</div>
           </div>
         ))}
       </div>
 
-      {/* ── Slicer Cards ── */}
-      <div style={{ marginBottom: '8px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-          <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--muted-foreground)' }}>Get started &mdash; complete each step to unlock the next</span>
-          <span style={{ fontSize: '11px', color: 'var(--muted-foreground)' }}>{data.doneCount} of 6 complete</span>
-        </div>
-
-        {/* Background container — Dribbble reference style */}
-        <div style={{
-          background: 'var(--muted)', borderRadius: '20px', border: '0.5px solid var(--border)',
-          padding: '20px', paddingTop: '28px', paddingBottom: '16px', overflow: 'visible',
-        }}>
-          {/* Cards row — centered, bottom-aligned */}
-          <div style={{
-            display: 'flex', gap: '10px', alignItems: 'flex-end',
-            justifyContent: 'center', overflow: 'visible', paddingBottom: '4px',
-          }}>
-            {SLICER_STEPS.map((step, i) => {
-              const isDone = i < data.doneCount
-              const isActive = i === data.doneCount
-              const isPending = i > data.doneCount
-              const iconColor = isDone ? '#1D9E75' : isActive ? '#BA7517' : 'var(--muted-foreground)'
-              const iconBg = isDone ? '#E1F5EE' : isActive ? '#FAEEDA' : 'var(--background)'
-
-              return (
-                <div key={i} style={getCardStyle(i, data.doneCount)} onClick={() => !isPending && router.push(step.link)}>
-                  {/* Top: icon + badge */}
-                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '14px' }}>
-                    <div style={{
-                      width: isActive ? '42px' : '34px', height: isActive ? '42px' : '34px',
-                      borderRadius: '10px', background: iconBg,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      flexShrink: 0, transition: 'all 0.4s',
-                    }}>
-                      {isDone ? (
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" strokeWidth="2.5"><path d="M9 11l3 3L22 4"/></svg>
-                      ) : getStepIcon(step.iconPath, iconColor)}
+      {/* ── Slicer Cards (hide for viewers) ── */}
+      {!isViewer && data.doneCount < 6 && (
+        <div className="mb-2">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-medium text-muted-foreground">Get started &mdash; complete each step to unlock the next</span>
+            <span className="text-[11px] text-muted-foreground">{data.doneCount} of 6 complete</span>
+          </div>
+          <div className="bg-muted rounded-[20px] border border-border p-5 pt-7 pb-4 overflow-visible">
+            <div className="flex gap-2.5 items-end justify-center overflow-visible pb-1">
+              {SLICER_STEPS.map((step, i) => {
+                const isDone = i < data.doneCount
+                const isActive = i === data.doneCount
+                const isPending = i > data.doneCount
+                const iconColor = isDone ? '#1D9E75' : isActive ? '#BA7517' : 'var(--muted-foreground)'
+                const iconBg = isDone ? '#E1F5EE' : isActive ? '#FAEEDA' : 'var(--background)'
+                return (
+                  <div key={i} style={getCardStyle(i, data.doneCount)} onClick={() => !isPending && router.push(step.link)}>
+                    <div className="flex items-start justify-between mb-3.5">
+                      <div className="rounded-[10px] flex items-center justify-center flex-shrink-0 transition-all"
+                        style={{ width: isActive ? '42px' : '34px', height: isActive ? '42px' : '34px', background: iconBg }}>
+                        {isDone ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" strokeWidth="2.5"><path d="M9 11l3 3L22 4"/></svg> : getStepIcon(step.iconPath, iconColor)}
+                      </div>
+                      <span className="text-[9px] px-2 py-0.5 rounded-[10px] font-medium"
+                        style={{ background: isDone ? '#E1F5EE' : isActive ? '#BA7517' : 'var(--background)', color: isDone ? '#085041' : isActive ? '#fff' : 'var(--muted-foreground)' }}>
+                        {isDone ? 'Done' : isActive ? 'Next up' : `Step ${i + 1}`}
+                      </span>
                     </div>
-                    <span style={{
-                      fontSize: '9px', padding: '3px 8px', borderRadius: '10px', fontWeight: 500,
-                      background: isDone ? '#E1F5EE' : isActive ? '#BA7517' : 'var(--background)',
-                      color: isDone ? '#085041' : isActive ? '#fff' : 'var(--muted-foreground)',
-                    }}>
-                      {isDone ? 'Done' : isActive ? 'Next up' : `Step ${i + 1}`}
-                    </span>
+                    <div className="font-medium leading-tight mb-1" style={{ fontSize: isActive ? '14px' : '12px', color: isDone ? '#085041' : isActive ? 'var(--foreground)' : 'var(--muted-foreground)' }}>{step.title}</div>
+                    <div className="text-muted-foreground leading-relaxed flex-1" style={{ fontSize: isActive ? '11px' : '10px' }}>{step.sub}</div>
+                    <div className="flex items-center gap-1 font-medium mt-3.5" style={{ fontSize: isActive ? '12px' : '10px', color: isDone ? '#1D9E75' : isActive ? '#BA7517' : 'var(--muted-foreground)' }}>
+                      {isDone ? <><Check className="w-2.5 h-2.5" /> Completed</> : isActive ? <>Get started <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg></> : 'Locked'}
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 h-[3px]">
+                      <div className="h-full transition-all duration-500" style={{ width: isDone ? '100%' : '0%', background: isDone ? '#1D9E75' : '#BA7517' }} />
+                    </div>
                   </div>
-
-                  {/* Title */}
-                  <div style={{
-                    fontWeight: 500, lineHeight: 1.3, marginBottom: '5px',
-                    fontSize: isActive ? '14px' : '12px',
-                    color: isDone ? '#085041' : isActive ? 'var(--foreground)' : 'var(--muted-foreground)',
-                  }}>{step.title}</div>
-
-                  {/* Subtitle — flex:1 pushes action to bottom */}
-                  <div style={{
-                    fontSize: isActive ? '11px' : '10px',
-                    color: 'var(--muted-foreground)', lineHeight: 1.5, flex: 1,
-                  }}>{step.sub}</div>
-
-                  {/* Action — pinned to bottom */}
-                  <div style={{
-                    display: 'flex', alignItems: 'center', gap: '4px',
-                    fontSize: isActive ? '12px' : '10px', fontWeight: 500, marginTop: '14px',
-                    color: isDone ? '#1D9E75' : isActive ? '#BA7517' : 'var(--muted-foreground)',
-                  }}>
-                    {isDone ? (
-                      <><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 11l3 3L22 4"/></svg> Completed</>
-                    ) : isActive ? (
-                      <>Get started <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg></>
-                    ) : 'Locked'}
-                  </div>
-
-                  {/* Bottom progress bar */}
-                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '3px' }}>
-                    <div style={{ height: '100%', width: isDone ? '100%' : '0%', background: isDone ? '#1D9E75' : '#BA7517', transition: 'width 0.5s ease' }} />
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-
-          {/* Dot indicators */}
-          <div style={{ display: 'flex', gap: '5px', justifyContent: 'center', marginTop: '14px' }}>
-            {SLICER_STEPS.map((_, i) => (
-              <div key={i} style={{
-                height: '5px', width: i === data.doneCount ? '20px' : '5px',
-                borderRadius: i === data.doneCount ? '3px' : '50%',
-                background: i < data.doneCount ? '#1D9E75' : i === data.doneCount ? '#BA7517' : 'var(--border)',
-                transition: 'all 0.3s ease', cursor: 'pointer',
-              }} />
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ── Quick Actions ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', margin: '20px 0' }}>
-        {[
-          { label: 'New inspection', sub: 'Start a quality check', iconBg: '#FAEEDA', iconColor: '#BA7517', link: '/inspections/new', icon: <ClipboardCheck className="w-4 h-4" /> },
-          { label: 'New project', sub: 'Create production order', iconBg: '#E6F1FB', iconColor: '#185FA5', link: '/projects/new', icon: <FolderKanban className="w-4 h-4" /> },
-          { label: 'Add factory', sub: 'Connect manufacturer', iconBg: '#E1F5EE', iconColor: '#1D9E75', link: '/factories/new', icon: <Factory className="w-4 h-4" /> },
-        ].map((qa, i) => (
-          <div key={i} onClick={() => router.push(qa.link)}
-            style={{ background: 'var(--card)', borderRadius: '12px', border: '0.5px solid var(--border)', padding: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', transition: 'all .15s' }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = '#C9A96E'; e.currentTarget.style.background = '#FAEEDA' }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--card)' }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '9px', background: qa.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: qa.iconColor, flexShrink: 0 }}>{qa.icon}</div>
-            <div>
-              <div style={{ fontSize: '12px', fontWeight: 500 }}>{qa.label}</div>
-              <div style={{ fontSize: '10px', color: 'var(--muted-foreground)', marginTop: '2px' }}>{qa.sub}</div>
+                )
+              })}
+            </div>
+            <div className="flex gap-1.5 justify-center mt-3.5">
+              {SLICER_STEPS.map((_, i) => (
+                <div key={i} className="rounded-full transition-all duration-300"
+                  style={{ height: '5px', width: i === data.doneCount ? '20px' : '5px', borderRadius: i === data.doneCount ? '3px' : '50%', background: i < data.doneCount ? '#1D9E75' : i === data.doneCount ? '#BA7517' : 'var(--border)' }} />
+              ))}
             </div>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
+
+      {/* ── Quick Actions (hide for viewers) ── */}
+      {!isViewer && (
+        <div className="grid grid-cols-3 gap-2.5 my-5">
+          {[
+            ...(isAdmin || isInspector ? [{ label: 'New inspection', sub: 'Start a quality check', iconBg: '#FAEEDA', iconColor: '#BA7517', link: '/inspections/new', icon: <ClipboardCheck className="w-4 h-4" /> }] : []),
+            ...(isAdmin ? [{ label: 'New project', sub: 'Create production order', iconBg: '#E6F1FB', iconColor: '#185FA5', link: '/projects/new', icon: <FolderKanban className="w-4 h-4" /> }] : []),
+            ...(!isInspector ? [{ label: 'Add factory', sub: 'Connect manufacturer', iconBg: '#E1F5EE', iconColor: '#1D9E75', link: '/factories/new', icon: <Factory className="w-4 h-4" /> }] : []),
+          ].map((qa, i) => (
+            <div key={i} onClick={() => router.push(qa.link)}
+              className="bg-card rounded-xl border border-border p-3.5 cursor-pointer flex items-center gap-3 transition-all hover:border-primary/40 hover:bg-primary/5">
+              <div className="w-9 h-9 rounded-[9px] flex items-center justify-center flex-shrink-0" style={{ background: qa.iconBg, color: qa.iconColor }}>{qa.icon}</div>
+              <div>
+                <div className="text-xs font-medium">{qa.label}</div>
+                <div className="text-[10px] text-muted-foreground mt-0.5">{qa.sub}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Charts (admin + factory manager) ── */}
+      {(isAdmin || isFactoryManager) && (
+        <div className="grid md:grid-cols-2 gap-3 mb-3">
+          {/* Inspection Trend */}
+          <div className="bg-card rounded-xl border border-border p-4">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-xs font-medium">Inspection trend (30 days)</span>
+              <span className="text-[9px] px-2 py-0.5 rounded-md bg-muted text-muted-foreground font-medium">Pass vs Fail</span>
+            </div>
+            {data.inspectionTrendChart.length > 0 ? (
+              <ResponsiveContainer width="100%" height={180}>
+                <LineChart data={data.inspectionTrendChart}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={(v) => v.slice(5)} stroke="var(--muted-foreground)" />
+                  <YAxis tick={{ fontSize: 10 }} stroke="var(--muted-foreground)" allowDecimals={false} />
+                  <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--card)' }} />
+                  <Line type="monotone" dataKey="pass" stroke="#16a34a" strokeWidth={2} dot={false} name="Pass" />
+                  <Line type="monotone" dataKey="fail" stroke="#dc2626" strokeWidth={2} dot={false} name="Fail" />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[180px] text-xs text-muted-foreground">No inspection data yet</div>
+            )}
+          </div>
+
+          {/* Defect Distribution */}
+          <div className="bg-card rounded-xl border border-border p-4">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-xs font-medium">Defect distribution</span>
+              <span className="text-[9px] px-2 py-0.5 rounded-md bg-muted text-muted-foreground font-medium">By category</span>
+            </div>
+            {data.defectsByCategory.length > 0 ? (
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart data={data.defectsByCategory} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis type="number" tick={{ fontSize: 10 }} stroke="var(--muted-foreground)" allowDecimals={false} />
+                  <YAxis dataKey="category" type="category" tick={{ fontSize: 10 }} stroke="var(--muted-foreground)" width={80} />
+                  <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--card)' }} />
+                  <Bar dataKey="count" fill="#BA7517" radius={[0, 4, 4, 0]} name="Defects" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[180px] text-xs text-muted-foreground">No defect data yet</div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── Bottom Two-Column ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+      <div className="grid md:grid-cols-2 gap-3">
         {/* Recent activity */}
-        <div style={{ background: 'var(--card)', borderRadius: '12px', border: '0.5px solid var(--border)', padding: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 500 }}>Recent activity</span>
-            <span style={{ fontSize: '9px', padding: '2px 7px', borderRadius: '6px', background: 'var(--muted)', color: 'var(--muted-foreground)', fontWeight: 500 }}>Today</span>
+        <div className="bg-card rounded-xl border border-border p-4">
+          <div className="flex items-center justify-between mb-3.5">
+            <span className="text-xs font-medium">Recent activity</span>
+            <span className="text-[9px] px-2 py-0.5 rounded-md bg-muted text-muted-foreground font-medium">Today</span>
           </div>
           {data.recentActivity.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '20px 0' }}>
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--muted-foreground)" strokeWidth="1" strokeLinecap="round" style={{ margin: '0 auto 8px', display: 'block', opacity: 0.3 }}>
+            <div className="text-center py-5">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--muted-foreground)" strokeWidth="1" strokeLinecap="round" className="mx-auto mb-2 opacity-30">
                 <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
               </svg>
-              <div style={{ fontSize: '12px', color: 'var(--muted-foreground)' }}>No activity yet</div>
-              <div style={{ fontSize: '11px', color: 'var(--muted-foreground)', marginTop: '3px' }}>Actions will appear here</div>
+              <div className="text-xs text-muted-foreground">No activity yet</div>
+              <div className="text-[11px] text-muted-foreground mt-1">Actions will appear here</div>
             </div>
           ) : (
             data.recentActivity.map((item, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 0', borderBottom: i < data.recentActivity.length - 1 ? '0.5px solid var(--border)' : 'none' }}>
-                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: ACTIVITY_COLORS[item.category] || '#534AB7', flexShrink: 0 }} />
-                <div style={{ fontSize: '12px', flex: 1 }}>{item.title}</div>
-                <div style={{ fontSize: '10px', color: 'var(--muted-foreground)' }}>
+              <div key={i}
+                className={`flex items-center gap-2.5 py-2 ${item.link ? 'cursor-pointer hover:bg-muted/50 -mx-2 px-2 rounded-md' : ''} ${i < data.recentActivity.length - 1 ? 'border-b border-border' : ''}`}
+                onClick={() => item.link && router.push(item.link)}>
+                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: ACTIVITY_COLORS[item.category] || '#534AB7' }} />
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs truncate">{item.title}</div>
+                  {item.detail && <div className="text-[10px] text-muted-foreground truncate">{item.detail}</div>}
+                </div>
+                <div className="text-[10px] text-muted-foreground flex-shrink-0">
                   {item.createdAt ? new Date(item.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : ''}
                 </div>
               </div>
@@ -294,59 +312,37 @@ export function DashboardClient({ data }: { data: DashboardData }) {
           )}
         </div>
 
-        {/* Setup progress */}
-        <div style={{ background: 'var(--card)', borderRadius: '12px', border: '0.5px solid var(--border)', padding: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 500 }}>Setup progress</span>
-            <span style={{ fontSize: '9px', padding: '2px 7px', borderRadius: '6px', background: '#FAEEDA', color: '#633806', fontWeight: 500 }}>{data.doneCount} of 6</span>
+        {/* Factory Audit Scores (horizontal bar) */}
+        <div className="bg-card rounded-xl border border-border p-4">
+          <div className="flex items-center justify-between mb-3.5">
+            <span className="text-xs font-medium">Factory audit scores</span>
+            {data.factoryAuditScores && data.factoryAuditScores.length > 0 && (
+              <Link href="/factories" className="text-[10px] text-primary hover:underline">View all &rarr;</Link>
+            )}
           </div>
-
-          {/* Progress bar */}
-          <div style={{ marginBottom: '14px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--muted-foreground)', marginBottom: '5px' }}>
-              <span>Overall progress</span>
-              <span style={{ color: '#BA7517', fontWeight: 500 }}>{Math.round((data.doneCount / 6) * 100)}%</span>
-            </div>
-            <div style={{ height: '6px', background: 'var(--muted)', borderRadius: '3px', overflow: 'hidden' }}>
-              <div style={{ width: `${Math.round((data.doneCount / 6) * 100)}%`, height: '100%', background: '#BA7517', borderRadius: '3px', transition: 'width 0.6s' }} />
-            </div>
-          </div>
-
-          {/* Step list */}
-          {SLICER_STEPS.map((step, i) => {
-            const isDone = i < data.doneCount
-            const isActive = i === data.doneCount
-            return (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', fontSize: '11px' }}>
-                <div style={{ width: '18px', height: '18px', borderRadius: '50%', background: isDone ? '#1D9E75' : isActive ? '#BA7517' : 'var(--muted)', border: !isDone && !isActive ? '1.5px solid var(--border)' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  {isDone && <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><path d="M9 11l3 3L22 4"/></svg>}
-                  {isActive && <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="3"/></svg>}
+          {data.factoryAuditScores && data.factoryAuditScores.length > 0 ? (
+            <div className="space-y-2">
+              {data.factoryAuditScores.map(f => (
+                <div key={f.id} className="flex items-center gap-2 text-xs">
+                  <span className="flex-1 truncate">{f.name}</span>
+                  <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                    <div className="h-full rounded-full transition-all" style={{
+                      width: `${f.score}%`,
+                      background: f.score >= 85 ? '#16a34a' : f.score >= 70 ? '#d97706' : '#dc2626',
+                    }} />
+                  </div>
+                  <span className="font-medium w-10 text-right" style={{ color: f.score >= 85 ? '#16a34a' : f.score >= 70 ? '#d97706' : '#dc2626' }}>{f.score}%</span>
                 </div>
-                <span style={{ color: isDone ? '#085041' : isActive ? '#633806' : 'var(--muted-foreground)', fontWeight: isActive ? 500 : 400 }}>{step.title}</span>
-              </div>
-            )
-          })}
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-5">
+              <div className="text-xs text-muted-foreground">No audit data yet</div>
+              <div className="text-[11px] text-muted-foreground mt-1">Factory audits will appear here</div>
+            </div>
+          )}
         </div>
       </div>
-
-      {/* ── Factory Audit Scores ── */}
-      {data.factoryAuditScores && data.factoryAuditScores.length > 0 && (
-        <div style={{ background: 'var(--card)', borderRadius: '12px', border: '0.5px solid var(--border)', padding: '16px', marginTop: '12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 500 }}>Factory audit scores</span>
-            <Link href="/audits/factory" style={{ fontSize: '10px', color: '#BA7517' }}>View all &rarr;</Link>
-          </div>
-          {data.factoryAuditScores.map(f => (
-            <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 0', fontSize: '12px' }}>
-              <span style={{ flex: 1 }}>{f.name}</span>
-              <span style={{ fontWeight: 500, color: f.result === 'approved' ? '#085041' : f.result === 'conditional' ? '#BA7517' : '#E24B4A' }}>{f.score}%</span>
-              <span style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '4px', fontWeight: 600, background: f.result === 'approved' ? '#E1F5EE' : f.result === 'conditional' ? '#FAEEDA' : '#FCEBEB', color: f.result === 'approved' ? '#085041' : f.result === 'conditional' ? '#633806' : '#791F1F' }}>
-                {f.result === 'approved' ? 'Approved' : f.result === 'conditional' ? 'Conditional' : 'Failed'}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   )
 }
