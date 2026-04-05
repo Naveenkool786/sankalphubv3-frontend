@@ -86,11 +86,29 @@ export default async function FactoryProfilePage({ params }: { params: Promise<{
               {[factory.city, factory.country].filter(Boolean).join(', ')}
             </p>
           )}
-          <div className="flex items-center gap-2 mt-2">
+          <div className="flex items-center gap-2 mt-2 flex-wrap">
             <Badge variant={factory.is_active ? 'default' : 'secondary'}>
               {factory.is_active ? 'Active' : 'Inactive'}
             </Badge>
             {factory.code && <Badge variant="secondary">{factory.code}</Badge>}
+            {factory.latest_audit_score != null && (
+              <Badge variant="secondary" className={cn('text-[10px]',
+                factory.latest_audit_score >= 85 ? 'bg-emerald-500/10 text-emerald-600' :
+                factory.latest_audit_score >= 70 ? 'bg-amber-500/10 text-amber-600' :
+                'bg-red-500/10 text-red-600'
+              )}>
+                Compliance: {factory.latest_audit_score}%
+              </Badge>
+            )}
+          </div>
+          {/* Categories & Capacity */}
+          <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground flex-wrap">
+            {factory.categories && Array.isArray(factory.categories) && factory.categories.length > 0 && (
+              <span>{(factory.categories as string[]).join(' · ')}</span>
+            )}
+            {factory.total_lines > 0 && (
+              <span>{factory.active_lines ?? 0}/{factory.total_lines} production lines</span>
+            )}
           </div>
         </div>
       </div>
@@ -284,6 +302,16 @@ export default async function FactoryProfilePage({ params }: { params: Promise<{
                 <p className="text-[10px] text-muted-foreground">Failed</p>
               </div>
             </div>
+          </div>
+
+          {/* Audit Actions */}
+          <div className="flex gap-2">
+            <Link href={`/factories/${id}/audits`} className="flex-1 text-center text-xs font-medium py-2.5 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+              Audit History
+            </Link>
+            <Link href={`/factories/${id}/audits/new`} className="flex-1 text-center text-xs font-medium py-2.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
+              New WRAP Audit
+            </Link>
           </div>
 
           {/* Live Status (Pattern 7) */}
