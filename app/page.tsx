@@ -253,6 +253,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-background">
 
       {/* ── NAVBAR ── */}
+      <header>
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
           {/* Logo */}
@@ -283,6 +284,8 @@ export default function LandingPage() {
           <button
             className="md:hidden p-2 text-muted-foreground hover:text-foreground"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-expanded={mobileMenuOpen}
+            aria-label="Toggle navigation menu"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -305,7 +308,9 @@ export default function LandingPage() {
           </div>
         )}
       </nav>
+      </header>
 
+      <main id="main-content">
       {/* ── HERO ── */}
       <section className="pt-28 pb-20 px-6 relative overflow-hidden min-h-[85vh] flex items-center">
         {/* 3D Background Image */}
@@ -621,6 +626,8 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      </main>
 
       {/* ── FOOTER ── */}
       <footer className="py-8 px-6 border-t border-border">
