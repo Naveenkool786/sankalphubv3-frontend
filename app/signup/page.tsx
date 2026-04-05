@@ -122,29 +122,29 @@ function StepCompany({
       <p className="text-sm text-muted-foreground mt-1 mb-6">Tell us about your organisation to get started.</p>
 
       <div className="space-y-4">
-        <Field label="Company name" error={errors.companyName}>
-          <Input placeholder="e.g. Acme Brands Ltd." value={data.companyName} onChange={e => onChange({ companyName: e.target.value })} />
+        <Field label="Company name" error={errors.companyName} required htmlFor="companyName">
+          <Input id="companyName" placeholder="e.g. Acme Brands Ltd." value={data.companyName} onChange={e => onChange({ companyName: e.target.value })} required aria-required="true" autoComplete="organization" aria-invalid={!!errors.companyName} aria-describedby={errors.companyName ? 'companyName-error' : undefined} />
         </Field>
 
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Country" error={errors.country}>
-            <Input placeholder="India" value={data.country} onChange={e => onChange({ country: e.target.value })} />
+          <Field label="Country" error={errors.country} required htmlFor="country">
+            <Input id="country" placeholder="India" value={data.country} onChange={e => onChange({ country: e.target.value })} required aria-required="true" autoComplete="country-name" aria-invalid={!!errors.country} aria-describedby={errors.country ? 'country-error' : undefined} />
           </Field>
-          <Field label="City" error={errors.city}>
-            <Input placeholder="Mumbai" value={data.city} onChange={e => onChange({ city: e.target.value })} />
+          <Field label="City" error={errors.city} required htmlFor="city">
+            <Input id="city" placeholder="Mumbai" value={data.city} onChange={e => onChange({ city: e.target.value })} required aria-required="true" aria-invalid={!!errors.city} aria-describedby={errors.city ? 'city-error' : undefined} />
           </Field>
         </div>
 
-        <Field label="Work email" error={errors.email}>
-          <Input type="email" placeholder="you@company.com" value={data.email} onChange={e => onChange({ email: e.target.value })} />
+        <Field label="Work email" error={errors.email} required htmlFor="signup-email">
+          <Input id="signup-email" type="email" placeholder="you@company.com" value={data.email} onChange={e => onChange({ email: e.target.value })} required aria-required="true" autoComplete="email" aria-invalid={!!errors.email} aria-describedby={errors.email ? 'signup-email-error' : undefined} />
         </Field>
 
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Password" error={errors.password}>
-            <Input type="password" placeholder="Min. 8 characters" value={data.password} onChange={e => onChange({ password: e.target.value })} />
+          <Field label="Password" error={errors.password} required htmlFor="signup-password">
+            <Input id="signup-password" type="password" placeholder="Min. 8 characters" value={data.password} onChange={e => onChange({ password: e.target.value })} required aria-required="true" autoComplete="new-password" aria-invalid={!!errors.password} aria-describedby={errors.password ? 'signup-password-error' : undefined} />
           </Field>
-          <Field label="Confirm password" error={errors.confirmPassword}>
-            <Input type="password" placeholder="Repeat password" value={data.confirmPassword} onChange={e => onChange({ confirmPassword: e.target.value })} />
+          <Field label="Confirm password" error={errors.confirmPassword} required htmlFor="confirmPassword">
+            <Input id="confirmPassword" type="password" placeholder="Repeat password" value={data.confirmPassword} onChange={e => onChange({ confirmPassword: e.target.value })} required aria-required="true" autoComplete="new-password" aria-invalid={!!errors.confirmPassword} aria-describedby={errors.confirmPassword ? 'confirmPassword-error' : undefined} />
           </Field>
         </div>
       </div>
@@ -212,8 +212,8 @@ function StepRole({
       {errors.orgType && <p className="text-xs text-destructive mt-2">{errors.orgType}</p>}
 
       <div className="border-t border-border mt-6 pt-4">
-        <Field label="Your job title" error={errors.jobTitle}>
-          <Input placeholder="e.g. Quality Manager" value={data.jobTitle} onChange={e => onChange({ jobTitle: e.target.value })} />
+        <Field label="Your job title" error={errors.jobTitle} htmlFor="jobTitle">
+          <Input id="jobTitle" placeholder="e.g. Quality Manager" value={data.jobTitle} onChange={e => onChange({ jobTitle: e.target.value })} autoComplete="organization-title" />
         </Field>
       </div>
 
@@ -373,12 +373,14 @@ function StepSuccess() {
 
 /* ─── FIELD HELPER ─── */
 
-function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
+function Field({ label, error, children, required, htmlFor }: { label: string; error?: string; children: React.ReactNode; required?: boolean; htmlFor?: string }) {
   return (
     <div>
-      <Label className="text-xs font-medium mb-1.5 block">{label}</Label>
+      <Label className="text-xs font-medium mb-1.5 block" htmlFor={htmlFor}>
+        {label}{required && <> <span aria-hidden="true">*</span><span className="sr-only">required</span></>}
+      </Label>
       {children}
-      {error && <p className="text-[11px] text-destructive mt-1">{error}</p>}
+      {error && <p id={htmlFor ? `${htmlFor}-error` : undefined} className="text-[11px] text-destructive mt-1" role="alert">{error}</p>}
     </div>
   )
 }

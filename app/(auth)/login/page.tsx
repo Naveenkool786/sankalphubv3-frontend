@@ -245,13 +245,16 @@ export default function LoginPage() {
             ) : useMagicLink ? (
               <form onSubmit={handleMagicLink}>
                 <div style={{ marginBottom: '20px' }}>
-                  <label style={labelStyle}>Email address</label>
+                  <label htmlFor="magic-email" style={labelStyle}>Email address <span aria-hidden="true">*</span></label>
                   <input
+                    id="magic-email"
                     type="email"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     placeholder="you@company.com"
                     required
+                    aria-required="true"
+                    autoComplete="email"
                     autoFocus
                     style={inputStyle}
                     onFocus={e => e.target.style.borderColor = '#C9A96E'}
@@ -288,13 +291,16 @@ export default function LoginPage() {
             ) : (
               <form onSubmit={handleLogin}>
                 <div style={{ marginBottom: '16px' }}>
-                  <label style={labelStyle}>Email address</label>
+                  <label htmlFor="login-email" style={labelStyle}>Email address <span aria-hidden="true">*</span></label>
                   <input
+                    id="login-email"
                     type="email"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     placeholder="you@company.com"
                     required
+                    aria-required="true"
+                    autoComplete="email"
                     autoFocus
                     style={inputStyle}
                     onFocus={e => e.target.style.borderColor = '#C9A96E'}
@@ -302,13 +308,16 @@ export default function LoginPage() {
                   />
                 </div>
                 <div style={{ marginBottom: '24px' }}>
-                  <label style={labelStyle}>Password</label>
+                  <label htmlFor="login-password" style={labelStyle}>Password <span aria-hidden="true">*</span></label>
                   <input
+                    id="login-password"
                     type="password"
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     placeholder="••••••••"
                     required
+                    aria-required="true"
+                    autoComplete="current-password"
                     style={inputStyle}
                     onFocus={e => e.target.style.borderColor = '#C9A96E'}
                     onBlur={e => e.target.style.borderColor = '#222'}
@@ -378,13 +387,16 @@ export default function LoginPage() {
                   Enter your email and we&apos;ll send a reset link.
                 </p>
                 <div style={{ marginBottom: '20px' }}>
-                  <label style={labelStyle}>Email address</label>
+                  <label htmlFor="recovery-email" style={labelStyle}>Email address <span aria-hidden="true">*</span></label>
                   <input
+                    id="recovery-email"
                     type="email"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     placeholder="you@company.com"
                     required
+                    aria-required="true"
+                    autoComplete="email"
                     autoFocus
                     style={inputStyle}
                     onFocus={e => e.target.style.borderColor = '#C9A96E'}

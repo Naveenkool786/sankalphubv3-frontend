@@ -138,28 +138,35 @@ export function SettingsClient({ profile, org, canManage: isAdmin }: Props) {
 
           <div className="space-y-3">
             <div>
-              <Label className="text-xs">Display Name *</Label>
+              <Label className="text-xs" htmlFor="displayName">Display Name <span aria-hidden="true">*</span></Label>
               <Input
+                id="displayName"
                 className="h-9 mt-1.5"
                 placeholder="John Smith"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 disabled={savingProfile}
+                required
+                aria-required="true"
+                autoComplete="name"
               />
             </div>
             <div>
-              <Label className="text-xs">Email Address</Label>
+              <Label className="text-xs" htmlFor="profileEmail">Email Address</Label>
               <Input
+                id="profileEmail"
                 className="h-9 mt-1.5 bg-muted/50 text-muted-foreground"
                 value={profile.email}
                 disabled
+                autoComplete="email"
               />
               <p className="text-[11px] text-muted-foreground mt-1">Email is managed by your identity provider and cannot be changed here.</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs">Department</Label>
+                <Label className="text-xs" htmlFor="department">Department</Label>
                 <Input
+                  id="department"
                   className="h-9 mt-1.5"
                   placeholder="e.g. Quality Control"
                   value={department}
@@ -168,13 +175,15 @@ export function SettingsClient({ profile, org, canManage: isAdmin }: Props) {
                 />
               </div>
               <div>
-                <Label className="text-xs">Phone</Label>
+                <Label className="text-xs" htmlFor="profilePhone">Phone</Label>
                 <Input
+                  id="profilePhone"
                   className="h-9 mt-1.5"
                   placeholder="+1 555 000 0000"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   disabled={savingProfile}
+                  autoComplete="tel"
                 />
               </div>
             </div>
@@ -211,13 +220,17 @@ export function SettingsClient({ profile, org, canManage: isAdmin }: Props) {
 
             <div className="space-y-3">
               <div>
-                <Label className="text-xs">Organization Name *</Label>
+                <Label className="text-xs" htmlFor="orgName">Organization Name <span aria-hidden="true">*</span></Label>
                 <Input
+                  id="orgName"
                   className="h-9 mt-1.5"
                   placeholder="Acme Inc."
                   value={orgName}
                   onChange={(e) => setOrgName(e.target.value)}
                   disabled={savingOrg}
+                  required
+                  aria-required="true"
+                  autoComplete="organization"
                 />
               </div>
               <div>

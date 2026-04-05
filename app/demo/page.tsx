@@ -214,7 +214,7 @@ function DemoForm() {
         <div className="space-y-1.5">
           <Label htmlFor="fullName">Full Name *</Label>
           <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)}
-            placeholder="Jane Smith" required />
+            placeholder="Jane Smith" required aria-required="true" autoComplete="name" />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="companyName">
@@ -222,7 +222,7 @@ function DemoForm() {
           </Label>
           <Input id="companyName" value={companyName} onChange={(e) => setCompanyName(e.target.value)}
             placeholder={selectedRole === 'factory' ? 'ABC Garments Ltd.' : selectedRole === 'agency' ? 'QC Global Agency' : 'Fashion Brand Co.'}
-            required />
+            required aria-required="true" autoComplete="organization" />
         </div>
       </div>
 
@@ -230,12 +230,12 @@ function DemoForm() {
         <div className="space-y-1.5">
           <Label htmlFor="email">Work Email *</Label>
           <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@company.com" required />
+            placeholder="you@company.com" required aria-required="true" autoComplete="email" />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="phone">Phone (optional)</Label>
           <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
-            placeholder="+91 98765 43210" />
+            placeholder="+91 98765 43210" autoComplete="tel" />
         </div>
       </div>
 

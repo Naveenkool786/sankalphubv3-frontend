@@ -377,20 +377,20 @@ export default function NewFactoryPage() {
               <h2 style={{ fontSize: '14px', fontWeight: 600 }}>Factory Basics</h2>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div><label style={labelStyle}>Factory name *</label><input style={inputStyle} value={form.name} onChange={e => set('name', e.target.value)} placeholder="Tiger Exports Ltd." required /></div>
-                <div><label style={labelStyle}>Factory code</label><input style={inputStyle} value={form.code} onChange={e => set('code', e.target.value)} placeholder="FAC-001" /></div>
+                <div><label htmlFor="factoryName" style={labelStyle}>Factory name *</label><input id="factoryName" style={inputStyle} value={form.name} onChange={e => set('name', e.target.value)} placeholder="Tiger Exports Ltd." required aria-required="true" autoComplete="organization" /></div>
+                <div><label htmlFor="factoryCode" style={labelStyle}>Factory code</label><input id="factoryCode" style={inputStyle} value={form.code} onChange={e => set('code', e.target.value)} placeholder="FAC-001" /></div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div><label style={labelStyle}>Country *</label><input style={inputStyle} value={form.country} onChange={e => set('country', e.target.value)} placeholder="India" required /></div>
-                <div><label style={labelStyle}>City</label><input style={inputStyle} value={form.city} onChange={e => set('city', e.target.value)} placeholder="Noida" /></div>
+                <div><label htmlFor="factoryCountry" style={labelStyle}>Country *</label><input id="factoryCountry" style={inputStyle} value={form.country} onChange={e => set('country', e.target.value)} placeholder="India" required aria-required="true" autoComplete="country-name" /></div>
+                <div><label htmlFor="factoryCity" style={labelStyle}>City</label><input id="factoryCity" style={inputStyle} value={form.city} onChange={e => set('city', e.target.value)} placeholder="Noida" /></div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div><label style={labelStyle}>Contact name *</label><input style={inputStyle} value={form.contactName} onChange={e => set('contactName', e.target.value)} placeholder="Full name" required /></div>
-                <div><label style={labelStyle}>Contact email *</label><input style={inputStyle} type="email" value={form.contactEmail} onChange={e => set('contactEmail', e.target.value)} placeholder="contact@factory.com" required /></div>
+                <div><label htmlFor="contactName" style={labelStyle}>Contact name *</label><input id="contactName" style={inputStyle} value={form.contactName} onChange={e => set('contactName', e.target.value)} placeholder="Full name" required aria-required="true" autoComplete="name" /></div>
+                <div><label htmlFor="contactEmail" style={labelStyle}>Contact email *</label><input id="contactEmail" style={inputStyle} type="email" value={form.contactEmail} onChange={e => set('contactEmail', e.target.value)} placeholder="contact@factory.com" required aria-required="true" autoComplete="email" /></div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div><label style={labelStyle}>Contact phone</label><input style={inputStyle} type="tel" value={form.contactPhone} onChange={e => set('contactPhone', e.target.value)} placeholder="+91 98765 43210" /></div>
-                <div><label style={labelStyle}>Website</label><input style={inputStyle} type="url" value={form.website} onChange={e => set('website', e.target.value)} placeholder="www.factory.com" /></div>
+                <div><label htmlFor="contactPhone" style={labelStyle}>Contact phone</label><input id="contactPhone" style={inputStyle} type="tel" value={form.contactPhone} onChange={e => set('contactPhone', e.target.value)} placeholder="+91 98765 43210" autoComplete="tel" /></div>
+                <div><label htmlFor="website" style={labelStyle}>Website</label><input id="website" style={inputStyle} type="url" value={form.website} onChange={e => set('website', e.target.value)} placeholder="www.factory.com" autoComplete="url" /></div>
               </div>
               <div>
                 <label style={labelStyle}>Notes</label>
