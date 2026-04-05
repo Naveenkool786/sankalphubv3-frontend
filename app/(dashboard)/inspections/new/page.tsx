@@ -6,6 +6,7 @@ import { createBrowserClient } from '@supabase/ssr'
 import { ArrowLeft, ArrowRight, Check, Camera, Upload, Loader2, Plus, Trash2, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { BackButton } from '@/components/ui/BackButton'
+import { notifyInspectionResult } from '../actions'
 import { getSampleSize, getAQLLimits, calculateAQL } from '@/lib/inspection/aql-engine'
 import { getChecklistForCategory, getTotalItemCount, type ChecklistSection } from '@/lib/inspection/checklists'
 import { exportInspectionPDF } from '@/lib/export/inspectionPdf'
@@ -308,6 +309,16 @@ export default function NewInspectionPage() {
             quantity: d.quantity, notes: d.notes || null,
           }))
         )
+      }
+
+      // Fire notifications for submitted inspections
+      if (!asDraft && saved) {
+        notifyInspectionResult({
+          inspectionId: saved.id,
+          inspectionNo: saved.inspection_no || `INS-${saved.id.slice(0, 8)}`,
+          result: aqlResult.overallResult === 'pass' ? 'pass' : 'fail',
+          hasCriticalDefects: defectCounts.critical > 0,
+        }).catch(() => {})
       }
 
       toast.success(asDraft ? 'Draft saved' : 'Inspection submitted')

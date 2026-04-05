@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { getUserContext, canManage } from '@/lib/getUserContext'
 import { revalidatePath } from 'next/cache'
 import { trackEvent } from '@/lib/activity-tracker'
@@ -22,7 +23,10 @@ export async function createInspection(data: {
 }) {
   const ctx = await getUserContext()
 
-  const supabase = await createClient()
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const supabase = serviceKey
+    ? createServiceClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceKey)
+    : await createClient()
   const inspection_no = `INS-${Date.now()}`
 
   const { error } = await supabase.from('inspections').insert({
@@ -54,11 +58,57 @@ export async function createInspection(data: {
   revalidatePath('/inspections')
 }
 
+export async function notifyInspectionResult(data: {
+  inspectionId: string
+  inspectionNo: string
+  result: 'pass' | 'fail'
+  hasCriticalDefects: boolean
+}) {
+  const ctx = await getUserContext()
+
+  if (data.result === 'pass') {
+    await createNotification({
+      organizationId: ctx.orgId,
+      eventType: 'inspection_passed',
+      soundCategory: 'inspection_pass',
+      title: 'Inspection Passed',
+      detail: `${data.inspectionNo} passed AQL requirements`,
+      link: `/inspections`,
+      isCritical: false,
+    })
+  } else {
+    await createNotification({
+      organizationId: ctx.orgId,
+      eventType: 'inspection_failed',
+      soundCategory: 'inspection_fail',
+      title: 'Inspection Failed',
+      detail: `${data.inspectionNo} failed AQL requirements`,
+      link: `/inspections`,
+      isCritical: true,
+    })
+  }
+
+  if (data.hasCriticalDefects) {
+    await createNotification({
+      organizationId: ctx.orgId,
+      eventType: 'critical_defect',
+      soundCategory: 'inspection_fail',
+      title: 'Critical Defect Found',
+      detail: `Critical defect detected during ${data.inspectionNo}`,
+      link: `/inspections`,
+      isCritical: true,
+    })
+  }
+}
+
 export async function updateInspectionStatus(inspectionId: string, status: InspectionStatus) {
   const ctx = await getUserContext()
   if (!canManage(ctx.role)) throw new Error('Unauthorized')
 
-  const supabase = await createClient()
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const supabase = serviceKey
+    ? createServiceClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceKey)
+    : await createClient()
   const { error } = await (supabase.from('inspections') as any)
     .update({ status })
     .eq('id', inspectionId)
@@ -71,7 +121,10 @@ export async function deleteInspection(inspectionId: string) {
   const ctx = await getUserContext()
   if (!canManage(ctx.role)) throw new Error('Unauthorized')
 
-  const supabase = await createClient()
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const supabase = serviceKey
+    ? createServiceClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceKey)
+    : await createClient()
   const { error } = await supabase
     .from('inspections')
     .delete()

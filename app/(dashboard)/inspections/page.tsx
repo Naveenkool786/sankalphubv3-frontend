@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { getUserContext, canManage } from '@/lib/getUserContext'
 import { InspectionsClient } from './_components/InspectionsClient'
 import type { InspectionStatus, InspectionResult, InspectionType } from '@/types/database'
@@ -42,7 +43,10 @@ type TemplateOption = {
 
 export default async function InspectionsPage() {
   const ctx = await getUserContext()
-  const supabase = await createClient()
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const supabase = serviceKey
+    ? createServiceClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceKey)
+    : await createClient()
 
   const [inspRes, projectsRes, templatesRes] = await Promise.all([
     supabase
@@ -70,9 +74,9 @@ export default async function InspectionsPage() {
       .order('name'),
   ])
 
-  const inspections = (inspRes.data ?? []) as InspectionRow[]
-  const projects = (projectsRes.data ?? []) as ProjectOption[]
-  const templates = (templatesRes.data ?? []) as TemplateOption[]
+  const inspections = (inspRes.data ?? []) as unknown as InspectionRow[]
+  const projects = (projectsRes.data ?? []) as unknown as ProjectOption[]
+  const templates = (templatesRes.data ?? []) as unknown as TemplateOption[]
 
   return (
     <div className="p-6 lg:p-8">
