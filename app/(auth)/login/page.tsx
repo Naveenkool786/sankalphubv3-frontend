@@ -1,441 +1,337 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { createBrowserClient } from '@supabase/ssr'
+import { toast } from 'sonner'
+import { Loader2, ArrowRight, ArrowLeft, Mail } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Logo } from '@/components/ui/Logo'
+import { loginSchema, magicLinkSchema, recoverySchema, type LoginFormData, type MagicLinkFormData, type RecoveryFormData } from '@/lib/validations/auth'
 
-/* ── Sacred Orbit Logo ── */
-function SacredOrbitLogo({ size = 64 }: { size?: number }) {
-  return (
-    <svg viewBox="0 0 140 140" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="dG" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#EDD898" />
-          <stop offset="100%" stopColor="#A87C30" />
-        </linearGradient>
-        <linearGradient id="dI" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#F5E6B0" />
-          <stop offset="100%" stopColor="#C9A96E" />
-        </linearGradient>
-        <linearGradient id="nG" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#C9A96E" />
-          <stop offset="100%" stopColor="#8B6520" />
-        </linearGradient>
-      </defs>
-      <ellipse cx="70" cy="70" rx="62" ry="22" fill="none" stroke="#C9A96E" strokeWidth="0.8" opacity="0.25" transform="rotate(-40 70 70)" />
-      <ellipse cx="70" cy="70" rx="62" ry="22" fill="none" stroke="#C9A96E" strokeWidth="0.8" opacity="0.4" transform="rotate(20 70 70)" />
-      <ellipse cx="70" cy="70" rx="62" ry="22" fill="none" stroke="#C9A96E" strokeWidth="0.8" opacity="0.2" transform="rotate(80 70 70)" />
-      <circle cx="70" cy="70" r="60" fill="none" stroke="#C9A96E" strokeWidth="0.4" opacity="0.15" />
-      <polygon points="70,14 116,70 70,122 24,70" fill="none" stroke="url(#dG)" strokeWidth="1.2" opacity="0.6" />
-      <polygon points="70,30 104,70 70,106 36,70" fill="none" stroke="url(#dG)" strokeWidth="1" opacity="0.9" />
-      <polygon points="70,44 96,70 70,94 44,70" fill="url(#dI)" opacity="0.12" />
-      <polygon points="70,44 96,70 70,94 44,70" fill="none" stroke="url(#dG)" strokeWidth="1.5" />
-      <circle cx="70" cy="8" r="4" fill="url(#nG)" />
-      <circle cx="124" cy="88" r="3" fill="url(#nG)" opacity="0.7" />
-      <circle cx="16" cy="88" r="3" fill="url(#nG)" opacity="0.7" />
-      <line x1="70" y1="8" x2="70" y2="44" stroke="#C9A96E" strokeWidth="0.5" opacity="0.3" />
-      <line x1="124" y1="88" x2="96" y2="70" stroke="#C9A96E" strokeWidth="0.5" opacity="0.2" />
-      <line x1="16" y1="88" x2="44" y2="70" stroke="#C9A96E" strokeWidth="0.5" opacity="0.2" />
-      <circle cx="70" cy="70" r="11" fill="none" stroke="#C9A96E" strokeWidth="0.8" opacity="0.5" />
-      <circle cx="70" cy="70" r="6" fill="url(#dG)" />
-      <circle cx="70" cy="70" r="2.5" fill="#EDD898" />
-    </svg>
+function getSupabase() {
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
 }
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<'signin' | 'recovery'>('signin')
   const [useMagicLink, setUseMagicLink] = useState(false)
   const [magicSent, setMagicSent] = useState(false)
   const [recoverySent, setRecoverySent] = useState(false)
 
-  function getSupabase() {
-    return createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-  }
+  /* ── Sign-in form ── */
+  const signInForm = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: '', password: '' },
+  })
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-
+  const handleLogin = async (data: LoginFormData) => {
     const supabase = getSupabase()
-    const { data, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+    const { error } = await supabase.auth.signInWithPassword({
+      email: data.email,
+      password: data.password,
     })
 
-    if (authError) {
-      setError(authError.message)
-      setLoading(false)
+    if (error) {
+      if (error.message.includes('429') || error.status === 429) {
+        toast.error('Too many attempts', { description: 'Try again in a few minutes.' })
+      } else if (error.message.includes('Invalid login')) {
+        toast.error('Invalid email or password')
+      } else {
+        toast.error('Sign in failed', { description: error.message })
+      }
       return
     }
 
-    if (data?.user) {
-      window.location.href = '/dashboard'
-    }
+    window.location.href = '/dashboard'
   }
 
-  const handleMagicLink = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
+  /* ── Magic link form ── */
+  const magicForm = useForm<MagicLinkFormData>({
+    resolver: zodResolver(magicLinkSchema),
+    defaultValues: { email: '' },
+  })
 
+  const handleMagicLink = async (data: MagicLinkFormData) => {
     const supabase = getSupabase()
-    const { error: otpError } = await supabase.auth.signInWithOtp({
-      email,
+    const { error } = await supabase.auth.signInWithOtp({
+      email: data.email,
       options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
     })
-    setLoading(false)
-    if (otpError) {
-      setError(otpError.message)
-    } else {
-      setMagicSent(true)
+
+    if (error) {
+      toast.error('Unable to send magic link', { description: error.message })
+      return
     }
+
+    setMagicSent(true)
+    toast.success('Magic link sent', { description: `Check your inbox at ${data.email}` })
   }
 
-  const handleRecovery = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
+  /* ── Recovery form ── */
+  const recoveryForm = useForm<RecoveryFormData>({
+    resolver: zodResolver(recoverySchema),
+    defaultValues: { email: '' },
+  })
 
+  const handleRecovery = async (data: RecoveryFormData) => {
     const supabase = getSupabase()
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+    const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
       redirectTo: `${window.location.origin}/auth/confirm?type=recovery&next=/auth/reset-password`,
     })
-    setLoading(false)
-    if (resetError) {
-      setError(resetError.message)
-    } else {
-      setRecoverySent(true)
+
+    if (error) {
+      toast.error('Unable to send reset link', { description: error.message })
+      return
     }
+
+    setRecoverySent(true)
+    toast.success('Reset link sent', { description: `Check your inbox at ${data.email}` })
   }
 
-  /* ── Shared styles ── */
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    padding: '10px 14px',
-    background: '#0a0a0a',
-    border: '1px solid #222',
-    borderRadius: '10px',
-    color: '#fff',
-    fontSize: '14px',
-    outline: 'none',
-    transition: 'border-color 0.2s',
-  }
-
-  const labelStyle: React.CSSProperties = {
-    color: '#888',
-    fontSize: '13px',
-    display: 'block',
-    marginBottom: '6px',
-    fontWeight: 500,
+  const switchTab = (tab: 'signin' | 'recovery') => {
+    setActiveTab(tab)
+    setMagicSent(false)
+    setRecoverySent(false)
+    setUseMagicLink(false)
+    signInForm.clearErrors()
+    magicForm.clearErrors()
+    recoveryForm.clearErrors()
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: '#080808',
-      fontFamily: 'system-ui, -apple-system, sans-serif',
-      padding: '24px',
-    }}>
-      <div style={{
-        background: '#111',
-        border: '1px solid #1a1a1a',
-        borderRadius: '20px',
-        padding: '40px 36px',
-        width: '100%',
-        maxWidth: '400px',
-      }}>
-        {/* ── Logo + Branding ── */}
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
-            <SacredOrbitLogo size={64} />
+    <div className="min-h-screen flex">
+      {/* ── Left Panel: Brand ── */}
+      <div className="hidden lg:flex lg:w-1/2 bg-[#0D1420] flex-col items-center justify-center p-12 relative overflow-hidden">
+        {/* Subtle pattern */}
+        <div className="absolute inset-0 opacity-[0.03]"
+          style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, #C9A96E 1px, transparent 0)', backgroundSize: '40px 40px' }}
+        />
+        <div className="relative z-10 text-center max-w-md">
+          <Logo size={64} variant="full" />
+          <h2 className="mt-8 text-2xl font-bold text-[#F0F0F2]">Fashion Manufacturing QA</h2>
+          <p className="mt-3 text-sm text-[#888890] leading-relaxed">
+            AQL inspections, factory audits, and production planning for Garments, Footwear, Gloves, Headwear &amp; Accessories.
+          </p>
+          <div className="mt-10 grid grid-cols-2 gap-3 text-left">
+            {[
+              'ANSI Z1.4 AQL Sampling',
+              '35-point WRAP Audits',
+              'Production Planning & DPR',
+              'Real-time Quality Analytics',
+            ].map((item) => (
+              <div key={item} className="flex items-start gap-2 text-xs text-[#888890]">
+                <div className="w-1.5 h-1.5 rounded-full bg-[#C9A96E] mt-1 flex-shrink-0" />
+                {item}
+              </div>
+            ))}
           </div>
-          <h1 style={{ margin: '0 0 4px', fontSize: '26px', fontWeight: 600, letterSpacing: '-0.3px' }}>
-            <span style={{ color: '#EDE0C8' }}>Sankalp</span>
-            <span style={{ color: '#C9A96E' }}>Hub</span>
-          </h1>
-          <p style={{
-            color: '#4A4030',
-            fontSize: '9px',
-            letterSpacing: '3px',
-            textTransform: 'uppercase',
-            margin: '8px 0 0',
-            fontWeight: 600,
-          }}>
-            Production Intelligence Platform
+        </div>
+      </div>
+
+      {/* ── Right Panel: Form ── */}
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-12 bg-background">
+        <div className="w-full max-w-[400px]">
+          {/* Mobile logo */}
+          <div className="lg:hidden flex items-center gap-2.5 mb-8">
+            <Logo size={36} variant="icon" />
+            <span className="font-bold text-lg text-foreground">
+              Sankalp<span className="text-primary">Hub</span>
+            </span>
+          </div>
+
+          {/* Tab Switcher */}
+          <div className="flex gap-1 p-1 bg-muted/50 rounded-lg mb-8">
+            {(['signin', 'recovery'] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => switchTab(tab)}
+                className={`flex-1 py-2 rounded-md text-sm font-medium transition-colors ${
+                  activeTab === tab
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {tab === 'signin' ? 'Sign In' : 'Password Recovery'}
+              </button>
+            ))}
+          </div>
+
+          {/* ── Sign In Tab ── */}
+          {activeTab === 'signin' && (
+            <>
+              {magicSent ? (
+                <div className="text-center py-8">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                    <Mail className="w-6 h-6 text-primary" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground">Check your email</h3>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    We sent a magic link to <span className="font-medium text-primary">{magicForm.getValues('email')}</span>. Click it to sign in.
+                  </p>
+                  <button type="button" onClick={() => setMagicSent(false)} className="text-sm text-muted-foreground hover:text-foreground mt-4 transition-colors">
+                    Use a different email
+                  </button>
+                </div>
+              ) : useMagicLink ? (
+                <form onSubmit={magicForm.handleSubmit(handleMagicLink)} className="space-y-5">
+                  <div>
+                    <h3 className="text-xl font-bold text-foreground">Sign in with magic link</h3>
+                    <p className="text-sm text-muted-foreground mt-1">We&apos;ll email you a link to sign in — no password needed.</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="magic-email">Email address <span aria-hidden="true">*</span></Label>
+                    <Input
+                      id="magic-email"
+                      type="email"
+                      placeholder="you@company.com"
+                      autoComplete="email"
+                      autoFocus
+                      aria-required="true"
+                      aria-invalid={!!magicForm.formState.errors.email}
+                      aria-describedby={magicForm.formState.errors.email ? 'magic-email-error' : undefined}
+                      className="mt-1.5"
+                      {...magicForm.register('email')}
+                    />
+                    {magicForm.formState.errors.email && (
+                      <p id="magic-email-error" className="text-xs text-destructive mt-1" role="alert">{magicForm.formState.errors.email.message}</p>
+                    )}
+                  </div>
+                  <Button type="submit" className="w-full gap-2" disabled={magicForm.formState.isSubmitting}>
+                    {magicForm.formState.isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                    {magicForm.formState.isSubmitting ? 'Sending...' : 'Send magic link'}
+                  </Button>
+                  <button type="button" onClick={() => setUseMagicLink(false)} className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-1">
+                    <ArrowLeft className="w-3.5 h-3.5" /> Back to password sign in
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={signInForm.handleSubmit(handleLogin)} className="space-y-5">
+                  <div>
+                    <h3 className="text-xl font-bold text-foreground">Welcome back</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Sign in to your SankalpHub account.</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="login-email">Email address <span aria-hidden="true">*</span></Label>
+                    <Input
+                      id="login-email"
+                      type="email"
+                      placeholder="you@company.com"
+                      autoComplete="email"
+                      autoFocus
+                      aria-required="true"
+                      aria-invalid={!!signInForm.formState.errors.email}
+                      aria-describedby={signInForm.formState.errors.email ? 'login-email-error' : undefined}
+                      className="mt-1.5"
+                      {...signInForm.register('email')}
+                    />
+                    {signInForm.formState.errors.email && (
+                      <p id="login-email-error" className="text-xs text-destructive mt-1" role="alert">{signInForm.formState.errors.email.message}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="login-password">Password <span aria-hidden="true">*</span></Label>
+                    <Input
+                      id="login-password"
+                      type="password"
+                      placeholder="••••••••"
+                      autoComplete="current-password"
+                      aria-required="true"
+                      aria-invalid={!!signInForm.formState.errors.password}
+                      aria-describedby={signInForm.formState.errors.password ? 'login-password-error' : undefined}
+                      className="mt-1.5"
+                      {...signInForm.register('password')}
+                    />
+                    {signInForm.formState.errors.password && (
+                      <p id="login-password-error" className="text-xs text-destructive mt-1" role="alert">{signInForm.formState.errors.password.message}</p>
+                    )}
+                  </div>
+                  <Button type="submit" className="w-full gap-2" disabled={signInForm.formState.isSubmitting}>
+                    {signInForm.formState.isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+                    {signInForm.formState.isSubmitting ? 'Signing in...' : 'Sign in'}
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => setUseMagicLink(true)}
+                    className="w-full text-sm text-primary/80 hover:text-primary transition-colors text-center"
+                  >
+                    Sign in with magic link instead →
+                  </button>
+                </form>
+              )}
+            </>
+          )}
+
+          {/* ── Recovery Tab ── */}
+          {activeTab === 'recovery' && (
+            <>
+              {recoverySent ? (
+                <div className="text-center py-8">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                    <Mail className="w-6 h-6 text-primary" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground">Check your email</h3>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    We sent a password reset link to <span className="font-medium text-primary">{recoveryForm.getValues('email')}</span>.
+                  </p>
+                  <button type="button" onClick={() => setRecoverySent(false)} className="text-sm text-muted-foreground hover:text-foreground mt-4 transition-colors">
+                    Try a different email
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={recoveryForm.handleSubmit(handleRecovery)} className="space-y-5">
+                  <div>
+                    <h3 className="text-xl font-bold text-foreground">Reset your password</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Enter your email and we&apos;ll send a reset link.</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="recovery-email">Email address <span aria-hidden="true">*</span></Label>
+                    <Input
+                      id="recovery-email"
+                      type="email"
+                      placeholder="you@company.com"
+                      autoComplete="email"
+                      autoFocus
+                      aria-required="true"
+                      aria-invalid={!!recoveryForm.formState.errors.email}
+                      aria-describedby={recoveryForm.formState.errors.email ? 'recovery-email-error' : undefined}
+                      className="mt-1.5"
+                      {...recoveryForm.register('email')}
+                    />
+                    {recoveryForm.formState.errors.email && (
+                      <p id="recovery-email-error" className="text-xs text-destructive mt-1" role="alert">{recoveryForm.formState.errors.email.message}</p>
+                    )}
+                  </div>
+                  <Button type="submit" className="w-full gap-2" disabled={recoveryForm.formState.isSubmitting}>
+                    {recoveryForm.formState.isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                    {recoveryForm.formState.isSubmitting ? 'Sending...' : 'Send reset link'}
+                  </Button>
+                </form>
+              )}
+            </>
+          )}
+
+          {/* ── Signup link ── */}
+          <p className="text-center text-sm text-muted-foreground mt-8">
+            Don&apos;t have an account?{' '}
+            <Link href="/signup" className="font-medium text-primary hover:underline">
+              Start your free trial
+            </Link>
+          </p>
+
+          {/* ── Footer ── */}
+          <p className="text-center text-[11px] text-muted-foreground/50 mt-6">
+            © {new Date().getFullYear()} SankalpHub. All rights reserved.
           </p>
         </div>
-
-        {/* ── Tab Switcher ── */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '4px',
-          background: '#0a0a0a',
-          borderRadius: '10px',
-          padding: '4px',
-          marginBottom: '28px',
-        }}>
-          {(['signin', 'recovery'] as const).map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => { setActiveTab(tab); setError(''); setMagicSent(false); setRecoverySent(false); setUseMagicLink(false) }}
-              style={{
-                padding: '8px 0',
-                borderRadius: '8px',
-                border: 'none',
-                fontSize: '13px',
-                fontWeight: 500,
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                background: activeTab === tab ? '#1a1a1a' : 'transparent',
-                color: activeTab === tab ? '#EDE0C8' : '#555',
-              }}
-            >
-              {tab === 'signin' ? 'Sign In' : 'Password Recovery'}
-            </button>
-          ))}
-        </div>
-
-        {/* ── Error ── */}
-        {error && (
-          <div role="alert" style={{
-            background: '#1a0f0f',
-            border: '1px solid #3a1515',
-            borderRadius: '10px',
-            padding: '10px 14px',
-            color: '#E24B4A',
-            fontSize: '13px',
-            marginBottom: '20px',
-          }}>
-            {error}
-          </div>
-        )}
-
-        {/* ── Sign In Tab ── */}
-        {activeTab === 'signin' && (
-          <>
-            {magicSent ? (
-              <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                <p style={{ color: '#EDE0C8', fontWeight: 600, marginBottom: '8px' }}>Check your email</p>
-                <p style={{ color: '#666', fontSize: '13px', lineHeight: '1.6' }}>
-                  We sent a magic link to{' '}
-                  <span style={{ color: '#C9A96E' }}>{email}</span>.
-                  Click it to sign in.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setMagicSent(false)}
-                  style={{ background: 'none', border: 'none', color: '#666', fontSize: '13px', cursor: 'pointer', marginTop: '16px' }}
-                >
-                  Use a different email
-                </button>
-              </div>
-            ) : useMagicLink ? (
-              <form onSubmit={handleMagicLink}>
-                <div style={{ marginBottom: '20px' }}>
-                  <label htmlFor="magic-email" style={labelStyle}>Email address <span aria-hidden="true">*</span></label>
-                  <input
-                    id="magic-email"
-                    type="email"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    placeholder="you@company.com"
-                    required
-                    aria-required="true"
-                    autoComplete="email"
-                    autoFocus
-                    style={inputStyle}
-                    onFocus={e => e.target.style.borderColor = '#C9A96E'}
-                    onBlur={e => e.target.style.borderColor = '#222'}
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  style={{
-                    width: '100%',
-                    height: '44px',
-                    background: loading ? '#6b5a2e' : '#BA7517',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '10px',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                    transition: 'background 0.2s',
-                    marginBottom: '16px',
-                  }}
-                >
-                  {loading ? 'Sending...' : 'Send magic link'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setUseMagicLink(false)}
-                  style={{ background: 'none', border: 'none', color: '#666', fontSize: '13px', cursor: 'pointer', width: '100%', textAlign: 'center' }}
-                >
-                  ← Back to password sign in
-                </button>
-              </form>
-            ) : (
-              <form onSubmit={handleLogin}>
-                <div style={{ marginBottom: '16px' }}>
-                  <label htmlFor="login-email" style={labelStyle}>Email address <span aria-hidden="true">*</span></label>
-                  <input
-                    id="login-email"
-                    type="email"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    placeholder="you@company.com"
-                    required
-                    aria-required="true"
-                    autoComplete="email"
-                    autoFocus
-                    style={inputStyle}
-                    onFocus={e => e.target.style.borderColor = '#C9A96E'}
-                    onBlur={e => e.target.style.borderColor = '#222'}
-                  />
-                </div>
-                <div style={{ marginBottom: '24px' }}>
-                  <label htmlFor="login-password" style={labelStyle}>Password <span aria-hidden="true">*</span></label>
-                  <input
-                    id="login-password"
-                    type="password"
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    required
-                    aria-required="true"
-                    autoComplete="current-password"
-                    style={inputStyle}
-                    onFocus={e => e.target.style.borderColor = '#C9A96E'}
-                    onBlur={e => e.target.style.borderColor = '#222'}
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  style={{
-                    width: '100%',
-                    height: '44px',
-                    background: loading ? '#6b5a2e' : '#BA7517',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '10px',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                    transition: 'background 0.2s',
-                    marginBottom: '16px',
-                  }}
-                >
-                  {loading ? 'Signing in...' : 'Sign in'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setUseMagicLink(true)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#C9A96E',
-                    fontSize: '13px',
-                    cursor: 'pointer',
-                    width: '100%',
-                    textAlign: 'center',
-                    opacity: 0.8,
-                  }}
-                >
-                  Sign in with magic link instead →
-                </button>
-              </form>
-            )}
-          </>
-        )}
-
-        {/* ── Password Recovery Tab ── */}
-        {activeTab === 'recovery' && (
-          <>
-            {recoverySent ? (
-              <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                <p style={{ color: '#EDE0C8', fontWeight: 600, marginBottom: '8px' }}>Check your email</p>
-                <p style={{ color: '#666', fontSize: '13px', lineHeight: '1.6' }}>
-                  We sent a password reset link to{' '}
-                  <span style={{ color: '#C9A96E' }}>{email}</span>.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setRecoverySent(false)}
-                  style={{ background: 'none', border: 'none', color: '#666', fontSize: '13px', cursor: 'pointer', marginTop: '16px' }}
-                >
-                  Try a different email
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleRecovery}>
-                <p style={{ color: '#666', fontSize: '13px', marginBottom: '20px' }}>
-                  Enter your email and we&apos;ll send a reset link.
-                </p>
-                <div style={{ marginBottom: '20px' }}>
-                  <label htmlFor="recovery-email" style={labelStyle}>Email address <span aria-hidden="true">*</span></label>
-                  <input
-                    id="recovery-email"
-                    type="email"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    placeholder="you@company.com"
-                    required
-                    aria-required="true"
-                    autoComplete="email"
-                    autoFocus
-                    style={inputStyle}
-                    onFocus={e => e.target.style.borderColor = '#C9A96E'}
-                    onBlur={e => e.target.style.borderColor = '#222'}
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  style={{
-                    width: '100%',
-                    height: '44px',
-                    background: loading ? '#6b5a2e' : '#BA7517',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '10px',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                    transition: 'background 0.2s',
-                  }}
-                >
-                  {loading ? 'Sending...' : 'Send reset link'}
-                </button>
-              </form>
-            )}
-          </>
-        )}
-
-        {/* ── Footer ── */}
-        <p style={{
-          textAlign: 'center',
-          color: '#2a2a2a',
-          fontSize: '11px',
-          marginTop: '32px',
-          marginBottom: 0,
-        }}>
-          © {new Date().getFullYear()} SankalpHub. All rights reserved.
-        </p>
       </div>
     </div>
   )
