@@ -392,20 +392,20 @@ export default function NewInspectionPage() {
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div style={{ ...cardStyle, flex: 1, display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <h2 style={{ fontSize: '14px', fontWeight: 600 }}>Inspection Details</h2>
-              <div><label style={labelStyle}>Project *</label>
-                <select style={{ ...inputStyle, appearance: 'auto' as any }} value={form.projectId} onChange={e => handleProjectSelect(e.target.value)}>
+              <div><label htmlFor="insp-project" style={labelStyle}>Project *</label>
+                <select id="insp-project" style={{ ...inputStyle, appearance: 'auto' as any }} value={form.projectId} onChange={e => handleProjectSelect(e.target.value)} aria-required="true">
                   <option value="">Select project</option>
                   {projects.map(p => <option key={p.id} value={p.id}>{p.name}{p.factories?.name ? ` \u2014 ${p.factories.name}` : ''}</option>)}
                 </select>
               </div>
-              <div><label style={labelStyle}>Inspection date *</label><input style={inputStyle} type="date" value={form.inspectionDate} onChange={e => set('inspectionDate', e.target.value)} /></div>
-              <div><label style={labelStyle}>Inspection type *</label>
-                <select style={{ ...inputStyle, appearance: 'auto' as any }} value={form.inspectionType} onChange={e => set('inspectionType', e.target.value)}>
+              <div><label htmlFor="insp-date" style={labelStyle}>Inspection date *</label><input id="insp-date" style={inputStyle} type="date" value={form.inspectionDate} onChange={e => set('inspectionDate', e.target.value)} aria-required="true" /></div>
+              <div><label htmlFor="insp-type" style={labelStyle}>Inspection type *</label>
+                <select id="insp-type" style={{ ...inputStyle, appearance: 'auto' as any }} value={form.inspectionType} onChange={e => set('inspectionType', e.target.value)} aria-required="true">
                   {INSPECTION_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                 </select>
               </div>
-              <div><label style={labelStyle}>Factory *</label>
-                <select style={{ ...inputStyle, appearance: 'auto' as any }} value={form.factoryId} onChange={e => set('factoryId', e.target.value)}>
+              <div><label htmlFor="insp-factory" style={labelStyle}>Factory *</label>
+                <select id="insp-factory" style={{ ...inputStyle, appearance: 'auto' as any }} value={form.factoryId} onChange={e => set('factoryId', e.target.value)} aria-required="true">
                   <option value="">Select factory</option>
                   {factories.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
                 </select>
@@ -415,15 +415,15 @@ export default function NewInspectionPage() {
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div style={{ ...cardStyle, flex: 1, display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <h2 style={{ fontSize: '14px', fontWeight: 600 }}>Inspector Details</h2>
-              <div><label style={labelStyle}>Inspector name *</label><input style={inputStyle} value={form.auditorName} onChange={e => set('auditorName', e.target.value)} placeholder="Full name" /></div>
-              <div><label style={labelStyle}>Inspector type</label>
-                <select style={{ ...inputStyle, appearance: 'auto' as any }} value={form.auditorType} onChange={e => set('auditorType', e.target.value)}>
+              <div><label htmlFor="auditorName" style={labelStyle}>Inspector name *</label><input id="auditorName" style={inputStyle} value={form.auditorName} onChange={e => set('auditorName', e.target.value)} placeholder="Full name" aria-required="true" autoComplete="name" /></div>
+              <div><label htmlFor="auditorType" style={labelStyle}>Inspector type</label>
+                <select id="auditorType" style={{ ...inputStyle, appearance: 'auto' as any }} value={form.auditorType} onChange={e => set('auditorType', e.target.value)}>
                   <option value="brand_inspector">Brand inspector</option>
                   <option value="third_party">Third-party agency</option>
                   <option value="internal_qc">Internal QC</option>
                 </select>
               </div>
-              <div><label style={labelStyle}>Contact</label><input style={inputStyle} type="tel" value={form.auditorContact} onChange={e => set('auditorContact', e.target.value)} placeholder="+91 98765 43210" /></div>
+              <div><label htmlFor="auditorContact" style={labelStyle}>Contact</label><input id="auditorContact" style={inputStyle} type="tel" value={form.auditorContact} onChange={e => set('auditorContact', e.target.value)} placeholder="+91 98765 43210" autoComplete="tel" /></div>
               {/* Completion checklist — fills remaining height */}
               <div style={{ flex: 1, padding: '12px 14px', background: 'var(--muted)', borderRadius: '8px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '8px' }}>
                 <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--foreground)', marginBottom: '4px' }}>Completion checklist</p>
@@ -447,27 +447,27 @@ export default function NewInspectionPage() {
           <div style={cardStyle}>
             <h2 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '16px' }}>Product Details</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div><label style={labelStyle}>Category *</label>
-                <select style={{ ...inputStyle, appearance: 'auto' as any }} value={form.category} onChange={e => set('category', e.target.value.toLowerCase())}>
+              <div><label htmlFor="insp-category" style={labelStyle}>Category *</label>
+                <select id="insp-category" style={{ ...inputStyle, appearance: 'auto' as any }} value={form.category} onChange={e => set('category', e.target.value.toLowerCase())} aria-required="true">
                   <option value="">Select category</option>
                   {CATEGORIES.map(c => <option key={c} value={c.toLowerCase()}>{c}</option>)}
                 </select>
               </div>
-              <div><label style={labelStyle}>Product type</label><input style={inputStyle} value={form.productType} onChange={e => set('productType', e.target.value)} placeholder="e.g. Jackets, Sneakers" /></div>
-              <div><label style={labelStyle}>Style / SKU</label><input style={inputStyle} value={form.styleRef} onChange={e => set('styleRef', e.target.value)} placeholder="Style reference" /></div>
-              <div><label style={labelStyle}>Colour / Variant</label><input style={inputStyle} value={form.colour} onChange={e => set('colour', e.target.value)} placeholder="Colour" /></div>
+              <div><label htmlFor="productType" style={labelStyle}>Product type</label><input id="productType" style={inputStyle} value={form.productType} onChange={e => set('productType', e.target.value)} placeholder="e.g. Jackets, Sneakers" /></div>
+              <div><label htmlFor="styleRef" style={labelStyle}>Style / SKU</label><input id="styleRef" style={inputStyle} value={form.styleRef} onChange={e => set('styleRef', e.target.value)} placeholder="Style reference" /></div>
+              <div><label htmlFor="colour" style={labelStyle}>Colour / Variant</label><input id="colour" style={inputStyle} value={form.colour} onChange={e => set('colour', e.target.value)} placeholder="Colour" /></div>
             </div>
           </div>
           <div style={cardStyle}>
             <h2 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '16px' }}>AQL Settings</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div><label style={labelStyle}>AQL level *</label>
-                <select style={{ ...inputStyle, appearance: 'auto' as any }} value={form.aqlLevel} onChange={e => set('aqlLevel', e.target.value)}>
+              <div><label htmlFor="aqlLevel" style={labelStyle}>AQL level *</label>
+                <select id="aqlLevel" style={{ ...inputStyle, appearance: 'auto' as any }} value={form.aqlLevel} onChange={e => set('aqlLevel', e.target.value)} aria-required="true">
                   {AQL_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
               </div>
-              <div><label style={labelStyle}>Lot size</label><input style={inputStyle} type="number" value={form.lotSize || ''} onChange={e => set('lotSize', parseInt(e.target.value) || 0)} placeholder="Total quantity" /></div>
-              <div><label style={labelStyle}>Sample size (auto-calculated)</label><input style={inputStyle} type="number" value={form.sampleSize} readOnly /></div>
+              <div><label htmlFor="lotSize" style={labelStyle}>Lot size</label><input id="lotSize" style={inputStyle} type="number" value={form.lotSize || ''} onChange={e => set('lotSize', parseInt(e.target.value) || 0)} placeholder="Total quantity" /></div>
+              <div><label htmlFor="sampleSize" style={labelStyle}>Sample size (auto-calculated)</label><input id="sampleSize" style={inputStyle} type="number" value={form.sampleSize} readOnly /></div>
             </div>
             {/* AQL summary */}
             <div style={{ marginTop: '12px', padding: '10px', background: 'var(--muted)', borderRadius: '8px', fontSize: '11px' }}>
@@ -674,7 +674,7 @@ export default function NewInspectionPage() {
           <div style={cardStyle}>
             <h2 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '16px' }}>Add Defect</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div><label style={labelStyle}>Defect name *</label><input style={inputStyle} value={manualDefect.name} onChange={e => setManualDefect(d => ({ ...d, name: e.target.value }))} placeholder="Search defect library..." /></div>
+              <div><label htmlFor="defectName" style={labelStyle}>Defect name *</label><input id="defectName" style={inputStyle} value={manualDefect.name} onChange={e => setManualDefect(d => ({ ...d, name: e.target.value }))} placeholder="Search defect library..." aria-required="true" /></div>
               <div>
                 <label style={labelStyle}>Severity *</label>
                 <div className="flex gap-2">

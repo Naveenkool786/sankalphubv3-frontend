@@ -210,7 +210,7 @@ export default function LoginPage() {
 
         {/* ── Error ── */}
         {error && (
-          <div style={{
+          <div role="alert" style={{
             background: '#1a0f0f',
             border: '1px solid #3a1515',
             borderRadius: '10px',
