@@ -6,7 +6,7 @@ import {
   ArrowRight, Menu, X, CheckCircle2, Check,
   Globe, AlertTriangle, FileSearch, Zap,
   ClipboardCheck, BarChart3, FileText, Users, Building2, Factory, UserCheck,
-  ChevronRight, Star,
+  ChevronRight, Star, Shirt, Footprints, Hand, HardHat, Watch,
 } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -100,44 +100,77 @@ const roles = [
 const features = [
   {
     icon: ClipboardCheck,
-    title: 'AQL Template Builder',
-    desc: 'Build inspection templates for garments, footwear, or hardware. Custom sections, field types, and scoring formulas — no code required.',
+    title: 'Inspections & AQL Sampling',
+    desc: 'ANSI Z1.4 standard AQL calculations with category-specific checklists. Log defects with photos, auto-calculate pass/fail, and generate PDF reports instantly.',
     color: 'text-blue-500',
     bg: 'bg-blue-500/10',
+    link: '#inspections',
   },
   {
-    icon: BarChart3,
-    title: 'Real-time Analytics',
-    desc: 'KPI dashboards, pass/fail rates, factory benchmarking, and defect trend reports across your entire supply chain.',
+    icon: Building2,
+    title: 'Factory Audits & WRAP Compliance',
+    desc: '35-point WRAP-aligned audit system with G/Y/R/N/A ratings across employment practices, health & safety, and management controls.',
     color: 'text-emerald-500',
     bg: 'bg-emerald-500/10',
+    link: '#audits',
   },
   {
     icon: Zap,
-    title: 'Automated Workflows',
-    desc: 'Trigger re-inspections, approval requests, and compliance alerts automatically based on AQL scores and defect thresholds.',
+    title: 'Production Planning & DPR Tracking',
+    desc: 'Allocate orders to factories, track daily production reports, monitor WIP across stages, and visualise timelines with Gantt-style views.',
     color: 'text-amber-500',
+    bg: 'bg-amber-500/10',
+    link: '#planning',
+  },
+  {
+    icon: BarChart3,
+    title: 'Analytics & Quality Metrics',
+    desc: 'Pass/fail rates, defect counts, OQR%, first-pass AQL — 26 metrics across quality, factory performance, production, and operations.',
+    color: 'text-purple-500',
+    bg: 'bg-purple-500/10',
+    link: '#analytics',
+  },
+]
+
+const categories = [
+  {
+    icon: Shirt,
+    name: 'Garments',
+    stages: 'Cut → Sew → Finish → Pack',
+    defects: 'Stitching, fabric, measurement, finishing',
+    color: 'text-blue-600',
+    bg: 'bg-blue-500/10',
+  },
+  {
+    icon: Footprints,
+    name: 'Footwear',
+    stages: 'Upper → Sole → Lasting → Finish',
+    defects: 'Bonding, sole defects, symmetry, material',
+    color: 'text-amber-600',
     bg: 'bg-amber-500/10',
   },
   {
-    icon: FileText,
-    title: 'Auto-generated Reports',
-    desc: 'PDF inspection reports generated instantly with defect breakdowns, photos, AQL scores, and complete audit trails.',
-    color: 'text-purple-500',
+    icon: Hand,
+    name: 'Gloves',
+    stages: 'Cut → Sew → Turn → Inspect',
+    defects: 'Seam alignment, finger symmetry, grip coating',
+    color: 'text-emerald-600',
+    bg: 'bg-emerald-500/10',
+  },
+  {
+    icon: HardHat,
+    name: 'Headwear',
+    stages: 'Cut → Form → Assemble → Finish',
+    defects: 'Shape retention, brim alignment, lining',
+    color: 'text-purple-600',
     bg: 'bg-purple-500/10',
   },
   {
-    icon: Users,
-    title: 'Role-based Access',
-    desc: 'Purpose-built views for Brands, Factories, Inspectors, and Agencies — with row-level data isolation between organisations.',
-    color: 'text-teal-500',
-    bg: 'bg-teal-500/10',
-  },
-  {
-    icon: Globe,
-    title: 'Multi-tenant Architecture',
-    desc: 'Each organisation gets isolated data. Brands manage factories. Agencies run inspections. All in one platform — zero data leakage.',
-    color: 'text-rose-500',
+    icon: Watch,
+    name: 'Accessories',
+    stages: 'Component → Assemble → Finish → QC',
+    defects: 'Hardware, material, assembly, cosmetic',
+    color: 'text-rose-600',
     bg: 'bg-rose-500/10',
   },
 ]
@@ -331,27 +364,27 @@ export default function LandingPage() {
 
         <div className="max-w-4xl mx-auto text-center relative">
           <Badge className="mb-6 px-3 py-1 bg-primary/10 text-primary border-primary/20 text-[10px] font-semibold tracking-widest uppercase">
-            Production Intelligence Platform
+            Fashion Manufacturing QA Platform
           </Badge>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-[1.08] text-balance">
-            Build Better Products,{' '}
-            <span className="text-primary">Faster.</span>
+            Quality Control for{' '}
+            <span className="text-primary">Fashion Manufacturing</span>
           </h1>
           <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto text-balance">
-            Tech packs, sampling, supplier collaboration, and product passports — all in one platform. Finally, ditch the spreadsheets.
+            AQL inspections, factory audits, and production planning for Garments, Footwear, Gloves, Headwear &amp; Accessories — all in one platform.
           </p>
 
           <div className="mt-8 flex items-center justify-center gap-3 flex-wrap">
-            <Link href="/demo">
+            <Link href="/signup">
               <Button size="lg" className="gap-2 text-base px-6">
-                Become a Founding Member <ArrowRight className="w-5 h-5" />
+                Start Free Trial <ArrowRight className="w-5 h-5" />
               </Button>
             </Link>
-            <a href="#how-it-works">
+            <Link href="/demo">
               <Button variant="secondary" size="lg" className="text-base px-6">
-                See How It Works
+                Request Demo
               </Button>
-            </a>
+            </Link>
           </div>
 
           {/* Stats strip */}
@@ -460,7 +493,7 @@ export default function LandingPage() {
               From AQL template creation to automated compliance reporting — built for multi-org manufacturing workflows.
             </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid md:grid-cols-2 gap-5">
             {features.map((f) => {
               const Icon = f.icon
               return (
@@ -470,6 +503,37 @@ export default function LandingPage() {
                   </div>
                   <h3 className="font-semibold text-foreground mb-1.5">{f.title}</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
+                  <a href={f.link} className="text-xs font-medium text-primary mt-3 inline-flex items-center gap-1 hover:underline">
+                    Learn more <ChevronRight className="w-3 h-3" />
+                  </a>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CATEGORY SHOWCASE ── */}
+      <section id="categories" className="py-20 px-6 bg-muted/20">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <p className="text-xs font-semibold tracking-widest uppercase text-muted-foreground mb-3">Purpose-Built for Fashion</p>
+            <h2 className="text-3xl font-bold text-foreground">5 Categories. One Platform.</h2>
+            <p className="text-muted-foreground mt-3 max-w-xl mx-auto">
+              Every inspection template, defect library, and production stage is tailored to your product category.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {categories.map((cat) => {
+              const Icon = cat.icon
+              return (
+                <div key={cat.name} className="bg-card border border-border rounded-2xl p-5 text-center hover:shadow-md transition-shadow">
+                  <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3', cat.bg)}>
+                    <Icon className={cn('w-6 h-6', cat.color)} />
+                  </div>
+                  <h3 className="font-semibold text-foreground text-sm mb-1">{cat.name}</h3>
+                  <p className="text-[11px] text-muted-foreground mb-2">{cat.stages}</p>
+                  <p className="text-[10px] text-muted-foreground/70">{cat.defects}</p>
                 </div>
               )
             })}
