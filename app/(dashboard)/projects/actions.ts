@@ -103,6 +103,7 @@ export async function createFullProject(data: Record<string, any>): Promise<{ su
       org_id: ctx.orgId,
       created_by: ctx.userId,
       name: data.name,
+      product_name: data.product_name || data.name,
       status: data.status || 'draft',
     }
 
