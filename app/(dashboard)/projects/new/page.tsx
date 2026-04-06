@@ -215,7 +215,7 @@ export default function NewProjectPage() {
         }
       }
 
-      await createFullProject({
+      const result = await createFullProject({
         name: form.name.trim(),
         season: form.season || null,
         product_category: form.category || null,
@@ -242,6 +242,11 @@ export default function NewProjectPage() {
         notes: form.notes || null,
         status: asDraft ? 'draft' : 'confirmed',
       })
+
+      if (!result.success) {
+        toast.error('Project creation failed', { description: result.error })
+        return
+      }
 
       toast.success(asDraft ? 'Draft saved' : 'Project created')
       router.push('/projects')
