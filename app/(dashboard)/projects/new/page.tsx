@@ -6,6 +6,7 @@ import { createBrowserClient } from '@supabase/ssr'
 import { Check, Upload, FileText, Sparkles, ArrowLeft, ArrowRight, Camera, Loader2, Download, FileSpreadsheet } from 'lucide-react'
 import { toast } from 'sonner'
 import { BackButton } from '@/components/ui/BackButton'
+import { createFullProject } from '../actions'
 import { exportProjectPDF } from '@/lib/export/projectPdf'
 import { exportProjectExcel } from '@/lib/export/projectExcel'
 
@@ -214,8 +215,7 @@ export default function NewProjectPage() {
         }
       }
 
-      await (supabase.from('projects') as any).insert({
-        org_id: orgId,
+      await createFullProject({
         name: form.name.trim(),
         season: form.season || null,
         product_category: form.category || null,
@@ -241,7 +241,6 @@ export default function NewProjectPage() {
         priority: form.priority || 'medium',
         notes: form.notes || null,
         status: asDraft ? 'draft' : 'confirmed',
-        created_by: userId,
       })
 
       toast.success(asDraft ? 'Draft saved' : 'Project created')
@@ -542,11 +541,23 @@ export default function NewProjectPage() {
               </div>
             )
           })()}
-          {sizeTotal > 0 && (
-            <p style={{ fontSize: '12px', fontWeight: 600, color: 'var(--foreground)', marginTop: '8px' }}>
-              Total: {sizeTotal.toLocaleString()} pcs
-            </p>
-          )}
+          {sizeTotal > 0 && (() => {
+            const orderQty = parseInt(form.quantity) || 0
+            const mismatch = orderQty > 0 && sizeTotal !== orderQty
+            return (
+              <div style={{ marginTop: '8px' }}>
+                <p style={{ fontSize: '12px', fontWeight: 600, color: mismatch ? '#E24B4A' : 'var(--foreground)' }}>
+                  Total: {sizeTotal.toLocaleString()} pcs
+                  {mismatch && ` (order qty: ${orderQty.toLocaleString()} — ${sizeTotal > orderQty ? 'over' : 'under'} by ${Math.abs(sizeTotal - orderQty).toLocaleString()})`}
+                </p>
+                {mismatch && (
+                  <p style={{ fontSize: '11px', color: '#E24B4A', marginTop: '2px' }}>
+                    Size breakdown must equal order quantity
+                  </p>
+                )}
+              </div>
+            )
+          })()}
         </div>
       )}
 

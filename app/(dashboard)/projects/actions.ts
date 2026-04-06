@@ -92,6 +92,22 @@ export async function updateProjectStatus(projectId: string, status: ProjectStat
   revalidatePath('/projects')
 }
 
+export async function createFullProject(data: Record<string, any>) {
+  const ctx = await getUserContext()
+  if (!canManage(ctx.role)) throw new Error('Unauthorized')
+
+  const supabase = createAdminClient()
+  const { error } = await (supabase.from('projects') as any).insert({
+    ...data,
+    org_id: ctx.orgId,
+    created_by: ctx.userId,
+  })
+  if (error) throw new Error(error.message)
+  trackEvent({ userId: ctx.userId, organizationId: ctx.orgId, actionType: 'create', category: 'projects', actionLabel: 'Created project (wizard)', detail: `${data.name} · ${data.product_category || 'General'}` })
+  createNotification({ organizationId: ctx.orgId, eventType: 'order_assigned', soundCategory: 'brand', title: 'New project created', detail: `${data.name} · ${data.product_category || 'General'}`, link: '/projects' })
+  revalidatePath('/projects')
+}
+
 export async function deleteProject(projectId: string) {
   const ctx = await getUserContext()
   if (!canManage(ctx.role)) throw new Error('Unauthorized')
