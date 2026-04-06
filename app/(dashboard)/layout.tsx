@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { AppShell } from '@/components/layout/AppShell'
 import { ImpersonationBanner } from '@/components/ImpersonationBanner'
+import { SessionTimeoutProvider } from '@/components/settings/SessionTimeoutProvider'
 import type { UserRole } from '@/types/database'
 
 interface Profile {
@@ -81,6 +82,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         fullName={fullName}
         email={user.email ?? ''}
       >
+        <SessionTimeoutProvider role={role} />
         {children}
       </AppShell>
     </>

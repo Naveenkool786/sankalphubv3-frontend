@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { getUserContext, canManage } from '@/lib/getUserContext'
 import { revalidatePath } from 'next/cache'
 import { trackEvent } from '@/lib/activity-tracker'
@@ -32,7 +32,7 @@ export async function createTemplate(data: {
   const ctx = await getUserContext()
   if (!canManage(ctx.role)) throw new Error('Unauthorized')
 
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { error } = await supabase.from('inspection_templates').insert({
     org_id: ctx.orgId,
     name: data.name,
@@ -60,7 +60,7 @@ export async function updateTemplate(
   const ctx = await getUserContext()
   if (!canManage(ctx.role)) throw new Error('Unauthorized')
 
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { error } = await (supabase.from('inspection_templates') as any)
     .update({
       name: data.name,
@@ -78,7 +78,7 @@ export async function duplicateTemplate(templateId: string) {
   const ctx = await getUserContext()
   if (!canManage(ctx.role)) throw new Error('Unauthorized')
 
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { data: source, error: fetchErr } = await supabase
     .from('inspection_templates')
     .select('name, template_type, industry, sections, score_formula')
@@ -107,7 +107,7 @@ export async function archiveTemplate(templateId: string) {
   const ctx = await getUserContext()
   if (!canManage(ctx.role)) throw new Error('Unauthorized')
 
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { error } = await (supabase.from('inspection_templates') as any)
     .update({ is_archived: true })
     .eq('id', templateId)
