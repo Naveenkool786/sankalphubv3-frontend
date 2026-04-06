@@ -16,12 +16,11 @@ export default async function ProjectsPage() {
   const [projectsRes, factoriesRes] = await Promise.all([
     (supabase.from('projects') as any)
       .select(`
-        id, name, po_number, buyer_brand, product_category, product_description,
-        product_image_url, quantity, unit, deadline, status, priority, season,
+        id, name, po_number, product_category, product_name,
+        quantity, unit, status, priority, season,
         expected_delivery, country, notes, created_by, created_at,
-        factory_id, assigned_inspector_id, sizes,
-        factories(name),
-        inspector:profiles!assigned_inspector_id(full_name)
+        factory_id,
+        factories(name)
       `)
       .eq('org_id', ctx.orgId)
       .order('created_at', { ascending: false }),
