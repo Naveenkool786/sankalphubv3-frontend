@@ -109,7 +109,7 @@ export async function createFullProject(data: Record<string, any>): Promise<{ su
 
     // Add optional fields — any of these may not exist in the DB yet
     const optionalFields: Record<string, any> = {
-      season: data.season, product_category: data.product_category,
+      season: data.season, product_category: data.product_category?.toLowerCase(),
       product_type: data.product_type, description: data.description,
       product_image_url: data.product_image_url, factory_id: data.factory_id,
       po_number: data.po_number, quantity: data.quantity, unit: data.unit || 'pcs',
