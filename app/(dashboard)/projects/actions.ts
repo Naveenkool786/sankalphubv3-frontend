@@ -137,10 +137,14 @@ export async function createFullProject(data: Record<string, any>): Promise<{ su
       error = result.error
       if (!error) break
 
-      // If schema cache error, remove the offending column and retry
-      const match = error.message?.match(/Could not find the '(\w+)' column/)
-      if (match) {
-        delete currentPayload[match[1]]
+      // If schema cache error or check constraint, remove the offending column and retry
+      const colMatch = error.message?.match(/Could not find the '(\w+)' column/)
+      const checkMatch = error.message?.match(/violates check constraint "projects_(\w+)_check"/)
+      if (colMatch) {
+        delete currentPayload[colMatch[1]]
+        attempts++
+      } else if (checkMatch) {
+        delete currentPayload[checkMatch[1]]
         attempts++
       } else {
         break
