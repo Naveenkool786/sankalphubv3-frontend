@@ -97,9 +97,9 @@ export async function createFullProject(data: Record<string, any>): Promise<{ su
     const ctx = await getUserContext()
     if (!canManage(ctx.role)) return { success: false, error: 'Unauthorized — only admins can create projects' }
 
-    // Whitelist known columns to avoid sending unknown fields to Supabase
+    // Whitelist known columns — try with all fields, retry without optional ones on schema error
     const supabase = createAdminClient()
-    const { error } = await (supabase.from('projects') as any).insert({
+    const corePayload: Record<string, any> = {
       org_id: ctx.orgId,
       created_by: ctx.userId,
       name: data.name,
@@ -113,7 +113,6 @@ export async function createFullProject(data: Record<string, any>): Promise<{ su
       quantity: data.quantity || null,
       unit: data.unit || 'pcs',
       country: data.country || null,
-      buyer_brand: data.buyer_brand || null,
       sizes: data.sizes || null,
       start_date: data.start_date || null,
       expected_delivery: data.expected_delivery || null,
@@ -127,7 +126,22 @@ export async function createFullProject(data: Record<string, any>): Promise<{ su
       priority: data.priority || 'medium',
       notes: data.notes || null,
       status: data.status || 'draft',
-    })
+    }
+
+    // Optional columns that may not exist yet in the DB
+    const optionalFields: Record<string, any> = {
+      buyer_brand: data.buyer_brand || null,
+    }
+
+    // Try with all fields first
+    let { error } = await (supabase.from('projects') as any).insert({ ...corePayload, ...optionalFields })
+
+    // If a column doesn't exist, retry without optional fields
+    if (error?.message?.includes('schema cache') || error?.message?.includes('column')) {
+      const retryResult = await (supabase.from('projects') as any).insert(corePayload)
+      error = retryResult.error
+    }
+
     if (error) return { success: false, error: error.message }
     trackEvent({ userId: ctx.userId, organizationId: ctx.orgId, actionType: 'create', category: 'projects', actionLabel: 'Created project (wizard)', detail: `${data.name} · ${data.product_category || 'General'}` })
     createNotification({ organizationId: ctx.orgId, eventType: 'order_assigned', soundCategory: 'brand', title: 'New project created', detail: `${data.name} · ${data.product_category || 'General'}`, link: '/projects' })
