@@ -9,20 +9,21 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { usePlanningData } from '@/hooks/usePlanningData'
 import { PlanningView } from './_components/PlanningView'
 import { TimelineView } from './_components/TimelineView'
 import { DprView } from './_components/DprView'
+import { WipView } from './_components/WipView'
 
-type View = 'planning' | 'timeline' | 'dpr'
+type View = 'planning' | 'timeline' | 'dpr' | 'wip'
 
 const VIEW_OPTIONS: { key: View; label: string; icon: typeof Calendar }[] = [
   { key: 'planning', label: 'Production Planning', icon: Calendar },
   { key: 'timeline', label: 'Production Timeline', icon: BarChart3 },
   { key: 'dpr', label: 'Daily Progress Report (DPR)', icon: FileText },
+  { key: 'wip', label: 'WIP Tracker', icon: Clock },
 ]
 
 export default function PlanningPage() {
@@ -64,14 +65,6 @@ export default function PlanningPage() {
                 </DropdownMenuItem>
               )
             })}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem disabled className="gap-2.5 py-2 opacity-50">
-              <Clock size={16} />
-              WIP Tracker
-              <Badge variant="secondary" className="ml-auto text-[9px] px-1.5 py-0" style={{ backgroundColor: '#FAEEDA', color: '#633806' }}>
-                Soon
-              </Badge>
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
@@ -98,6 +91,7 @@ export default function PlanningPage() {
           {activeView === 'planning' && <PlanningView data={data} />}
           {activeView === 'timeline' && <TimelineView data={data} viewMonth={viewMonth} onMonthChange={setViewMonth} />}
           {activeView === 'dpr' && <DprView data={data} selectedDate={selectedDate} onDateChange={setSelectedDate} />}
+          {activeView === 'wip' && <WipView data={data} />}
         </>
       )}
     </div>
