@@ -13,6 +13,7 @@ import {
   FlaskConical,
   Calculator,
   ShoppingCart,
+  Ship,
 } from 'lucide-react'
 import type { UserRole } from '@/types/database'
 
@@ -38,6 +39,7 @@ const ALL_NAV: NavItem[] = [
   { label: 'Testing',        path: '/testing',     icon: FlaskConical },
   { label: 'Costing',        path: '/costing',     icon: Calculator },
   { label: 'Purchasing',     path: '/purchasing/orders', icon: ShoppingCart },
+  { label: 'Logistics',      path: '/logistics',   icon: Ship },
   { label: 'Planning',       path: '/planning',    icon: CalendarRange },
   { label: 'Factories',      path: '/factories',   icon: Factory },
   { label: 'Factory Audits', path: '/audits/factory', icon: FileSearch },
@@ -57,12 +59,12 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
   brand_manager: {
     label: 'Brand Manager',
     badgeClass: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
-    navItems: nav('Dashboard', 'Projects', 'Inspections', 'Production', 'Sampling', 'Testing', 'Costing', 'Purchasing', 'Planning', 'Factories', 'Factory Audits', 'Analytics', 'Settings'),
+    navItems: nav('Dashboard', 'Projects', 'Inspections', 'Production', 'Sampling', 'Testing', 'Costing', 'Purchasing', 'Logistics', 'Planning', 'Factories', 'Factory Audits', 'Analytics', 'Settings'),
   },
   factory_manager: {
     label: 'Factory Manager',
     badgeClass: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
-    navItems: nav('Dashboard', 'Projects', 'Inspections', 'Production', 'Sampling', 'Testing', 'Costing', 'Purchasing', 'Planning', 'Factory Audits', 'Settings'),
+    navItems: nav('Dashboard', 'Projects', 'Inspections', 'Production', 'Sampling', 'Testing', 'Costing', 'Purchasing', 'Logistics', 'Planning', 'Factory Audits', 'Settings'),
   },
   inspector: {
     label: 'Inspector',

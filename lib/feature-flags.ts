@@ -1,3 +1,4 @@
 export const FEATURE_FLAGS = {
   TESTING_LAB_ENABLED: process.env.NEXT_PUBLIC_TESTING_LAB_ENABLED !== 'false',
+  LOGISTICS_ENABLED: process.env.NEXT_PUBLIC_LOGISTICS_ENABLED !== 'false',
 }
