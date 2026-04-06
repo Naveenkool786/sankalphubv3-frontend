@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Mail, Clock, Shield, Bell, UserPlus, AlertTriangle, Archive, Send, ChevronDown, ChevronUp } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { loadAutomationStates, toggleAutomation } from '../actions'
 
 interface AutomationStep {
   id: string
@@ -211,6 +212,15 @@ export function AutomationsClient() {
     return initial
   })
 
+  // Load persisted automation states from database on mount
+  useEffect(() => {
+    loadAutomationStates().then((saved) => {
+      if (Object.keys(saved).length > 0) {
+        setEnabledSteps((prev) => ({ ...prev, ...saved }))
+      }
+    })
+  }, [])
+
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
     lifecycle: true,
     demo: true,
@@ -221,12 +231,19 @@ export function AutomationsClient() {
   const [editSubject, setEditSubject] = useState('')
   const [editBody, setEditBody] = useState('')
 
-  function toggleStep(stepId: string) {
-    setEnabledSteps((prev) => {
-      const newState = { ...prev, [stepId]: !prev[stepId] }
-      toast.success(newState[stepId] ? 'Automation enabled' : 'Automation disabled')
-      return newState
-    })
+  async function toggleStep(stepId: string) {
+    const newEnabled = !enabledSteps[stepId]
+    // Optimistic update
+    setEnabledSteps((prev) => ({ ...prev, [stepId]: newEnabled }))
+
+    const { success, error } = await toggleAutomation(stepId, newEnabled)
+    if (success) {
+      toast.success(newEnabled ? 'Automation enabled' : 'Automation disabled')
+    } else {
+      // Revert on failure
+      setEnabledSteps((prev) => ({ ...prev, [stepId]: !newEnabled }))
+      toast.error('Failed to save', { description: error || 'Please try again.' })
+    }
   }
 
   function toggleCategory(catId: string) {
