@@ -97,49 +97,53 @@ export async function createFullProject(data: Record<string, any>): Promise<{ su
     const ctx = await getUserContext()
     if (!canManage(ctx.role)) return { success: false, error: 'Unauthorized — only admins can create projects' }
 
-    // Whitelist known columns — try with all fields, retry without optional ones on schema error
+    // Build payload dynamically — try insert, strip failing columns on schema errors
     const supabase = createAdminClient()
-    const corePayload: Record<string, any> = {
+    const payload: Record<string, any> = {
       org_id: ctx.orgId,
       created_by: ctx.userId,
       name: data.name,
-      season: data.season || null,
-      product_category: data.product_category || null,
-      product_type: data.product_type || null,
-      description: data.description || null,
-      product_image_url: data.product_image_url || null,
-      factory_id: data.factory_id || null,
-      po_number: data.po_number || null,
-      quantity: data.quantity || null,
-      unit: data.unit || 'pcs',
-      country: data.country || null,
-      sizes: data.sizes || null,
-      start_date: data.start_date || null,
-      expected_delivery: data.expected_delivery || null,
-      deadline: data.deadline || null,
-      inspection_date: data.inspection_date || null,
-      shipment_date: data.shipment_date || null,
-      aql_level: data.aql_level || null,
-      inspection_type: data.inspection_type || null,
-      sample_size: data.sample_size || null,
-      lot_size: data.lot_size || null,
-      priority: data.priority || 'medium',
-      notes: data.notes || null,
       status: data.status || 'draft',
     }
 
-    // Optional columns that may not exist yet in the DB
+    // Add optional fields — any of these may not exist in the DB yet
     const optionalFields: Record<string, any> = {
-      buyer_brand: data.buyer_brand || null,
+      season: data.season, product_category: data.product_category,
+      product_type: data.product_type, description: data.description,
+      product_image_url: data.product_image_url, factory_id: data.factory_id,
+      po_number: data.po_number, quantity: data.quantity, unit: data.unit || 'pcs',
+      country: data.country, buyer_brand: data.buyer_brand, sizes: data.sizes,
+      start_date: data.start_date, expected_delivery: data.expected_delivery,
+      deadline: data.deadline, inspection_date: data.inspection_date,
+      shipment_date: data.shipment_date, aql_level: data.aql_level,
+      inspection_type: data.inspection_type, sample_size: data.sample_size,
+      lot_size: data.lot_size, priority: data.priority || 'medium',
+      notes: data.notes,
     }
 
-    // Try with all fields first
-    let { error } = await (supabase.from('projects') as any).insert({ ...corePayload, ...optionalFields })
+    // Only include non-null optional fields
+    for (const [k, v] of Object.entries(optionalFields)) {
+      if (v != null && v !== '') payload[k] = v
+    }
 
-    // If a column doesn't exist, retry without optional fields
-    if (error?.message?.includes('schema cache') || error?.message?.includes('column')) {
-      const retryResult = await (supabase.from('projects') as any).insert(corePayload)
-      error = retryResult.error
+    // Try insert — if a column doesn't exist, strip it and retry (up to 3 retries)
+    let error: any = null
+    let attempts = 0
+    let currentPayload = { ...payload }
+
+    while (attempts < 4) {
+      const result = await (supabase.from('projects') as any).insert(currentPayload)
+      error = result.error
+      if (!error) break
+
+      // If schema cache error, remove the offending column and retry
+      const match = error.message?.match(/Could not find the '(\w+)' column/)
+      if (match) {
+        delete currentPayload[match[1]]
+        attempts++
+      } else {
+        break
+      }
     }
 
     if (error) return { success: false, error: error.message }
