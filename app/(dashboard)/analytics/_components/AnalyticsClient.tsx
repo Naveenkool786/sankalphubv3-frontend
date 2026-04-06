@@ -24,6 +24,8 @@ export interface AnalyticsData {
     totalCritical: number
     totalMajor: number
     totalMinor: number
+    oqrPct: number
+    fpAqlPct: number
   }
   monthlyTrend: { month: string; avgScore: number; passRate: number; inspections: number }[]
   factoryPassFail: { factory: string; pass: number; fail: number }[]
@@ -96,44 +98,47 @@ export function AnalyticsClient({ data }: { data: AnalyticsData }) {
       color: PROJECT_STATUS_COLORS[status]?.color ?? '#94a3b8',
     }))
 
-  const kpiCards = [
+  // Cody's 4 Core KPIs (always visible at top)
+  const codyKpis = [
     {
-      label: 'Total Inspections',
-      value: kpis.total,
-      icon: ClipboardCheck,
-      color: 'text-blue-600',
-      bg: 'bg-blue-50 dark:bg-blue-900/20',
-      sub: `${kpis.passCount} passed, ${kpis.failCount} failed`,
-      trendUp: true,
-    },
-    {
-      label: 'Pass Rate',
+      label: 'Pass/Fail Rate',
       value: `${kpis.passRate}%`,
       icon: kpis.passRate >= 80 ? TrendingUp : TrendingDown,
       color: kpis.passRate >= 80 ? 'text-green-600' : 'text-red-500',
       bg: kpis.passRate >= 80 ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20',
-      sub: 'overall',
+      sub: `${kpis.passCount} passed, ${kpis.failCount} failed`,
       trendUp: kpis.passRate >= 80,
     },
     {
-      label: 'Avg. Score',
-      value: kpis.avgScore,
-      icon: ShieldCheck,
-      color: 'text-purple-600',
-      bg: 'bg-purple-50 dark:bg-purple-900/20',
-      sub: 'across all inspections',
-      trendUp: kpis.avgScore >= 80,
-    },
-    {
-      label: 'Critical Defects',
-      value: kpis.totalCritical,
+      label: 'Defect Counts',
+      value: totalDefects,
       icon: AlertTriangle,
       color: 'text-red-600',
       bg: 'bg-red-50 dark:bg-red-900/20',
-      sub: `${totalDefects} total defects`,
+      sub: `${kpis.totalCritical}C ${kpis.totalMajor}Ma ${kpis.totalMinor}Mi`,
       trendUp: kpis.totalCritical === 0,
     },
+    {
+      label: 'OQR%',
+      value: `${kpis.oqrPct}%`,
+      icon: ShieldCheck,
+      color: kpis.oqrPct >= 90 ? 'text-green-600' : 'text-purple-600',
+      bg: kpis.oqrPct >= 90 ? 'bg-green-50 dark:bg-green-900/20' : 'bg-purple-50 dark:bg-purple-900/20',
+      sub: 'Outgoing Quality Rate',
+      trendUp: kpis.oqrPct >= 90,
+    },
+    {
+      label: 'FP AQL%',
+      value: `${kpis.fpAqlPct}%`,
+      icon: ClipboardCheck,
+      color: kpis.fpAqlPct >= 80 ? 'text-blue-600' : 'text-amber-600',
+      bg: kpis.fpAqlPct >= 80 ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-amber-50 dark:bg-amber-900/20',
+      sub: 'First-Pass AQL Rate',
+      trendUp: kpis.fpAqlPct >= 80,
+    },
   ]
+
+  const kpiCards = codyKpis
 
   if (kpis.total === 0) {
     return (

@@ -155,8 +155,17 @@ async function AnalyticsPageContent() {
     remarks: i.remarks ?? '',
   }))
 
+  // OQR% — Outgoing Quality Rate: inspections with zero defects / total submitted
+  const submitted = insp.filter((i: any) => i.status === 'submitted')
+  const zeroDefect = submitted.filter((i: any) => ((i.critical_defects ?? 0) + (i.major_defects ?? 0) + (i.minor_defects ?? 0)) === 0)
+  const oqrPct = submitted.length > 0 ? Math.round((zeroDefect.length / submitted.length) * 100) : 0
+
+  // FP AQL% — First Pass AQL: inspections that passed on first attempt (result = 'pass' and no re-inspection)
+  const firstPassCount = insp.filter((i: any) => i.result === 'pass').length
+  const fpAqlPct = total > 0 ? Math.round((firstPassCount / total) * 100) : 0
+
   const data: AnalyticsData = {
-    kpis: { total, passCount, failCount, passRate, avgScore, totalCritical, totalMajor, totalMinor },
+    kpis: { total, passCount, failCount, passRate, avgScore, totalCritical, totalMajor, totalMinor, oqrPct, fpAqlPct },
     monthlyTrend,
     factoryPassFail,
     defectDistribution,
