@@ -4,7 +4,7 @@ interface CreateNotificationParams {
   organizationId: string
   userId?: string
   eventType: string
-  soundCategory: 'brand' | 'factory' | 'inspection_pass' | 'inspection_fail' | 'system'
+  soundCategory: 'brand' | 'factory' | 'inspection_pass' | 'inspection_fail' | 'system' | 'audit_complete' | 'deadline_warning' | 'production_milestone' | 'urgent_action'
   title: string
   detail?: string
   link?: string

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { AUDIT_CHECKPOINTS, SECTION_LABELS, calculateAuditScore, type AuditCheckpointResponse, type AuditRating } from '@/lib/audit-checkpoints'
+import { notifyAuditCompleted } from '@/app/(dashboard)/factories/actions'
 
 const RATING_OPTIONS: { value: AuditRating; label: string; color: string; bg: string }[] = [
   { value: 'G', label: 'Green', color: '#085041', bg: '#E1F5EE' },
@@ -134,6 +135,14 @@ export default function NewWRAPAuditPage() {
           latest_audit_result: score.result,
         }).eq('id', factoryId)
       }
+
+      // Fire notification
+      notifyAuditCompleted({
+        factoryName: factory?.name || 'Factory',
+        score: score.score,
+        result: score.result,
+        factoryId,
+      }).catch(() => {})
 
       toast.success(`Audit completed — ${score.result} (${score.score}%)`)
       router.push(`/factories/${factoryId}`)

@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getUserContext, canManage } from '@/lib/getUserContext'
 import { revalidatePath } from 'next/cache'
 import { trackEvent } from '@/lib/activity-tracker'
+import { createNotification } from '@/lib/notifications'
 
 export async function createFactory(data: {
   name: string
@@ -154,4 +155,23 @@ export async function updateFactoryStatus(factoryId: string, status: string) {
   if (error) throw new Error(error.message)
   trackEvent({ userId: ctx.userId, organizationId: ctx.orgId, actionType: 'edit', category: 'factories', actionLabel: `Factory status → ${status}`, detail: factoryId })
   revalidatePath('/factories')
+}
+
+export async function notifyAuditCompleted(data: {
+  factoryName: string
+  score: number
+  result: string
+  factoryId: string
+}) {
+  const ctx = await getUserContext()
+
+  await createNotification({
+    organizationId: ctx.orgId,
+    eventType: data.score < 70 ? 'audit_failed' : 'audit_completed',
+    soundCategory: data.score < 70 ? 'inspection_fail' : 'brand',
+    title: data.score < 70 ? 'Audit Failed' : 'Audit Completed',
+    detail: `${data.factoryName} — ${data.score}% (${data.result})`,
+    link: `/factories/${data.factoryId}/audits`,
+    isCritical: data.score < 70,
+  })
 }
