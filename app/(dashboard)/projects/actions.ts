@@ -7,6 +7,16 @@ import { trackEvent } from '@/lib/activity-tracker'
 import { createNotification } from '@/lib/notifications'
 import type { ProjectStatus } from '@/types/database'
 
+// Map form category to DB-allowed values
+const VALID_CATEGORIES = ['garments', 'footwear', 'accessories', 'electronics', 'furniture', 'packaging', 'other']
+function mapProductCategory(val: string | undefined | null): string | null {
+  if (!val) return null
+  const lower = val.toLowerCase()
+  if (VALID_CATEGORIES.includes(lower)) return lower
+  // Map unsupported categories to 'other' until DB constraint is updated
+  return 'other'
+}
+
 export async function createProject(data: {
   name: string
   product_category: string
@@ -109,7 +119,8 @@ export async function createFullProject(data: Record<string, any>): Promise<{ su
 
     // Add optional fields — any of these may not exist in the DB yet
     const optionalFields: Record<string, any> = {
-      season: data.season, product_category: data.product_category?.toLowerCase(),
+      season: data.season,
+      product_category: mapProductCategory(data.product_category),
       product_type: data.product_type, description: data.description,
       product_image_url: data.product_image_url, factory_id: data.factory_id,
       po_number: data.po_number, quantity: data.quantity, unit: data.unit || 'pcs',
