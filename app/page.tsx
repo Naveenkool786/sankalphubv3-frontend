@@ -6,7 +6,8 @@ import {
   ArrowRight, Menu, X, CheckCircle2, Check,
   Globe, AlertTriangle, FileSearch, Zap,
   ClipboardCheck, BarChart3, FileText, Users, Building2, Factory, UserCheck,
-  ChevronRight, Star, Shirt, Footprints, Hand, HardHat, Watch,
+  ChevronRight, ChevronDown, Star, Shirt, Footprints, Hand, HardHat, Watch,
+  Palette, FlaskConical, DollarSign, Truck, ShieldCheck, Layers,
 } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -104,7 +105,7 @@ const features = [
     desc: 'ANSI Z1.4 standard AQL calculations with category-specific checklists. Log defects with photos, auto-calculate pass/fail, and generate PDF reports instantly.',
     color: 'text-blue-500',
     bg: 'bg-blue-500/10',
-    link: '#inspections',
+    bullets: ['ANSI Z1.4 Level I/II/III sampling', 'Category-specific checklists (19+ points)', 'Defect recording with Critical/Major/Minor severity', 'Auto-generated PDF inspection reports'],
   },
   {
     icon: Building2,
@@ -112,7 +113,7 @@ const features = [
     desc: '35-point WRAP-aligned audit system with G/Y/R/N/A ratings across employment practices, health & safety, and management controls.',
     color: 'text-emerald-500',
     bg: 'bg-emerald-500/10',
-    link: '#audits',
+    bullets: ['35 WRAP-aligned checkpoints in 3 sections', 'G/Y/R/N/A rating with corrective action tracking', 'Score formula: (G+Y)/(Total−NA) × 100', 'Factory compliance badge (Green/Yellow/Red)'],
   },
   {
     icon: Zap,
@@ -120,7 +121,7 @@ const features = [
     desc: 'Allocate orders to factories, track daily production reports, monitor WIP across stages, and visualise timelines with Gantt-style views.',
     color: 'text-amber-500',
     bg: 'bg-amber-500/10',
-    link: '#planning',
+    bullets: ['Gantt-style timeline view with today marker', 'Daily Production Reports with efficiency tracking', 'WIP kanban board across production stages', 'Capacity checks and daily target auto-calculation'],
   },
   {
     icon: BarChart3,
@@ -128,51 +129,63 @@ const features = [
     desc: 'Pass/fail rates, defect counts, OQR%, first-pass AQL — 26 metrics across quality, factory performance, production, and operations.',
     color: 'text-purple-500',
     bg: 'bg-purple-500/10',
-    link: '#analytics',
+    bullets: ["Cody's 4 KPIs: Pass Rate, Defects, OQR%, FP AQL%", '26 metrics across 4 categories', 'Factory leaderboard and inspector performance', 'CSV and PDF export for all metrics'],
   },
+]
+
+const comingSoonModules = [
+  { icon: Palette, title: 'Product Development & Tech Packs', color: 'text-pink-500', bg: 'bg-pink-500/10' },
+  { icon: Layers, title: 'Sampling Lifecycle', color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
+  { icon: FlaskConical, title: 'Testing & Lab Management', color: 'text-orange-500', bg: 'bg-orange-500/10' },
+  { icon: DollarSign, title: 'Costing & Purchasing', color: 'text-lime-500', bg: 'bg-lime-500/10' },
+  { icon: Truck, title: 'Logistics & Shipping', color: 'text-sky-500', bg: 'bg-sky-500/10' },
+  { icon: ShieldCheck, title: 'Compliance & Certifications', color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
 ]
 
 const categories = [
   {
     icon: Shirt,
     name: 'Garments',
-    stages: 'Cut → Sew → Finish → Pack',
-    defects: 'Stitching, fabric, measurement, finishing',
+    tagline: 'Complete garment QA from cutting room to final pack',
     color: 'text-blue-600',
     bg: 'bg-blue-500/10',
   },
   {
     icon: Footprints,
     name: 'Footwear',
-    stages: 'Upper → Sole → Lasting → Finish',
-    defects: 'Bonding, sole defects, symmetry, material',
+    tagline: 'Sole bonding, lasting, and finish inspection',
     color: 'text-amber-600',
     bg: 'bg-amber-500/10',
   },
   {
     icon: Hand,
     name: 'Gloves',
-    stages: 'Cut → Sew → Turn → Inspect',
-    defects: 'Seam alignment, finger symmetry, grip coating',
+    tagline: 'Finger alignment, grip coating, and symmetry checks',
     color: 'text-emerald-600',
     bg: 'bg-emerald-500/10',
   },
   {
     icon: HardHat,
     name: 'Headwear',
-    stages: 'Cut → Form → Assemble → Finish',
-    defects: 'Shape retention, brim alignment, lining',
+    tagline: 'Shape retention, brim alignment, and logo placement',
     color: 'text-purple-600',
     bg: 'bg-purple-500/10',
   },
   {
     icon: Watch,
     name: 'Accessories',
-    stages: 'Component → Assemble → Finish → QC',
-    defects: 'Hardware, material, assembly, cosmetic',
+    tagline: 'Hardware, material integrity, and assembly QC',
     color: 'text-rose-600',
     bg: 'bg-rose-500/10',
   },
+]
+
+const faqs = [
+  { q: 'What modules are included?', a: 'The platform includes Inspections & AQL Sampling, Factory Audits & WRAP Compliance, Production Planning & DPR, Analytics & Quality Metrics. Modules for Product Development, Sampling, Testing, Costing, Logistics, and Compliance are coming soon.' },
+  { q: 'Can I start with just QA and add modules later?', a: 'Yes. Start with the Free plan focused on inspections, then upgrade to Pro for the full suite including audits, planning, and analytics. New modules will be available as they launch.' },
+  { q: 'How does PremiumHub pricing work?', a: 'Free plan: 5 users, 10 inspections/month. Pro: $29/month for 5 users with unlimited inspections and all features. Enterprise: custom pricing with unlimited users and white-label options.' },
+  { q: 'What happens during the 21-day free trial?', a: 'Full access to all Pro features — no credit card required. After the trial, your account moves to the Free plan. Upgrade anytime to restore full access.' },
+  { q: 'Which product categories are supported?', a: 'Garments, Footwear, Gloves, Headwear, and Accessories. Each category has tailored inspection checklists, defect libraries, and production stage definitions.' },
 ]
 
 const pricingPlans = [
@@ -273,14 +286,18 @@ const roleCTAs = [
 
 const stats = [
   { value: '50', label: 'Founding Slots' },
-  { value: '100%', label: 'Digital. No Paper' },
+  { value: '100%', label: 'Digital' },
   { value: '< 24 hr', label: 'Onboarding' },
-  { value: '5 Roles', label: 'Supported' },
+  { value: '5', label: 'Categories' },
+  { value: '17', label: 'Workflow Steps' },
+  { value: '5', label: 'Roles' },
 ]
 
 /* ─── PAGE ─── */
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [expandedFeature, setExpandedFeature] = useState<string | null>(null)
+  const [openFaq, setOpenFaq] = useState<number | null>(null)
 
   return (
     <div className="min-h-screen bg-background">
@@ -367,11 +384,11 @@ export default function LandingPage() {
             Fashion Manufacturing QA Platform
           </Badge>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-[1.08] text-balance">
-            Quality Control for{' '}
+            End-to-End Product Lifecycle for{' '}
             <span className="text-primary">Fashion Manufacturing</span>
           </h1>
           <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto text-balance">
-            AQL inspections, factory audits, and production planning for Garments, Footwear, Gloves, Headwear &amp; Accessories — all in one platform.
+            From product development and sampling to testing, costing, logistics, and compliance — manage your entire manufacturing pipeline for Garments, Footwear, Gloves, Headwear &amp; Accessories.
           </p>
 
           <div className="mt-8 flex items-center justify-center gap-3 flex-wrap">
@@ -388,7 +405,7 @@ export default function LandingPage() {
           </div>
 
           {/* Stats strip */}
-          <div className="mt-14 grid grid-cols-2 md:grid-cols-4 gap-6 border border-border rounded-2xl p-6 bg-card/50">
+          <div className="mt-14 grid grid-cols-3 md:grid-cols-6 gap-6 border border-border rounded-2xl p-6 bg-card/50">
             {stats.map((s) => (
               <div key={s.label} className="text-center">
                 <div className="text-2xl font-bold text-foreground">{s.value}</div>
@@ -496,19 +513,52 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-2 gap-5">
             {features.map((f) => {
               const Icon = f.icon
+              const isExpanded = expandedFeature === f.title
               return (
-                <div key={f.title} className="bg-card border border-border rounded-2xl p-5 hover:shadow-md transition-shadow">
+                <div key={f.title} className="bg-card border border-border rounded-2xl p-5 hover:shadow-md transition-all">
                   <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center mb-4', f.bg)}>
                     <Icon className={cn('w-5 h-5', f.color)} />
                   </div>
                   <h3 className="font-semibold text-foreground mb-1.5">{f.title}</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
-                  <a href={f.link} className="text-xs font-medium text-primary mt-3 inline-flex items-center gap-1 hover:underline">
-                    Learn more <ChevronRight className="w-3 h-3" />
-                  </a>
+                  <button
+                    onClick={() => setExpandedFeature(isExpanded ? null : f.title)}
+                    className="text-xs font-medium text-primary mt-3 inline-flex items-center gap-1 hover:underline"
+                  >
+                    {isExpanded ? 'Show less' : 'Learn more'}
+                    {isExpanded ? <ChevronDown className="w-3 h-3 rotate-180" /> : <ChevronRight className="w-3 h-3" />}
+                  </button>
+                  {isExpanded && (
+                    <ul className="mt-3 space-y-1.5 border-t border-border pt-3">
+                      {f.bullets.map((b) => (
+                        <li key={b} className="text-xs text-muted-foreground flex items-start gap-2">
+                          <Check className="w-3 h-3 text-primary mt-0.5 flex-shrink-0" />
+                          {b}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               )
             })}
+          </div>
+
+          {/* Coming Soon Modules */}
+          <div className="mt-12">
+            <p className="text-xs font-semibold tracking-widest uppercase text-muted-foreground mb-4 text-center">Expanding Soon</p>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+              {comingSoonModules.map((m) => {
+                const Icon = m.icon
+                return (
+                  <div key={m.title} className="bg-card/50 border border-dashed border-border rounded-xl p-4 text-center opacity-70 hover:opacity-100 transition-opacity">
+                    <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center mx-auto mb-2', m.bg)}>
+                      <Icon className={cn('w-4 h-4', m.color)} />
+                    </div>
+                    <p className="text-[11px] font-medium text-foreground">{m.title}</p>
+                  </div>
+                )
+              })}
+            </div>
           </div>
         </div>
       </section>
@@ -527,13 +577,12 @@ export default function LandingPage() {
             {categories.map((cat) => {
               const Icon = cat.icon
               return (
-                <div key={cat.name} className="bg-card border border-border rounded-2xl p-5 text-center hover:shadow-md transition-shadow">
+                <div key={cat.name} className="bg-card border border-border rounded-2xl p-5 text-center hover:shadow-lg hover:-translate-y-1 transition-all cursor-default">
                   <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3', cat.bg)}>
                     <Icon className={cn('w-6 h-6', cat.color)} />
                   </div>
-                  <h3 className="font-semibold text-foreground text-sm mb-1">{cat.name}</h3>
-                  <p className="text-[11px] text-muted-foreground mb-2">{cat.stages}</p>
-                  <p className="text-[10px] text-muted-foreground/70">{cat.defects}</p>
+                  <h3 className="font-semibold text-foreground text-sm mb-1.5">{cat.name}</h3>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">{cat.tagline}</p>
                 </div>
               )
             })}
@@ -664,11 +713,34 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── FAQ ── */}
+      <section className="py-16 px-6">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-2xl font-bold text-foreground text-center mb-8">Frequently Asked Questions</h2>
+          <div className="space-y-2">
+            {faqs.map((faq, i) => (
+              <div key={i} className="border border-border rounded-xl overflow-hidden">
+                <button
+                  className="w-full flex items-center justify-between px-5 py-4 text-left text-sm font-medium text-foreground hover:bg-muted/30 transition-colors"
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                >
+                  {faq.q}
+                  <ChevronDown className={cn('w-4 h-4 flex-shrink-0 text-muted-foreground transition-transform duration-200', openFaq === i && 'rotate-180')} />
+                </button>
+                {openFaq === i && (
+                  <div className="px-5 pb-4 text-sm text-muted-foreground leading-relaxed">{faq.a}</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── ROLE CTA STRIP ── */}
       <section className="py-20 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-10">
-            <h2 className="text-2xl font-bold text-foreground">Ready to get started?</h2>
+            <h2 className="text-2xl font-bold text-foreground">Ready to streamline your manufacturing lifecycle?</h2>
             <p className="text-muted-foreground mt-2">Choose how you want to join SankalpHub.</p>
           </div>
           <div className="grid md:grid-cols-3 gap-5">
