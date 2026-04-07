@@ -19,7 +19,8 @@ export default async function LogisticsPage() {
   const supabase = createAdminClient()
 
   const { data: shipments } = await (supabase.from('shipments') as any)
-    .select('*, projects(name)')
+    .select('*, projects!inner(name, org_id)')
+    .eq('projects.org_id', ctx.orgId)
     .order('created_at', { ascending: false })
 
   return (

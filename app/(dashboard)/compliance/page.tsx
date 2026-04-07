@@ -23,10 +23,10 @@ export default async function CompliancePage() {
   const in60 = new Date(Date.now() + 60 * 86400000).toISOString().split('T')[0]
 
   const [{ data: audits }, { data: certs }, { data: metrics }, { data: recentAudits }] = await Promise.all([
-    (supabase.from('factory_audits') as any).select('id, status, next_audit_date').neq('status', 'closed'),
-    (supabase.from('product_certifications') as any).select('id, status, expiry_date'),
-    (supabase.from('sustainability_metrics') as any).select('esg_score').not('esg_score', 'is', null),
-    (supabase.from('factory_audits') as any).select('*, factories(name)').order('created_at', { ascending: false }).limit(5),
+    (supabase.from('factory_audits') as any).select('id, status, next_audit_date, factories!inner(org_id)').eq('factories.org_id', ctx.orgId).neq('status', 'closed'),
+    (supabase.from('product_certifications') as any).select('id, status, expiry_date, projects!inner(org_id)').eq('projects.org_id', ctx.orgId),
+    (supabase.from('sustainability_metrics') as any).select('esg_score, factories!inner(org_id)').eq('factories.org_id', ctx.orgId).not('esg_score', 'is', null),
+    (supabase.from('factory_audits') as any).select('*, factories!inner(name, org_id)').eq('factories.org_id', ctx.orgId).order('created_at', { ascending: false }).limit(5),
   ])
 
   const upcomingAudits = (audits ?? []).filter((a: any) => a.next_audit_date && a.next_audit_date <= in30).length

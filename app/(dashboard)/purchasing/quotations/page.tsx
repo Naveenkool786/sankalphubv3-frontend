@@ -7,7 +7,8 @@ export default async function QuotationsPage() {
   const supabase = createAdminClient()
 
   const { data: quotations } = await (supabase.from('quotations') as any)
-    .select('*, projects(name), factories(name)')
+    .select('*, projects!inner(name, org_id), factories(name)')
+    .eq('projects.org_id', ctx.orgId)
     .order('created_at', { ascending: false })
 
   return (

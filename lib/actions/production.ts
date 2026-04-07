@@ -14,6 +14,7 @@ function generateOrderNumber(): string {
 
 export async function createProductionOrder(data: {
   order_number?: string
+  style_id?: string
   style_number?: string
   style_name?: string
   category: ProductionCategory
@@ -39,6 +40,7 @@ export async function createProductionOrder(data: {
     const { data: order, error } = await (supabase.from('production_orders') as any).insert({
       project_id: data.project_id,
       order_number: orderNumber,
+      style_id: data.style_id || null,
       style_number: data.style_number || null,
       style_name: data.style_name || null,
       category: data.category,

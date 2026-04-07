@@ -8,10 +8,12 @@ export default async function InvoicesPage() {
 
   const [{ data: invoices }, { data: pos }] = await Promise.all([
     (supabase.from('invoices') as any)
-      .select('*, purchase_orders(po_number, total_amount, supplier_name)')
+      .select('*, purchase_orders!inner(po_number, total_amount, supplier_name, projects!inner(org_id))')
+      .eq('purchase_orders.projects.org_id', ctx.orgId)
       .order('created_at', { ascending: false }),
     (supabase.from('purchase_orders') as any)
-      .select('id, po_number, supplier_name, total_amount')
+      .select('id, po_number, supplier_name, total_amount, projects!inner(org_id)')
+      .eq('projects.org_id', ctx.orgId)
       .order('po_number'),
   ])
 

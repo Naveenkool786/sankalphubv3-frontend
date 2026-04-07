@@ -7,7 +7,8 @@ export default async function PurchaseOrdersPage() {
   const supabase = createAdminClient()
 
   const { data: orders } = await (supabase.from('purchase_orders') as any)
-    .select('*, projects(name), factories(name)')
+    .select('*, projects!inner(name, org_id), factories(name)')
+    .eq('projects.org_id', ctx.orgId)
     .order('created_at', { ascending: false })
 
   return (

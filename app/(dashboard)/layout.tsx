@@ -1,9 +1,11 @@
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { AppShell } from '@/components/layout/AppShell'
 import { ImpersonationBanner } from '@/components/ImpersonationBanner'
 import { SessionTimeoutProvider } from '@/components/settings/SessionTimeoutProvider'
+import { ROLE_CONFIGS } from '@/lib/roles'
 import type { UserRole } from '@/types/database'
 
 interface Profile {
@@ -70,6 +72,26 @@ export default async function DashboardLayout({ children }: { children: React.Re
         .eq('id', orgId)
         .single()
       if (data) orgName = (data as any).name
+    }
+  }
+
+  // ─── Route Guard: check if role has access to current path ───
+  const headersList = await headers()
+  const pathname = headersList.get('x-pathname') || headersList.get('x-invoke-path') || ''
+
+  if (pathname) {
+    const roleConfig = ROLE_CONFIGS[role]
+    if (roleConfig) {
+      const allowedPaths = roleConfig.navItems.map(item => item.path)
+      const isAllowed = allowedPaths.some(allowed => pathname.startsWith(allowed))
+
+      // Always allow /dashboard and /settings
+      const alwaysAllowed = ['/dashboard', '/settings']
+      const isAlwaysAllowed = alwaysAllowed.some(p => pathname.startsWith(p))
+
+      if (!isAllowed && !isAlwaysAllowed) {
+        redirect('/dashboard?denied=1')
+      }
     }
   }
 

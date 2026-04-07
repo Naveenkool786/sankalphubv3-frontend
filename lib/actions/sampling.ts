@@ -14,6 +14,7 @@ function generateRequestNumber(): string {
 export async function createSampleRequest(data: {
   project_id: string
   production_order_id?: string
+  style_id?: string
   style_number?: string
   style_name?: string
   category?: string
@@ -34,6 +35,7 @@ export async function createSampleRequest(data: {
     const { data: sample, error } = await (supabase.from('sample_requests') as any).insert({
       project_id: data.project_id,
       production_order_id: data.production_order_id || null,
+      style_id: data.style_id || null,
       request_number: generateRequestNumber(),
       style_number: data.style_number || null,
       style_name: data.style_name || null,

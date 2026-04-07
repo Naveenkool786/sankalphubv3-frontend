@@ -19,6 +19,7 @@ export interface ProductionOrder {
   id: string
   project_id: string
   order_number: string
+  style_id: string | null
   style_number: string | null
   style_name: string | null
   category: ProductionCategory | null

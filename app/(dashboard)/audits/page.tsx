@@ -9,7 +9,8 @@ export default async function AuditsPage() {
   const supabase = createAdminClient()
 
   const { data: audits } = await (supabase.from('factory_audits_v2') as any)
-    .select('*, factories(name, city, country), audit_templates(template_name, standard)')
+    .select('*, factories!inner(name, city, country, org_id), audit_templates(template_name, standard)')
+    .eq('factories.org_id', ctx.orgId)
     .order('created_at', { ascending: false })
 
   return (

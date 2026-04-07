@@ -24,7 +24,7 @@ export default async function TestingPage() {
   const supabase = createAdminClient()
 
   const [{ data: requests }, { data: labs }] = await Promise.all([
-    (supabase.from('test_requests') as any).select('*, lab_partners(lab_name), projects(name)').order('created_at', { ascending: false }),
+    (supabase.from('test_requests') as any).select('*, lab_partners(lab_name), projects!inner(name, org_id)').eq('projects.org_id', ctx.orgId).order('created_at', { ascending: false }),
     (supabase.from('lab_partners') as any).select('id, lab_name').eq('is_active', true).order('lab_name'),
   ])
 

@@ -28,6 +28,9 @@ export async function proxy(request: NextRequest) {
   // Refresh session only — NO redirects at all
   await supabase.auth.getUser()
 
+  // Pass pathname to layout for route guards
+  supabaseResponse.headers.set('x-pathname', request.nextUrl.pathname)
+
   return supabaseResponse
 }
 
